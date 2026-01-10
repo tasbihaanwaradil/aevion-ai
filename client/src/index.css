@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+@import 'tailwindcss';
+
+@theme {
+    --font-sans: 'Inter', sans-serif;
+    --font-urbanist: 'Urbanist', sans-serif;
+}
+
+@layer base {
+    body {
+        @apply bg-white text-sm text-gray-800 antialiased;
+    }
+}
