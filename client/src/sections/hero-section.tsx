@@ -26,7 +26,7 @@ export default function HeroSection() {
                 </AnimatedContent>
                 <AnimatedContent distance={30} delay={0.1} className="relative">
                     <h1 className="text-center font-urbanist text-5xl/15 md:text-6xl/18 mt-4 font-bold max-w-2xl">
-                        Build, Launch & Scale with AI agents.
+                        Build, Launch & Scale with AI agents
                     </h1>
                     <div className="absolute -top-5 right-13 hidden md:block">
                         <CustomIcon icon={SparkleIcon} dir="right" />
