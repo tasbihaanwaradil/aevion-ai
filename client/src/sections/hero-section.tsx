@@ -26,7 +26,8 @@ export default function HeroSection() {
                 </AnimatedContent>
                 <AnimatedContent distance={30} delay={0.1} className="relative">
                     <h1 className="text-center font-urbanist text-5xl/15 md:text-6xl/18 mt-4 font-bold max-w-2xl">
-                       Create, Automate & Scale Academic Work with Aevion.AI
+                       Empower Educators with AI: Automate, Create & Share Instantly
+                       
                     </h1>
                     <div className="absolute -top-5 right-13 hidden md:block">
                         <CustomIcon icon={SparkleIcon} dir="right" />
@@ -34,7 +35,7 @@ export default function HeroSection() {
                 </AnimatedContent>
                 <AnimatedContent distance={30} delay={0.2}>
                     <p className="text-center text-base/7 text-zinc-500 max-w-lg mt-4">
-                        Design and deploy intelligent AI agents to generate quizzes, slides, academic emails, summaries, and reminders—built for modern educators..
+                        Aevion.AI helps Teachers to generate quizzes, slides, academic emails, summarize & merge mutiple slides, and manage reminders — All in one intelligent platform.
                     </p>
                 </AnimatedContent>
                 <AnimatedContent className="flex flex-col md:flex-row items-center gap-4 mt-6 w-full md:w-auto">
