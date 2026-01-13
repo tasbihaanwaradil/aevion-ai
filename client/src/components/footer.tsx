@@ -21,7 +21,8 @@ export default function Footer() {
                             height={35}
                             className="h-9"
                         />
-                        <p className="text-zinc-500 mt-4 pb-6">For further assistance or additional inquiries, feel free to contact us</p>
+                        <p className="text-zinc-500 mt-4 pb-6">AI agents for smarter academic workflows.</p>
+                         <p className="text-zinc-500 mt-4 pb-6">© 2026 Aevion.AI. All rights reserved</p>
                     </AnimatedContent>
                     <div>
                         <p className="uppercase font-semibold text-orange-600 text-base">Social</p>

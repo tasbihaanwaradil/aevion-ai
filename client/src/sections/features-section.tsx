@@ -13,11 +13,11 @@ export default function FeaturesSection() {
                             dir="left"
                             icon={SparkleIcon}
                             title="Core features"
-                            subtitle="Everything you need to build, deploy and scale AI agents - designed for speed, reliability and real-world production use."
+                            subtitle="Everything you need to build, deploy, and scale Aevion.AI agents—designed for speed, reliability, and real-world academic use."
                         />
                         <AnimatedContent className="p-4 md:p-6 bg-orange-500 w-full rounded-xl mt-12">
                             <p className="text-lg text-white">
-                                Trusted by teams building intelligent products with AI agents.
+                                Trusted by educators, institutions, and academic teams building intelligent teaching and learning solutions with AI agents.
                             </p>
 
                             <a href="#" className="bg-white w-max hover:bg-gray-100 px-5 py-2 rounded-full mt-6 flex items-center gap-1" >

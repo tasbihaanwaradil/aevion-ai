@@ -11,7 +11,7 @@ export default function FaqSection() {
                     <SectionTitle
                         icon={CircleQuestionMarkIcon}
                         title="Got questions?"
-                        subtitle="Everything you need to know about Buildify, AI agents and how to get started."
+                        subtitle="Everything you need to know about Aevion.AI, its AI agents, and how educators can get started easily."
                     />
                 </div>
             </div>
