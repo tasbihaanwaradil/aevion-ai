@@ -17,7 +17,7 @@ export default function HeroSection() {
                     </div>
                     <span>60K+</span>
                     <div className="h-5 w-px mx-1 bg-white rounded-full" />
-                    <span>Happy users worldwide</span>
+                    <span>Happy user world wide. Lets Try out!</span>
                     <div className="h-5 w-px mx-1 bg-white rounded-full" />
                     <div className="flex items-center gap-1 pr-3">
                         <StarIcon className="size-4.5 fill-orange-500 stroke-orange-500" />
