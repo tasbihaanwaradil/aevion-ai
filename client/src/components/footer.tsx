@@ -1,48 +1,91 @@
-import { InstagramIcon, LinkedinIcon, TwitterIcon } from "lucide-react";
-import AnimatedContent from "./animated-content";
+"use client";
+
+import {
+  InstagramIcon,
+  LinkedinIcon,
+  MailIcon,
+  GithubIcon,
+} from "lucide-react";
 
 export default function Footer() {
-    return (
-        <footer className="px-4 md:px-16 lg:px-24 xl:px-32">
-            <div className="border-x border-gray-200 px-4 md:px-12 max-w-7xl mx-auto pt-40">
-                <div className="flex flex-col md:flex-row items-start justify-between relative p-8 md:p-12 overflow-hidden pb-32 md:pb-42 bg-linear-to-t from-orange-50 to-orange-100 rounded-t-2xl">
-                    <img
-                        src="/assets/logo-colored.svg"
-                        alt="Logo"
-                        width={135}
-                        height={35}
-                        className="h-62 w-auto absolute -bottom-18 opacity-7 select-none pointer-events-none"
-                    />
-                    <AnimatedContent distance={40} className="max-w-72">
-                        <img
-                            src="/assets/logo-colored.svg"
-                            alt="Logo"
-                            width={135}
-                            height={35}
-                            className="h-9"
-                        />
-                        <p className="text-zinc-500 mt-4 pb-6">AI agents for smarter academic workflows.</p>
-                         <p className="text-zinc-500 mt-4 pb-6">© 2026 Aevion.AI. All rights reserved</p>
-                    </AnimatedContent>
-                    <div>
-                        <p className="uppercase font-semibold text-orange-600 text-base">Social</p>
-                        <AnimatedContent className="flex flex-col mt-6 gap-3">
-                            <a href="https://prebuiltui.com?ref=buildify" className="flex items-center gap-2 text-orange-500">
-                                <TwitterIcon size={20} />
-                                <p>Twitter</p>
-                            </a>
-                            <a href="https://prebuiltui.com?ref=buildify" className="flex items-center gap-2 text-orange-500">
-                                <LinkedinIcon size={20} />
-                                <p>Linkedin</p>
-                            </a>
-                            <a href="https://prebuiltui.com?ref=buildify" className="flex items-center gap-2 text-orange-500">
-                                <InstagramIcon size={20} />
-                                <p>Instagram</p>
-                            </a>
-                        </AnimatedContent>
-                    </div>
-                </div>
-            </div>
-        </footer>
-    );
+  return (
+    <footer className="relative bg-sky-50 backdrop-blur-lg border-t border-sky-100 overflow-hidden rounded-t-3xl">
+      
+      {/* Subtle Background Logo */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+        <img
+          src="/assets/logo.svg"
+          alt="Background Logo"
+          className="opacity-[0.19] w-64 md:w-80"
+        />
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-16 lg:px-24 py-12 flex flex-col md:flex-row justify-between items-start gap-10">
+        
+        {/* Left Section */}
+        <div className="flex flex-col gap-4 max-w-sm">
+          <p className="text-sky-900 text-sm font-medium leading-relaxed">
+            AI agents for smarter academic workflows.
+            <br className="hidden md:block" />
+            Automate, create, and share effortlessly.
+          </p>
+        </div>
+
+        {/* Right Section - Social */}
+        <div className="flex flex-col gap-4">
+          <p className="uppercase font-black tracking-widest text-sky-900 text-xs">
+            Connect
+          </p>
+
+          <div className="grid grid-cols-2 md:flex md:flex-col gap-x-8 gap-y-3">
+            {/* Instagram Link */}
+            <a
+              href="https://www.instagram.com/aevion_ai/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sky-900 hover:text-sky-600 transition-all text-sm font-semibold"
+            >
+              <InstagramIcon size={18} className="text-sky-600" /> Instagram
+            </a>
+
+            {/* LinkedIn Link (Placeholder - add your profile slug when ready) */}
+            <a
+              href="https://www.linkedin.com/company/aevion-ai-2026/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sky-900 hover:text-sky-600 transition-all text-sm font-semibold"
+            >
+              <LinkedinIcon size={18} className="text-sky-600" /> LinkedIn
+            </a>
+
+            {/* Email Link */}
+            <a
+              href="mailto:aevionai0@gmail.com"
+              className="flex items-center gap-2 text-sky-900 hover:text-sky-600 transition-all text-sm font-semibold"
+            >
+              <MailIcon size={18} className="text-sky-600" /> Email
+            </a>
+
+            {/* GitHub Link */}
+            <a
+              href="https://github.com/tasbihaanwaradil/aevion-ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sky-900 hover:text-sky-600 transition-all text-sm font-semibold"
+            >
+              <GithubIcon size={18} className="text-sky-600" /> GitHub
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Centered Copyright */}
+      <div className="relative z-10 text-center pb-6">
+        <p className="text-sky-700 text-[11px] font-bold uppercase tracking-wider">
+          © 2026 Aevion.AI. All rights reserved.
+        </p>
+      </div>
+    </footer>
+  );
 }

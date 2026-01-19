@@ -1,72 +1,107 @@
-import React from "react"
-import { useState } from "react"
+"use client";
+
+import React, { useState } from "react";
 
 const Login = () => {
-    const [state, setState] = useState("login")
+  const [state, setState] = useState<"login" | "register">("login");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
 
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: ''
-    })
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
-        setFormData(prev => ({ ...prev, [name]: value }))
-    }
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log(formData);
+  };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
+  return (
+    /* FIX: Added pt-20 (padding-top) to push the card below your Navbar 
+       and changed items-center to flex-col with a top margin if needed.
+    */
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#072146] px-4 pt-24 pb-12">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-md bg-white rounded-2xl px-10 py-16 shadow-2xl relative z-10"
+      >
+        {/* Main Heading - Darker Teal */}
+        <h1 className="text-4xl text-[#2d5f6e] font-bold text-center mb-2">
+          {state === "login" ? "Login" : "Sign Up"}
+        </h1>
 
-    }
+        {/* Sub text - Lighter gray */}
+        <p className="text-gray-400 text-sm text-center mb-10">
+          {state === "login"
+            ? "Please login to continue"
+            : "Create your account to get started"}
+        </p>
 
-    return (
-        <>
-            <div className="min-h-screen flex items-center justify-center">
-                <form
-                    onSubmit={handleSubmit}
-                    className="w-full sm:w-87.5 text-center bg-white/6 border border-white/10 rounded-2xl px-8">
-                    <h1 className="text-gray-700 text-3xl mt-10 font-medium">
-                        {state === "login" ? "Login" : "Sign up"}
-                    </h1>
-
-                    <p className="text-zinc-400 text-sm mt-2">Please sign in to continue</p>
-
-                    {state !== "login" && (
-                        <div className="flex items-center mt-6 w-full bg-white/5 ring-2 ring-white/10 focus-within:ring-orange-500/60 h-12 rounded-full overflow-hidden pl-6 gap-2 transition-all ">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-gray-500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"> <circle cx="12" cy="8" r="5" /> <path d="M20 21a8 8 0 0 0-16 0" /> </svg>
-                            <input type="text" name="name" placeholder="Name" className="w-full bg-transparent text-gray-800 placeholder-gray-400 border-none outline-none " value={formData.name} onChange={handleChange} required />
-                        </div>
-                    )}
-
-                    <div className="flex items-center w-full mt-4 bg-white/5 ring-2 ring-white/10 focus-within:ring-orange-500/60 h-12 rounded-full overflow-hidden pl-6 gap-2 transition-all ">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-gray-500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"> <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /> <rect x="2" y="4" width="20" height="16" rx="2" /> </svg>
-                        <input type="email" name="email" placeholder="Email id" className="w-full bg-transparent text-gray-800 placeholder-gray-400 border-none outline-none " value={formData.email} onChange={handleChange} required />
-                    </div>
-
-                    <div className=" flex items-center mt-4 w-full bg-white/5 ring-2 ring-white/10 focus-within:ring-orange-500/60 h-12 rounded-full overflow-hidden pl-6 gap-2 transition-all ">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-gray-500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"> <rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /> </svg>
-                        <input type="password" name="password" placeholder="Password" className="w-full bg-transparent text-gray-800 placeholder-gray-400 border-none outline-none" value={formData.password} onChange={handleChange} required />
-                    </div>
-
-                    <div className="mt-4 text-left">
-                        <button className="text-sm text-orange-400 hover:underline">
-                            Forget password?
-                        </button>
-                    </div>
-
-                    <button type="submit" className="mt-2 w-full h-11 rounded-full text-white bg-orange-500 hover:bg-orange-500 transition " >
-                        {state === "login" ? "Login" : "Sign up"}
-                    </button>
-
-                    <p onClick={() => setState(prev => prev === "login" ? "register" : "login")} className="text-zinc-400 text-sm mt-3 mb-11 cursor-pointer" >
-                        {state === "login" ? "Don't have an account?" : "Already have an account?"}
-                        <span className="text-orange-400 hover:underline ml-1">click here</span>
-                    </p>
-                </form>
+        <div className="space-y-5">
+          {state === "register" && (
+            <div className="bg-gray-100 rounded-xl">
+              <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full h-14 px-5 bg-transparent text-gray-700 placeholder-gray-400 outline-none border-none focus:ring-2 focus:ring-[#2d5f6e] rounded-xl"
+                required
+              />
             </div>
-        </>
-    )
-}
+          )}
 
-export default Login
+          <div className="bg-gray-100 rounded-xl">
+            <input
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full h-14 px-5 bg-transparent text-gray-700 placeholder-gray-400 outline-none border-none focus:ring-2 focus:ring-[#2d5f6e] rounded-xl"
+              required
+            />
+          </div>
+
+          <div className="bg-gray-100 rounded-xl">
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full h-14 px-5 bg-transparent text-gray-700 placeholder-gray-400 outline-none border-none focus:ring-2 focus:ring-[#2d5f6e] rounded-xl"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Login Button - Matches image teal and shadow */}
+        <button
+          type="submit"
+          className="mt-12 w-full h-14 rounded-2xl bg-[#2d5f6e] text-white font-bold text-xl hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)]"
+        >
+          {state === "login" ? "Login" : "Sign Up"}
+        </button>
+
+        {/* Bottom Switcher */}
+        <p className="mt-10 text-center text-sm text-gray-500">
+          {state === "login" ? "Don't have an account?" : "Already have an account?"}
+          <span 
+            onClick={() => setState(state === "login" ? "register" : "login")}
+            className="ml-1 font-bold text-[#2d5f6e] hover:underline cursor-pointer"
+          >
+            Click here
+          </span>
+        </p>
+      </form>
+    </div>
+  );
+};
+
+export default Login;

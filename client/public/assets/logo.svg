@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 26.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 612 792" style="enable-background:new 0 0 612 792;" xml:space="preserve">
+	 viewBox="0 0 2188.2 802" style="enable-background:new 0 0 2188.2 802;" xml:space="preserve">
 <style type="text/css">
-	.st0{fill:none;stroke:#000000;stroke-width:4;stroke-miterlimit:10;}
-	.st1{fill:none;stroke:#F15A29;stroke-width:4;stroke-miterlimit:10;}
-	.st2{font-family:'CooperBlack';}
-	.st3{font-size:91.4125px;}
-	.st4{fill:#F15A29;}
-	.st5{font-family:'FranklinGothic-Heavy';}
-	.st6{font-size:25.0684px;}
+	.st0{fill:none;stroke:#4E58A7;stroke-width:12;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#09133F;stroke-width:7;stroke-miterlimit:10;}
+	.st2{fill:none;stroke:#4E57A6;stroke-width:12;stroke-miterlimit:10;}
+	.st3{fill:#0B1B54;}
+	.st4{font-family:'CooperBlack';}
+	.st5{font-size:450.75px;}
+	.st6{fill:#0A1238;}
+	.st7{font-family:'FranklinGothic-Book';}
+	.st8{font-size:123.61px;}
+	.st9{fill:none;}
 </style>
-<rect x="56.65" y="167.08" transform="matrix(0.9329 -0.3601 0.3601 0.9329 -64.1651 44.7621)" class="st0" width="62.84" height="55.07"/>
-<rect x="79.7" y="226.79" transform="matrix(0.9329 -0.3601 0.3601 0.9329 -84.1193 57.0648)" class="st1" width="62.84" height="55.07"/>
-<rect x="151.56" y="199.05" transform="matrix(0.9329 -0.3601 0.3601 0.9329 -69.3122 81.081)" class="st0" width="62.84" height="55.07"/>
-<rect x="128.52" y="139.34" transform="matrix(0.9329 -0.3601 0.3601 0.9329 -49.358 68.7783)" class="st1" width="62.84" height="55.07"/>
-<text transform="matrix(0.8327 0 0 1 228.9264 238.4478)" class="st2 st3">Aevion.AI</text>
-<text transform="matrix(0.8636 0 0 1 298.3032 274.4898)" class="st4 st5 st6">Agent for educators</text>
+<polygon class="st0" points="2.4,251.3 227,139.9 302.9,393.2 78.7,504.5 "/>
+<polygon class="st1" points="90.8,545.8 315.4,434 391.3,687.3 166.7,799.1 "/>
+<polygon class="st2" points="366,409.2 590.5,297.4 666.5,550.7 441.9,662.5 "/>
+<polygon class="st1" points="277.9,114.6 502.5,2.8 578.4,256.1 353.9,367.9 "/>
+<text transform="matrix(0.65 0 0 1 752.2793 544.8057)" class="st3 st4 st5">Aevion.AI</text>
+<text transform="matrix(0.6613 0 0 1 853.6191 668.272)" class="st6 st7 st8">Agent for educators</text>
+<polygon class="st9" points="1544.1,656.7 1572.7,656.7 1572.7,656.7 "/>
 </svg>

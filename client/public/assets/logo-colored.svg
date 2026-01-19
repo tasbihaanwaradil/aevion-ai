@@ -1,17 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 26.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 612 792" style="enable-background:new 0 0 612 792;" xml:space="preserve">
+	 viewBox="0 0 2255.7 803.4" style="enable-background:new 0 0 2255.7 803.4;" xml:space="preserve">
 <style type="text/css">
-	.st0{fill:none;stroke:#000000;stroke-width:4;stroke-miterlimit:10;}
-	.st1{fill:none;stroke:#F15A29;stroke-width:4;stroke-miterlimit:10;}
-	.st2{fill:#F15A29;}
-	.st3{font-family:'CooperBlack';}
-	.st4{font-size:91.4125px;}
+	.st0{fill:none;stroke:#4E59A7;stroke-width:12;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#3F3F4F;stroke-width:7;stroke-miterlimit:10;}
+	.st2{fill:none;stroke:#4F58A7;stroke-width:12;stroke-miterlimit:10;}
+	.st3{fill:none;stroke:#12163F;stroke-width:7;stroke-miterlimit:10;}
+	.st4{fill:#1D2153;}
+	.st5{font-family:'CooperBlack';}
+	.st6{font-size:450.75px;}
+	.st7{letter-spacing:-3.1;}
 </style>
-<rect x="2.09" y="394.69" transform="matrix(0.9329 -0.3601 0.3601 0.9329 -149.7766 40.3836)" class="st0" width="62.84" height="55.07"/>
-<rect x="97" y="426.66" transform="matrix(0.9329 -0.3601 0.3601 0.9329 -154.9237 76.7025)" class="st0" width="62.84" height="55.07"/>
-<rect x="73.96" y="366.95" transform="matrix(0.9329 -0.3601 0.3601 0.9329 -134.9695 64.3998)" class="st1" width="62.84" height="55.07"/>
-<text transform="matrix(0.8327 0 0 1 174.3679 466.0562)" class="st2 st3 st4">Aevion.AI</text>
-<rect x="25.14" y="454.4" transform="matrix(0.9329 -0.3601 0.3601 0.9329 -169.7307 52.6863)" class="st1" width="62.84" height="55.07"/>
+<polygon class="st0" points="2.4,252 227,140.6 302.9,393.9 78.7,505.3 "/>
+<polygon class="st1" points="90.8,546.5 315.4,434.7 391.3,688 166.7,799.8 "/>
+<polygon class="st2" points="366,409.9 590.5,298.1 666.5,551.4 441.9,663.2 "/>
+<polygon class="st3" points="277.9,115.3 502.5,3.6 578.4,256.9 353.9,368.6 "/>
+<g>
+	<text transform="matrix(0.65 0 0 1 752.2803 545.52)" class="st4 st5 st6 st7">A</text>
+	<text transform="matrix(0.65 0 0 1 990.7588 545.52)" class="st4 st5 st6 st7">e</text>
+	<text transform="matrix(0.65 0 0 1 1143.2617 545.52)" class="st4 st5 st6">vion.AI</text>
+</g>
 </svg>

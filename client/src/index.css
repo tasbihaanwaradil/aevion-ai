@@ -8,6 +8,7 @@
 
 @layer base {
     body {
-        @apply bg-white text-sm text-gray-800 antialiased;
+        @apply bg-[#0A1238] text-white text-sm antialiased;
+        font-family: var(--font-sans);
     }
 }

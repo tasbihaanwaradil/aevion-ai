@@ -1,53 +1,82 @@
+"use client";
+
 import AnimatedContent from "../components/animated-content";
 import SectionTitle from "../components/section-title";
 import { faqs } from "../data/faqs";
-import { ChevronDownIcon, CircleQuestionMarkIcon } from "lucide-react";
+import { ChevronDownIcon, HelpCircleIcon } from "lucide-react";
 
 export default function FaqSection() {
-    return (
-        <section className="border-y border-gray-200">
-            <div className="px-4 md:px-16 lg:px-24 xl:px-32">
-                <div className="p-4 pt-20 md:p-20 flex flex-col items-center max-w-7xl mx-auto justify-center border-x border-gray-200">
-                    <SectionTitle
-                        icon={CircleQuestionMarkIcon}
-                        title="Got questions?"
-                        subtitle="Everything you need to know about Aevion.AI, its AI agents, and how educators can get started easily."
-                    />
-                </div>
-            </div>
-            <div className="px-4 md:px-16 lg:px-24 xl:px-32 border-t border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 divide-x divide-gray-200 border-x border-gray-200 max-w-7xl mx-auto">
-                    <div className="p-4 pt-20 md:p-20 space-y-6">
-                        {faqs.map((faq, index) => (
-                            <AnimatedContent key={index}>
-                                <details key={index} className="group bg-gray-50 border border-gray-200 rounded-xl" open={index === 0}>
-                                    <summary className="flex items-center justify-between p-6 select-none">
-                                        <h3 className="font-medium text-base">{faq.question}</h3>
-                                        <ChevronDownIcon size={20} className="group-open:rotate-180" />
-                                    </summary>
-                                    <p className="text-sm/6 text-zinc-500 max-w-md p-6 pt-0">
-                                        {faq.answer}
-                                    </p>
-                                </details>
-                            </AnimatedContent>
-                        ))}
-                    </div>
-                    <div className="p-4 pt-20 md:p-20">
-                        <div className="sticky top-30 flex items-center justify-between gap-5 p-6 bg-violet-500 w-full rounded-xl mt-12">
-                            <h3 className="text-lg text-white text-balance">
-                                Still have questions? Our team help you get started.
-                            </h3>
+  return (
+    <section className="bg-gradient-to-br from-[#0c4a6e] to-[##0A1238] ">
+      {/* Section Header */}
+      <div className="px-4 md:px-16 lg:px-24 xl:px-32">
+        <div className="max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
+          <SectionTitle
+            icon={HelpCircleIcon}
+            title="Got questions?"
+            subtitle="Everything you need to know about Aevion.AI, its AI agents, and how educators can get started easily."
+          />
+        </div>
+      </div>
 
-                            <a
-                                href="https://prebuiltui.com?ref=buildify"
-                                className="bg-white w-max shrink-0 hover:bg-gray-100 px-5 py-2 rounded-full"
-                            >
-                                Contact support
-                            </a>
-                        </div>
-                    </div>
+      {/* FAQ Grid */}
+      <div className="px-4 md:px-16 lg:px-24 xl:px-32 mt-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-7xl mx-auto">
+          
+          {/* FAQ Accordions */}
+          <div className="space-y-6">
+            {faqs.map((faq, index) => (
+              <AnimatedContent key={index} distance={20} delay={0.1 + index * 0.1}>
+                <details
+                  className="group bg-[#0A1238]/90 border border-white/20 rounded-2xl overflow-hidden backdrop-blur-sm transition-all duration-300 open:border-white/30 open:bg-[#007a8c]/80"
+                  open={index === 0}
+                >
+                  <summary className="flex items-center justify-between p-7 select-none cursor-pointer list-none">
+                    <h3 className="font-urbanist font-bold text-lg text-white group-open:text-white/90 transition-colors">
+                      {faq.question}
+                    </h3>
+                    <ChevronDownIcon
+                      size={22}
+                      className="group-open:rotate-180 text-white transition-transform duration-300"
+                    />
+                  </summary>
+                  <div className="px-7 pb-7">
+                    <p className="text-white/80 text-base leading-relaxed max-w-md">
+                      {faq.answer}
+                    </p>
+                  </div>
+                </details>
+              </AnimatedContent>
+            ))}
+          </div>
+
+          {/* Support / CTA Panel */}
+          <div className="relative">
+            <AnimatedContent distance={20} delay={0.2} className="md:sticky md:top-32">
+              <div className="flex flex-col items-start gap-6 p-10 bg-[#007a8c]/90 w-full rounded-3xl shadow-2xl shadow-black/20 border border-white/10">
+                <div className="bg-white/20 p-3 rounded-xl">
+                    <HelpCircleIcon className="text-white" size={28} />
                 </div>
-            </div>
-        </section>
-    )
+                
+                <h3 className="text-2xl md:text-4xl font-urbanist font-extrabold text-white leading-tight">
+                  Still have questions? <br /> Our team can help.
+                </h3>
+                
+                <p className="text-white/90 font-medium text-lg">
+                    Can't find what you're looking for? Reach out to our academic support specialists.
+                </p>
+
+                <a
+                  href="/"
+                  className="bg-white text-[#007a8c] hover:bg-cyan-50 font-bold px-10 py-4 rounded-full transition-all duration-300 shadow-lg text-lg"
+                >
+                  Contact Support
+                </a>
+              </div>
+            </AnimatedContent>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
