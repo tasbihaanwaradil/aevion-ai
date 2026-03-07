@@ -1,6 +1,6 @@
 # Aevion AI – Git & Collaboration Workflow
 
-This document explains the **step-by-step Git workflow** for contributing to the Aevion AI Final Year Project.
+This document explains the **step-by-step Git workflow** for contributing to the Aevion AI Final Year Project.  
 All team members must follow this workflow to keep the code clean and stable.
 
 ---
@@ -9,9 +9,9 @@ All team members must follow this workflow to keep the code clean and stable.
 
 ### Branches Used
 
-* **main** → Final, stable, submission-ready code
-* **dev** → Development & integration branch
-* **feature/** → Individual feature work (home, login, agents, etc.)
+- **main** → Final, stable, submission-ready code  
+- **dev** → Development & integration branch  
+- **feature/** → Individual feature work (frontend or backend)
 
 ⚠️ Never work directly on `main`
 
@@ -33,6 +33,7 @@ cd aevion-ai
 ```bash
 git fetch
 git checkout dev
+git pull origin dev
 ```
 
 ---
@@ -52,14 +53,15 @@ git checkout -b feature/feature-name
 ```bash
 git checkout -b feature/home-page
 git checkout -b feature/login-page
-git checkout -b feature/academic-email-writer
+git checkout -b feature/backend-setup
+git checkout -b feature/auth-api
 ```
 
 ---
 
-## 4. Working on the Project
+## 4. Running the Project Locally
 
-### Step 4: Go to Client Folder
+### 4.1 Frontend Setup (Client)
 
 ```bash
 cd client
@@ -67,13 +69,70 @@ npm install
 npm run dev
 ```
 
-Make your changes **only related to your feature**.
+Frontend runs on:
+
+```
+http://localhost:5173
+```
 
 ---
 
-## 5. Saving Your Work
+### 4.2 Backend Setup (Server)
 
-### Step 5: Check Changes
+Open a **new terminal**:
+
+```bash
+cd server
+npm install
+```
+
+#### Create `.env` File (REQUIRED)
+
+Create a file named `.env` inside the `server` folder:
+
+```
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
+SESSION_SECRET=your_secret_key
+```
+
+⚠️ `.env` must **never** be committed to GitHub.
+
+---
+
+#### Run Backend Server
+
+```bash
+npm run dev
+```
+
+Backend runs on:
+
+```
+http://localhost:3000
+```
+
+Expected logs:
+
+```
+MongoDB connected
+Server running on port 5000
+```
+
+---
+
+## 5. Working on the Project
+
+Make changes **only related to your assigned feature**.
+
+- Frontend work → `client/`
+- Backend work → `server/`
+
+---
+
+## 6. Saving Your Work
+
+### Step 6.1: Check Changes
 
 ```bash
 git status
@@ -81,19 +140,19 @@ git status
 
 ---
 
-### Step 6: Add & Commit Changes
+### Step 6.2: Add & Commit Changes
 
 ```bash
 git add .
 git commit -m "Add login page UI"
 ```
 
-✔️ Write clear commit messages
-❌ Do not commit unrelated files
+✔️ Use clear commit messages  
+❌ Do not commit `.env` or `node_modules`
 
 ---
 
-## 6. Push Feature Branch to GitHub
+## 7. Push Feature Branch to GitHub
 
 ```bash
 git push origin feature/feature-name
@@ -107,66 +166,77 @@ git push origin feature/login-page
 
 ---
 
-## 7. Create Pull Request (PR)
+## 8. Create Pull Request (PR)
 
-1. Go to GitHub repository
-2. Click **Compare & Pull Request**
-3. **From:** `feature/feature-name`
-4. **To:** `dev`
-5. Add short description of changes
-6. Create Pull Request
+1. Go to the GitHub repository  
+2. Click **Compare & Pull Request**  
+3. **From:** `feature/feature-name`  
+4. **To:** `dev`  
+5. Add a short description  
+6. Create Pull Request  
 
 ❌ Do NOT merge into `main`
 
 ---
 
-## 8. Reviewing & Testing a Feature (Team Lead)
-
-Before merging a feature into `dev`:
+## 9. Reviewing & Testing a Feature (Team Lead)
 
 ```bash
 git checkout dev
 git pull origin dev
 git fetch origin
 git checkout feature/feature-name
+```
+
+### Test Frontend
+
+```bash
 cd client
 npm run dev
 ```
 
-✔️ Test UI
-✔️ Check console errors
-✔️ Review code
+### Test Backend (if applicable)
+
+```bash
+cd server
+npm run dev
+```
+
+✔️ UI works  
+✔️ API works  
+✔️ No console errors  
 
 ---
 
-## 9. Merging Rules
+## 10. Merging Rules
 
-* Feature → dev (after review & testing)
-* dev → main (only when project is stable and ready)
-
----
-
-## 10. Basic Rules to Follow
-
-✔️ One feature = one branch
-✔️ Pull request required
-✔️ No direct push to `main`
-✔️ Test before merging
-✔️ Keep commits clean
+- Feature → `dev` (after review & testing)  
+- `dev` → `main` (only when project is stable)
 
 ---
 
-## 11. Why This Workflow?
+## 11. Basic Rules to Follow
 
-* Prevents breaking the main project
-* Allows parallel work
-* Makes collaboration easy
-* Follows industry best practices
-* Ideal for Final Year Project evaluation
+✔ One feature = one branch  
+✔ Pull request required  
+✔ No direct push to `main`  
+✔ Test before merging  
+✔ Keep commits clean  
+
+---
+
+## 12. Why This Workflow?
+
+- Prevents breaking the main project  
+- Allows parallel work  
+- Makes collaboration easy  
+- Follows industry best practices  
+- Ideal for Final Year Project evaluation  
 
 ---
 
 ## Maintained By
 
-**Tasbiha Anwar Adil**
+**Tasbiha Anwar Adil**  
 Team Lead – Aevion AI
+
