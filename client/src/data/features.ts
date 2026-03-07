@@ -35,7 +35,7 @@ export const features: IFeature[] = [
     iconBg: "bg-indigo-500",
   },
   {
-    title: "Auto-Create Google Slides",
+    title: "Auto-Create Presentation Slides",
     description:
       "Generates structured lecture slides from a topic, lesson outline, or uploaded material.",
     icon: PresentationIcon,

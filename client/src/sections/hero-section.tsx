@@ -37,8 +37,7 @@ export default function HeroSection() {
         </div>
 
         <p className="mt-8 max-w-2xl text-lg md:text-xl text-white/90 font-medium leading-relaxed">
-          Aevion.AI helps teachers generate quizzes, slides, academic emails,
-          summarize & merge multiple slides, and manage reminders.
+         Aevion.AI helps teachers generate LinkedIn posts, academic emails, quizzes, presentation slides, PDF-to-slides, timetable reminders, and merged slide summaries—effortlessly.
         </p>
 
         <div className="mt-12 flex flex-col md:flex-row items-center gap-6">

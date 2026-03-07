@@ -24,7 +24,7 @@ const Login = () => {
     /* FIX: Added pt-20 (padding-top) to push the card below your Navbar 
        and changed items-center to flex-col with a top margin if needed.
     */
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#072146] px-4 pt-24 pb-12">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0A1238] px-4 pt-24 pb-12">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md bg-white rounded-2xl px-10 py-16 shadow-2xl relative z-10"
