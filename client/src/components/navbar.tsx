@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { MenuIcon, XIcon } from "lucide-react";
-import { links } from "../data/links";
-import type { ILink } from "../../types";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Navigate to login page when "Get Started" button is clicked
+  const navigate = useNavigate()
 
   return (
     <>
@@ -20,37 +22,24 @@ export default function Navbar() {
         "
       >
         <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
-          {/* Logo - Added mix-blend-mode or contrast filters if needed */}
-          <img
-            src="/assets/logo.svg"
-            alt="Aevion AI"
-            /* If the logo is too dark: use "brightness-0 invert" to make it white.
-               If the logo is too light: use "brightness-110" or "contrast-125".
-            */
-            className="h-10 w-auto object-contain transition-all duration-300"
-          />
+          {/* Logo */}
+          <Link to='/'>
+            <img src="/assets/logo.svg" alt="logo" className="h-10.5 w-auto" />
+          </Link>
 
           {/* Desktop Links */}
           <div className="hidden md:flex gap-6 text-sm font-medium text-sky-900">
-            {links.map((link: ILink) => (
-              <a key={link.name} href={link.href} className="hover:text-sky-600">
-                {link.name}
-              </a>
-            ))}
+            <Link to='/' className="hover:text-sky-600">Home</Link>
+            <Link to='/LinkedInPostGenerator' className="hover:text-sky-600">Genearate LinkedIn Post</Link>
+            <Link to='/my-generation' className="hover:text-sky-600">My Generations</Link>
+            <Link to='/contact' className="hover:text-sky-600">Contact Us</Link>
           </div>
 
-          {/* CTA */}
-          <a
-            href="#get-started"
-            className="
-              hidden md:inline-flex
-              px-6 py-2 rounded-full
-              bg-[#007a8c] text-white font-semibold
-              hover:bg-[#005f6a] transition
-            "
-          >
+          {/* Get Started Button */}
+          <button onClick={() => navigate('/login')} className="hidden md:inline-flex px-6 py-2 rounded-full bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition">
             Get Started
-          </a>
+          </button>
+
 
           {/* Mobile */}
           <button onClick={() => setIsMenuOpen(true)} className="md:hidden text-sky-900">
@@ -61,9 +50,8 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       <div
-        className={`fixed inset-0 z-[60] bg-white transition-transform duration-300 ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed inset-0 z-[60] bg-white transition-transform duration-300 ${isMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="flex justify-between items-center p-6 border-b">
           <img src="/assets/logo.svg" className="h-8" />
@@ -71,16 +59,11 @@ export default function Navbar() {
         </div>
 
         <div className="flex flex-col gap-6 p-8">
-          {links.map((link: ILink) => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              className="text-lg font-semibold text-sky-900"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {link.name}
-            </a>
-          ))}
+          <Link to='/' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Home</Link>
+          <Link to='/LinkedInPostGenerator' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Genearate LinkedIn Post</Link>
+          <Link to='/my-generation' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">My Generations</Link>
+          <Link to='/contact' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Contact Us</Link>
+          <Link to='/login' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Login</Link>
         </div>
       </div>
     </>
