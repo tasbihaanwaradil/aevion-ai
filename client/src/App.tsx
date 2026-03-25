@@ -1,27 +1,32 @@
 import Footer from "./components/footer";
 import LenisScroll from "./components/lenis";
 import Navbar from "./components/navbar";
-import FaqSection from "./sections/faq-section";
-import FeaturesSection from "./sections/features-section";
-import HeroSection from "./sections/hero-section";
-import OurTeamSection from "./sections/our-team";
-import PricingSection from "./sections/pricing-section";
-import StatsSection from "./sections/stats-section";
-import TestimonialSection from "./sections/testimonial-section";
+import { Route, Routes } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import Login from "./components/Login";
+import SettingsPage from "./pages/settings";
+import LinkedInPostGenerator from "./pages/LinkedInPostGenerator";
+import AcademicEmailGenerator from "./pages/AcademicEmailGenerator";
+import AutoCreatePresentationSlides from "./pages/AutoCreatePresentationSlides";
+
+
+
+
 
 export default function App() {
     return (
-        <div>
+        <>
             <LenisScroll />
             <Navbar />
-            <HeroSection />
-            <StatsSection />
-            <FeaturesSection />
-            <FaqSection />
-            <OurTeamSection />
-            <PricingSection />
-            <TestimonialSection />
+            <Routes>
+                <Route path="/" element={<HomePage />}></Route>
+                <Route path="/login" element={<Login />}></Route>
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/LinkedInPostGenerator" element={<LinkedInPostGenerator/>}/>
+                <Route path="/AcademicEmailGenerator" element={<AcademicEmailGenerator/>}/>
+                <Route path="/AutoCreatePresentationSlides" element={<AutoCreatePresentationSlides/>}/>
+            </Routes>
             <Footer />
-        </div>
+        </>
     )
 }

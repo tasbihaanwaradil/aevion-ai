@@ -1,56 +1,71 @@
 "use client";
-import { links } from "../data/links";
-import type { ILink } from "../../types";
-import { MenuIcon, XIcon } from "lucide-react";
+
 import { useState } from "react";
-import AnimatedContent from "./animated-content";
+import { MenuIcon, XIcon } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Navbar() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    return (
-        <>
-            <AnimatedContent reverse>
-                <nav className='fixed w-full top-0 z-50 px-4 md:px-16 lg:px-24 xl:px-32 py-4 border-b transition-all duration-300 border-neutral-300'>
-                    <div className="max-w-7xl mx-auto flex items-center justify-between">
-                        <a href="https://prebuiltui.com?ref=buildify">
-                            <img src="/assets/logo.svg" alt="Buildify Logo" width={135} height={36} />
-                        </a>
+  // Navigate to login page when "Get Started" button is clicked
+  const navigate = useNavigate()
 
-                        <div className="hidden md:flex gap-3">
-                            {links.map((link: ILink) => (
-                                <a key={link.name} href={link.href} className="py-1 px-3 hover:text-zinc-500">
-                                    {link.name}
-                                </a>
-                            ))}
-                        </div>
+  return (
+    <>
+      <nav
+        className="
+          fixed top-0 z-50 w-full
+          h-20
+          px-4 md:px-16 lg:px-24 xl:px-32
+          bg-sky-50 backdrop-blur-lg
+          border-b border-sky-100
+        "
+      >
+        <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
+          {/* Logo */}
+          <Link to='/'>
+            <img src="/assets/logo.svg" alt="logo" className="h-10.5 w-auto" />
+          </Link>
 
-                        <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                            <MenuIcon className="size-6.5" />
-                        </button>
+          {/* Desktop Links */}
+          <div className="hidden md:flex gap-6 text-sm font-medium text-sky-900">
+            <Link to='/' className="hover:text-sky-600">Home</Link>
+            <Link to='/LinkedInPostGenerator' className="hover:text-sky-600">Genearate LinkedIn Post</Link>
+            <Link to='/my-generation' className="hover:text-sky-600">My Generations</Link>
+            <Link to='/contact' className="hover:text-sky-600">Contact Us</Link>
+          </div>
 
-                        <a href="https://prebuiltui.com?ref=buildify" className="hidden md:inline-block py-2.5 px-6 shadow-[inset_0_2px_4px_rgba(255,255,255,0.6)] bg-orange-500 text-white rounded-full">
-                            Get Started
-                        </a>
-                    </div>
-                </nav>
-            </AnimatedContent>
-            <div className={`fixed top-0 right-0 z-60 w-full bg-white shadow-xl shadow-black/5 transition-all duration-300 ease-in-out ${isMenuOpen ? "h-92 overflow-hidden" : "h-0 overflow-hidden"}`}>
-                <div className="flex items-center justify-between p-4">
-                    <img src="/assets/logo.svg" alt="Buildify Logo" width={135} height={36} />
-                    <XIcon className="size-6.5" onClick={() => setIsMenuOpen(false)} />
-                </div>
-                <div className="flex flex-col gap-4 p-4 text-base">
-                    {links.map((link: ILink) => (
-                        <a key={link.name} href={link.href} className="py-1 px-3" onClick={() => setIsMenuOpen(false)}>
-                            {link.name}
-                        </a>
-                    ))}
-                    <a href="https://prebuiltui.com?ref=buildify" className="py-2.5 px-6 w-max text-sm shadow-[inset_0_2px_4px_rgba(255,255,255,0.6)] bg-linear-to-tl from-orange-600 to-orange-500 text-white rounded-full">
-                        Get Started
-                    </a>
-                </div>
-            </div>
-        </>
-    );
+          {/* Get Started Button */}
+          <button onClick={() => navigate('/login')} className="hidden md:inline-flex px-6 py-2 rounded-full bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition">
+            Get Started
+          </button>
+
+
+          {/* Mobile */}
+          <button onClick={() => setIsMenuOpen(true)} className="md:hidden text-sky-900">
+            <MenuIcon />
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Menu */}
+      <div
+        className={`fixed inset-0 z-[60] bg-white transition-transform duration-300 ${isMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+      >
+        <div className="flex justify-between items-center p-6 border-b">
+          <img src="/assets/logo.svg" className="h-8" />
+          <XIcon onClick={() => setIsMenuOpen(false)} className="cursor-pointer" />
+        </div>
+
+        <div className="flex flex-col gap-6 p-8">
+          <Link to='/' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Home</Link>
+          <Link to='/LinkedInPostGenerator' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Genearate LinkedIn Post</Link>
+          <Link to='/my-generation' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">My Generations</Link>
+          <Link to='/contact' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Contact Us</Link>
+          <Link to='/login' onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Login</Link>
+        </div>
+      </div>
+    </>
+  );
 }
