@@ -1,24 +1,39 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useEffect } from "react"
+import { useState } from "react"
+import { useAuth } from "../context/AuthContext"
+import { useNavigate } from "react-router-dom"
 
 const Login = () => {
-  const [state, setState] = useState<"login" | "register">("login");
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
+    const [state, setState] = useState("login")
+    const { user, login, signUp } = useAuth()
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log(formData);
-  };
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: ''
+    })
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target
+        setFormData(prev => ({ ...prev, [name]: value }))
+    }
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        if (state === 'login') {
+            login(formData)
+        } else {
+            signUp(formData)
+        }
+    }
+
+    useEffect(()=>{
+        if(user){
+            navigate('/')
+        }
+    }, [user])
 
   return (
     /* FIX: Added pt-20 (padding-top) to push the card below your Navbar 
