@@ -19,7 +19,7 @@
     "motion": "^12.23.26",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-router-dom": "^7.11.0",
+    "react-router-dom": "^7.14.2",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {

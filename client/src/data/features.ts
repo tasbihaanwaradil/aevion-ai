@@ -5,11 +5,12 @@ import {
   PresentationIcon,
   FileTextIcon,
   CalendarClockIcon,
-  LayersIcon,
+  // LayersIcon,
 } from "lucide-react";
+
 import type { IFeature } from "../../types";
 
-export const features: IFeature[] = [
+export const Features: IFeature[] = [
   {
     title: "LinkedIn Post Generator",
     description:
@@ -51,19 +52,19 @@ export const features: IFeature[] = [
     iconBg: "bg-lime-500",
   },
   {
-    title: "Timetable Reminder",
+    title: "Reminder",
     description:
       "Tracks class schedules, assignment deadlines, and academic events with automated reminders.",
     icon: CalendarClockIcon,
-    cardBg: "bg-gray-50",
+    cardBg: "bg-gray-100",
     iconBg: "bg-orange-500",
   },
-  {
-    title: "Merge & Summarize Multiple Slides",
-    description:
-      "Combines multiple lecture slide decks into one structured slide deck and summarizes key points.",
-    icon: LayersIcon,
-    cardBg: "bg-purple-50",
-    iconBg: "bg-purple-500",
-  },
+  // {
+  //   title: "Merge & Summarize Multiple Slides",
+  //   description:
+  //     "Combines multiple lecture slide decks into one structured slide deck and summarizes key points.",
+  //   icon: LayersIcon,
+  //   cardBg: "bg-purple-100",
+  //   iconBg: "bg-purple-500",
+  // },
 ];

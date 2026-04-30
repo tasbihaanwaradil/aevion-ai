@@ -24,7 +24,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
           {/* Logo */}
           <Link to='/'>
-            <img src="/assets/logo.svg" alt="logo" className="h-10.5 w-auto" />
+            <img src="/assets/logo.svg" alt="logo" className="h-16.5 w-auto" />
           </Link>
 
           {/* Desktop Links */}

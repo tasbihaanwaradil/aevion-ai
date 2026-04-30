@@ -27,7 +27,7 @@ export default function HeroSection() {
 
       <div className="relative z-10 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
         <div className="relative">
-          <h1 className="font-urbanist text-4xl md:text-6xl font-extrabold max-w-4xl leading-tight text-white drop-shadow-2xl">
+          <h1 className="font-urbanist text-4xl md:text-6xl font-extrabold max-w-10xl leading-tight text-white drop-shadow-2xl">
             Empower Educators with AI
             <br />
             <span className="text-white">Automate</span>,{" "}
@@ -42,7 +42,7 @@ export default function HeroSection() {
 
         <div className="mt-12 flex flex-col md:flex-row items-center gap-6">
           <a
-            href="/"
+            href="Login"
             className="
               px-10 py-4 rounded-xl
               bg-white text-sky-900 font-bold text-lg
@@ -53,6 +53,7 @@ export default function HeroSection() {
           >
             Get Started
           </a>
+          
 
           <a
   href="/"

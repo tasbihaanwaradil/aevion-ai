@@ -1,32 +1,34 @@
-import React, { useRef, useEffect } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+"use client";
+
+import React, { useRef, useEffect } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
 interface AnimatedContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   distance?: number;
-  direction?: 'vertical' | 'horizontal';
+  direction?: "vertical" | "horizontal";
   delay?: number;
-  threshold?: number;
   duration?: number;
   ease?: string;
-  animateOpacity?: boolean;
+  threshold?: number;
   reverse?: boolean;
+  animateOpacity?: boolean;
 }
 
 const AnimatedContent: React.FC<AnimatedContentProps> = ({
   children,
-  distance = 60,          // noticeable slide distance
-  direction = 'vertical',
+  distance = 12, // ✅ subtle like Socrative
+  direction = "vertical",
   delay = 0,
-  threshold = 0.3,         // trigger earlier
-  duration = 0.8,
-  ease = 'power3.out',
-  animateOpacity = true,
+  duration = 0.5, // ✅ faster
+  ease = "power2.out", // ✅ clean SaaS easing
+  threshold = 0.15, // ✅ triggers early like modern landing pages
   reverse = false,
-  className = '',
+  animateOpacity = true,
+  className = "",
   ...props
 }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -35,17 +37,24 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
     const el = ref.current;
     if (!el) return;
 
-    const axis = direction === 'horizontal' ? 'x' : 'y';
+    const axis = direction === "horizontal" ? "x" : "y";
     const offset = reverse ? -distance : distance;
 
-    // Initial state
+    // Initial state (soft & minimal)
     gsap.set(el, {
       [axis]: offset,
       opacity: animateOpacity ? 0 : 1,
-      visibility: 'visible',
     });
 
-    const tl = gsap.timeline({ paused: true, delay });
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: el,
+        start: `top ${threshold * 100}%`,
+        toggleActions: "play none none none",
+      },
+      delay,
+    });
+
     tl.to(el, {
       [axis]: 0,
       opacity: 1,
@@ -53,26 +62,17 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
       ease,
     });
 
-    const st = ScrollTrigger.create({
-      trigger: el,
-      start: `top ${threshold * 100}%`, // scroll start
-      once: true,
-      onEnter: () => tl.play(),
-    });
-
     return () => {
-      st.kill();
       tl.kill();
+      ScrollTrigger.getAll().forEach((t) => t.kill());
     };
-  }, [distance, direction, delay, threshold, duration, ease, animateOpacity, reverse]);
+  }, [distance, direction, delay, duration, ease, threshold, reverse, animateOpacity]);
 
   return (
-    <div ref={ref} className={`opacity-0 ${className}`} {...props}>
+    <div ref={ref} className={className} {...props}>
       {children}
     </div>
   );
 };
-
-
 
 export default AnimatedContent;
