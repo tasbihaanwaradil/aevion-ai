@@ -11,6 +11,7 @@ import AutoCreatePresentationSlides from "./pages/AutoCreatePresentationSlides";
 import PdfToSlidesConverter from "./pages/Pdf-to-SlideConverter";
 import Dashboard  from "./pages/Dashboard";
 
+import { Toaster } from 'react-hot-toast'
 
 
 
@@ -19,6 +20,7 @@ import Dashboard  from "./pages/Dashboard";
 export default function App() {
     return (
         <>
+            <Toaster />
             <LenisScroll />
             {/* <Navbar /> */}
             <Routes>
@@ -30,7 +32,8 @@ export default function App() {
                 <Route path="/AutoCreatePresentationSlides" element={<AutoCreatePresentationSlides/>}/>
                 <Route path="/Pdf-to-SlideConverter" element={<PdfToSlidesConverter/>}/>
                 <Route path="/Dashboard" element={<Dashboard/>}/>
-                
+                <Route path="/settings" element={<SettingsPage />} />
+           
             </Routes>
             <Footer />
         </>
