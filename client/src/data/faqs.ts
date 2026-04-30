@@ -1,6 +1,6 @@
 import type { IFaq } from "../../types";
 
-export const faqs: IFaq[] = [
+export const Faqs: IFaq[] = [
     {
     question: "What is Aevion.AI?",
     answer:

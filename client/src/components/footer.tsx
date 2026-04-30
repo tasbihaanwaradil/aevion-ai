@@ -4,7 +4,7 @@ import {
   InstagramIcon,
   LinkedinIcon,
   MailIcon,
-  GithubIcon,
+  // GithubIcon,
 } from "lucide-react";
 
 export default function Footer() {
@@ -68,14 +68,14 @@ export default function Footer() {
             </a>
 
             {/* GitHub Link */}
-            <a
+            {/* <a
               href="https://github.com/tasbihaanwaradil/aevion-ai"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-sky-900 hover:text-sky-600 transition-all text-sm font-semibold"
             >
               <GithubIcon size={18} className="text-sky-600" /> GitHub
-            </a>
+            </a> */}
           </div>
         </div>
       </div>
