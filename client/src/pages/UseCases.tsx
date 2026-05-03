@@ -4,7 +4,7 @@ import { UseCases as UseCasesData } from "../data/UseCases";
 
 export default function UseCases() {
   return (
-    <section className="min-h-screen bg-gradient-to-br from-[#0c4a6e] to-[#0A1238] px-4 md:px-16 lg:px-24 xl:px-32 py-16 pt-28">
+    <section id="UseCases" className="min-h-screen bg-gradient-to-br from-[#0c4a6e] to-[#0A1238] px-4 md:px-16 lg:px-24 xl:px-32 py-16 pt-28">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-white">
           Use Cases

@@ -32,8 +32,6 @@ export default function App() {
                 <Route path="/AutoCreatePresentationSlides" element={<AutoCreatePresentationSlides/>}/>
                 <Route path="/Pdf-to-SlideConverter" element={<PdfToSlidesConverter/>}/>
                 <Route path="/Dashboard" element={<Dashboard/>}/>
-                <Route path="/settings" element={<SettingsPage />} />
-           
             </Routes>
             <Footer />
         </>

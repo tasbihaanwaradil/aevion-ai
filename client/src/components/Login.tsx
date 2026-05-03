@@ -31,9 +31,9 @@ const Login = () => {
 
     useEffect(()=>{
         if(user){
-            navigate('/')
+            navigate('/Dashboard')
         }
-    }, [user])
+    }, [user, navigate])
 
   return (
     /* FIX: Added pt-20 (padding-top) to push the card below your Navbar 

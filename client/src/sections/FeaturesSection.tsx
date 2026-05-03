@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRightIcon, SparkleIcon } from "lucide-react";
-import { Features } from "../data/Features";
+import { Features } from "../data/features";
 import AnimatedContent from "../components/animated-content";
 import SectionTitle from "../components/section-title";
 

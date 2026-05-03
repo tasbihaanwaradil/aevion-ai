@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 type Props = {
   isOpen: boolean;
@@ -19,6 +20,7 @@ const SideNavbar = ({
   title,
 }: Props) => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const menuItems = [
     { name: "Dashboard", key: "dashboard" },
@@ -81,7 +83,11 @@ const SideNavbar = ({
           {/* Sign Out */}
           <button
             className="text-left text-red-600 mt-6 hover:text-red-800"
-            onClick={() => navigate("/")}
+            onClick={async () => {
+              setIsOpen(false);
+              await logout();
+              navigate("/");
+            }}
           >
             Sign Out
           </button>

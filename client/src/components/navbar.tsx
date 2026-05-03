@@ -34,15 +34,15 @@ export default function Navbar() {
             <Link to='/' className="hover:text-sky-600">Home</Link>
             {
               isLoggedIn ?
-                <Link to='/LinkedInPostGenerator' className="hover:text-sky-600">Genearate LinkedIn Post</Link>
+                <Link to='/Dashboard' className="hover:text-sky-600">Dashboard</Link>
                 :
-                <Link to='#' className="hover:text-sky-600">About</Link>
+                <Link to='#Features' className="hover:text-sky-600">Features</Link>
             }
             {
               isLoggedIn ?
                 <Link to='/my-generation' className="hover:text-sky-600">My Generations</Link>
                 :
-                <Link to='/contact' className="hover:text-sky-600">Contact Us</Link>
+                <Link to='/UseCases' className="hover:text-sky-600">Use Cases</Link>
             }
           </div>
 
@@ -53,7 +53,7 @@ export default function Navbar() {
                   {user?.name.charAt(0).toUpperCase()}
                 </button>
                 <div className="absolute hidden group-hover:block top-6 right-0 pt-4">
-                  <button onClick={() => logout()} className="bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition px-4 py-2 rounded">
+                  <button onClick={async () => { await logout(); navigate('/'); }} className="bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition px-4 py-2 rounded">
                     Logout
                   </button>
                 </div>
@@ -79,8 +79,8 @@ export default function Navbar() {
       </nav >
 
       {/* Mobile Menu */}
-      < div
-        className={`fixed inset-0 z-[60] bg-white transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
+      <div
+        className={`fixed inset-0 z-60 bg-white transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
           }`
         }
       >
