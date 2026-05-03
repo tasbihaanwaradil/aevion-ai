@@ -8,6 +8,7 @@ import Login from "./components/Login";
 import LinkedInPostGenerator from "./pages/LinkedInPostGenerator";
 import AcademicEmailGenerator from "./pages/AcademicEmailGenerator";
 import AutoCreatePresentationSlides from "./pages/AutoCreatePresentationSlides";
+import TimetableReminder from "./pages/Reminder";
 import PdfToSlidesConverter from "./pages/Pdf-to-SlideConverter";
 import Dashboard  from "./pages/Dashboard";
 
@@ -31,6 +32,7 @@ export default function App() {
                 <Route path="/AcademicEmailGenerator" element={<AcademicEmailGenerator/>}/>
                 <Route path="/AutoCreatePresentationSlides" element={<AutoCreatePresentationSlides/>}/>
                 <Route path="/Pdf-to-SlideConverter" element={<PdfToSlidesConverter/>}/>
+                <Route path="/Reminder" element={<TimetableReminder/>}/>
                 <Route path="/Dashboard" element={<Dashboard/>}/>
             </Routes>
             <Footer />
