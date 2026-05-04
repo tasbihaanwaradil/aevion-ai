@@ -11,6 +11,7 @@ import AutoCreatePresentationSlides from "./pages/AutoCreatePresentationSlides";
 import TimetableReminder from "./pages/Reminder";
 import PdfToSlidesConverter from "./pages/Pdf-to-SlideConverter";
 import Dashboard  from "./pages/Dashboard";
+import Settings from "./pages/Settings";
 
 import { Toaster } from 'react-hot-toast'
 
@@ -34,6 +35,7 @@ export default function App() {
                 <Route path="/Pdf-to-SlideConverter" element={<PdfToSlidesConverter/>}/>
                 <Route path="/Reminder" element={<TimetableReminder/>}/>
                 <Route path="/Dashboard" element={<Dashboard/>}/>
+                <Route path="/settings" element={<Settings />} />
             </Routes>
             <Footer />
         </>
