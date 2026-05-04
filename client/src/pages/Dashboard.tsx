@@ -67,7 +67,7 @@ const Dashboard = () => {
       icon: CalendarClockIcon,
       cardBg: "bg-gray-100",
       iconBg: "bg-orange-500",
-      route: "/timetable",
+      route: "/Reminder",
     },
   ];
 
