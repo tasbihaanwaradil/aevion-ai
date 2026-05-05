@@ -1,4 +1,4 @@
-import Footer from "./components/footer";
+// import Footer from "./components/footer";
 import LenisScroll from "./components/lenis";
 // import Navbar from "./components/navbar";
 import { Route, Routes } from "react-router-dom";
@@ -37,7 +37,7 @@ export default function App() {
                 <Route path="/Dashboard" element={<Dashboard/>}/>
                 <Route path="/settings" element={<Settings />} />
             </Routes>
-            <Footer />
+            {/* <Footer /> */}
         </>
     )
 }
