@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/MainLayout";
+import { useAuth } from "../context/AuthContext";
 import {
   LinkedinIcon,
   MailIcon,
@@ -14,6 +15,8 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  {/* Get user from context */}
+  const { user } = useAuth();
 
   const [activeSection, setActiveSection] = useState("dashboard");
 
@@ -76,12 +79,13 @@ const Dashboard = () => {
       <div className="p-8">
         <div className="max-w-6xl mx-auto">
 
-          {/* <h2 className="text-3xl font-bold text-white">
-            Welcome back, Dua Mansoor!
-          </h2> */}
+           <h1 className="text-3xl font-bold text-white">
+             {/* Welcome message with username */}
+            Welcome back, {user?.name || "User"}!
+          </h1> 
 
           <p className="text-gray-300 mt-1 mb-8">
-            Choose a tool to get started
+            Unlock smarter workflows with AI tools
           </p>
 
           <div className="grid md:grid-cols-3 gap-6">
