@@ -12,6 +12,7 @@ import TimetableReminder from "./pages/Reminder";
 import PdfToSlidesConverter from "./pages/Pdf-to-SlideConverter";
 import Dashboard  from "./pages/Dashboard";
 import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
 
 import { Toaster } from 'react-hot-toast'
 
@@ -36,6 +37,7 @@ export default function App() {
                 <Route path="/Reminder" element={<TimetableReminder/>}/>
                 <Route path="/Dashboard" element={<Dashboard/>}/>
                 <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
             </Routes>
             {/* <Footer /> */}
         </>

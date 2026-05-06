@@ -10,6 +10,8 @@ import MongoStore from 'connect-mongo';
 import AuthRouter from './routes/AuthRoutes.js';
 import userRoutes from "./routes/UserRoutes.js";
 
+import passport from "./configs/passport.js";
+
 declare module 'express-session' {
     interface SessionData {
         isLoggedIn: boolean;
@@ -37,6 +39,10 @@ app.use(session({
         collectionName: 'sessions'
     })
 }))
+
+// Initialize passport AFTER session
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(express.json())
 
