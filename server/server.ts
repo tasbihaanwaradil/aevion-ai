@@ -9,6 +9,9 @@ import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import AuthRouter from './routes/AuthRoutes.js';
 import LinkedInPostRouter from './routes/LinkedInPostRoutes.js';
+import userRoutes from "./routes/UserRoutes.js";
+
+import passport from "./configs/passport.js";
 
 declare module 'express-session' {
     interface SessionData {
@@ -38,6 +41,10 @@ app.use(session({
     })
 }))
 
+// Initialize passport AFTER session
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(express.json())
 
 app.get('/', (req: Request, res: Response) => {
@@ -46,6 +53,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api/auth', AuthRouter)
 app.use('/api/linkedin-posts', LinkedInPostRouter)
+app.use("/api/user", userRoutes);
 
 const port = process.env.PORT || 3000;
 

@@ -1,4 +1,4 @@
-import Footer from "./components/footer";
+// import Footer from "./components/footer";
 import LenisScroll from "./components/lenis";
 // import Navbar from "./components/navbar";
 import { Route, Routes } from "react-router-dom";
@@ -8,8 +8,11 @@ import Login from "./components/Login";
 import LinkedInPostGenerator from "./pages/LinkedInPostGenerator";
 import AcademicEmailGenerator from "./pages/AcademicEmailGenerator";
 import AutoCreatePresentationSlides from "./pages/AutoCreatePresentationSlides";
+import TimetableReminder from "./pages/Reminder";
 import PdfToSlidesConverter from "./pages/Pdf-to-SlideConverter";
 import Dashboard  from "./pages/Dashboard";
+import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
 
 import { Toaster } from 'react-hot-toast'
 
@@ -31,9 +34,12 @@ export default function App() {
                 <Route path="/AcademicEmailGenerator" element={<AcademicEmailGenerator/>}/>
                 <Route path="/AutoCreatePresentationSlides" element={<AutoCreatePresentationSlides/>}/>
                 <Route path="/Pdf-to-SlideConverter" element={<PdfToSlidesConverter/>}/>
+                <Route path="/Reminder" element={<TimetableReminder/>}/>
                 <Route path="/Dashboard" element={<Dashboard/>}/>
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
             </Routes>
-            <Footer />
+            {/* <Footer /> */}
         </>
     )
 }
