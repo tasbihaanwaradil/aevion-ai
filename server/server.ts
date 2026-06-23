@@ -11,6 +11,8 @@ import AuthRouter from './routes/AuthRoutes.js';
 import userRoutes from "./routes/UserRoutes.js";
 
 import passport from "./configs/passport.js";
+import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
+
 
 declare module 'express-session' {
     interface SessionData {
@@ -52,6 +54,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api/auth', AuthRouter);
 app.use("/api/user", userRoutes);
+app.use("/api/linkedin-posts", linkedinPostRoutes);
 
 const port = process.env.PORT || 3000;
 
