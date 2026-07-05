@@ -46,7 +46,7 @@ const Dashboard = () => {
       icon: FileQuestionIcon,
       cardBg: "bg-indigo-100",
       iconBg: "bg-indigo-500",
-      route: "/quiz",
+      route: "/Quizgenerator",
     },
     {
       title: "Auto Slides",
