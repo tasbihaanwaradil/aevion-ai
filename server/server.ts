@@ -9,6 +9,8 @@ import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import AuthRouter from './routes/AuthRoutes.js';
 import userRoutes from "./routes/UserRoutes.js";
+import AcademicEmailRoutes from"./routes/AcademicEmailRoutes.js";
+import quizRoutes from "./routes/quiz.js";
 
 import passport from "./configs/passport.js";
 import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
@@ -55,6 +57,8 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/auth', AuthRouter);
 app.use("/api/user", userRoutes);
 app.use("/api/linkedin-posts", linkedinPostRoutes);
+app.use("/api/academic-email", AcademicEmailRoutes);
+app.use("/api/quiz", quizRoutes);
 
 const port = process.env.PORT || 3000;
 

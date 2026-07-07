@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 import { Toaster } from 'react-hot-toast'
+import QuizGenerator from "./pages/Quizgenerator";
 
 
 
@@ -32,6 +33,7 @@ export default function App() {
                 <Route path="/login" element={<Login />}></Route>
                 <Route path="/LinkedInPostGenerator" element={<LinkedInPostGenerator/>}/>
                 <Route path="/AcademicEmailGenerator" element={<AcademicEmailGenerator/>}/>
+                <Route path="/Quizgenerator" element={<QuizGenerator/>}/>
                 <Route path="/AutoCreatePresentationSlides" element={<AutoCreatePresentationSlides/>}/>
                 <Route path="/Pdf-to-SlideConverter" element={<PdfToSlidesConverter/>}/>
                 <Route path="/Reminder" element={<TimetableReminder/>}/>

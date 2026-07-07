@@ -2,7 +2,7 @@
 
 import AnimatedContent from "../components/animated-content";
 import SectionTitle from "../components/section-title";
-import { Faqs } from "../data/Faqs";
+import { Faqs } from "../data/faqs";
 import { ChevronDownIcon, HelpCircleIcon } from "lucide-react";
 
 export default function Faqsection() {

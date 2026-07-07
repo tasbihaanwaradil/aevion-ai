@@ -9,7 +9,10 @@ export const llm = new ChatGroq({
 
 export const outputParser = new StringOutputParser();
 
-export const generateText = async (prompt: string): Promise<string> => {
+// Reusable helper
+export const generateText = async (
+  prompt: string
+): Promise<string> => {
   const res = await llm.invoke(prompt);
   return res.content?.toString() || "";
 };
