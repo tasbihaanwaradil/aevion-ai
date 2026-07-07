@@ -19,19 +19,17 @@ export interface QuizResult {
 const MAX_RETRIES = 2;
 
 export const generateQuizAgent = async ({
-  sourceText,
   topic,
   difficulty,
   questionCount,
   questionTypes,
 }: {
-  sourceText?: string;
-  topic?: string;
+  topic: string;
   difficulty: "Easy" | "Medium" | "Hard";
   questionCount: number;
   questionTypes: string[];
 }): Promise<QuizResult> => {
-  const prompt = quizPrompt({ sourceText, topic, difficulty, questionCount, questionTypes });
+  const prompt = quizPrompt({ topic, difficulty, questionCount, questionTypes });
 
   let lastError: unknown;
 
@@ -45,7 +43,6 @@ export const generateQuizAgent = async ({
       return parsed;
     } catch (err) {
       lastError = err;
-      // on retry, nudge the model to fix its own output format
       continue;
     }
   }
@@ -74,7 +71,6 @@ const validateQuiz = (quiz: QuizResult, expectedCount: number) => {
       throw new Error("MCQ question missing 4 options");
     }
   }
-  // soft check — don't hard-fail if model gives a few more/fewer
   if (Math.abs(quiz.questions.length - expectedCount) > 2) {
     console.warn(
       `Quiz question count (${quiz.questions.length}) differs significantly from requested (${expectedCount})`

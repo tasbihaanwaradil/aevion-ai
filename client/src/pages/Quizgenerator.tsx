@@ -7,7 +7,6 @@ import SideNavbar from "../components/SideNavbar";
 
 type QuestionType = "MCQ" | "TrueFalse" | "ShortAnswer";
 type Difficulty = "Easy" | "Medium" | "Hard";
-type SourceMode = "topic" | "file";
 
 interface QuizQuestion {
   id: string;
@@ -37,10 +36,7 @@ const QuizGenerator: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("tools");
 
-  // ----- Generator form state -----
-  const [sourceMode, setSourceMode] = useState<SourceMode>("topic");
   const [topic, setTopic] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>("Medium");
   const [questionCount, setQuestionCount] = useState(5);
   const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>([
@@ -52,19 +48,15 @@ const QuizGenerator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
-  // ----- Quiz state (once generated) -----
   const [quiz, setQuiz] = useState<QuizData | null>(null);
 
-  // ----- Quiz-taking state -----
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
 
   const toggleType = (type: QuestionType) => {
     setSelectedTypes((prev) =>
-      prev.includes(type)
-        ? prev.filter((t) => t !== type)
-        : [...prev, type]
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
   };
 
@@ -80,12 +72,8 @@ const QuizGenerator: React.FC = () => {
     e.preventDefault();
     setError("");
 
-    if (sourceMode === "topic" && topic.trim().length < 5) {
+    if (topic.trim().length < 5) {
       setError("Please enter a topic (at least 5 characters).");
-      return;
-    }
-    if (sourceMode === "file" && !file) {
-      setError("Please upload a PDF or PPTX file.");
       return;
     }
     if (selectedTypes.length === 0) {
@@ -97,24 +85,17 @@ const QuizGenerator: React.FC = () => {
       setLoading(true);
       resetQuizState();
 
-      const formData = new FormData();
-      if (sourceMode === "topic") {
-        formData.append("topic", topic);
-      } else if (file) {
-        formData.append("file", file);
-      }
-      formData.append("difficulty", difficulty);
-      formData.append("questionCount", String(questionCount));
-      formData.append("questionTypes", JSON.stringify(selectedTypes));
-
-      const response = await fetch(
-        "http://localhost:3000/api/quiz/generate",
-        {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        }
-      );
+      const response = await fetch("http://localhost:3000/api/quiz/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          topic,
+          difficulty,
+          questionCount,
+          questionTypes: selectedTypes,
+        }),
+      });
 
       const data = await response.json();
 
@@ -166,9 +147,7 @@ const QuizGenerator: React.FC = () => {
       >
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white">Quiz Generator</h1>
-          <p className="text-gray-400 mt-2">
-            Turn slides, PDFs, or a topic into a ready-to-take quiz
-          </p>
+          <p className="text-gray-400 mt-2">Turn any topic into a ready-to-take quiz</p>
         </div>
 
         {!quiz ? (
@@ -177,65 +156,15 @@ const QuizGenerator: React.FC = () => {
               onSubmit={handleGenerate}
               className="bg-white rounded-2xl shadow-2xl p-10 text-gray-800"
             >
-              {/* Source Mode Toggle */}
-              <div className="flex gap-2 mb-6 bg-gray-100 rounded-xl p-1">
-                <button
-                  type="button"
-                  onClick={() => setSourceMode("topic")}
-                  className={`flex-1 h-11 rounded-lg font-semibold transition-colors ${
-                    sourceMode === "topic"
-                      ? "bg-[#2d5f6e] text-white"
-                      : "text-gray-600"
-                  }`}
-                >
-                  From Topic
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSourceMode("file")}
-                  className={`flex-1 h-11 rounded-lg font-semibold transition-colors ${
-                    sourceMode === "file"
-                      ? "bg-[#2d5f6e] text-white"
-                      : "text-gray-600"
-                  }`}
-                >
-                  From PDF / Slides
-                </button>
-              </div>
+              <label className="block font-semibold mb-2">Topic</label>
+              <textarea
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="E.g., Cellular respiration, React hooks, WWII causes..."
+                className="w-full h-28 px-5 py-4 bg-gray-100 rounded-xl outline-none"
+              />
 
-              {sourceMode === "topic" ? (
-                <>
-                  <label className="block font-semibold mb-2">Topic</label>
-                  <textarea
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder="E.g., Cellular respiration, React hooks, WWII causes..."
-                    className="w-full h-28 px-5 py-4 bg-gray-100 rounded-xl outline-none"
-                  />
-                </>
-              ) : (
-                <>
-                  <label className="block font-semibold mb-2">
-                    Upload PDF or PPTX
-                  </label>
-                  <input
-                    type="file"
-                    accept=".pdf,.pptx"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="w-full px-5 py-4 bg-gray-100 rounded-xl outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#2d5f6e] file:text-white file:font-semibold"
-                  />
-                  {file && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      Selected: {file.name}
-                    </p>
-                  )}
-                </>
-              )}
-
-              {/* Difficulty */}
-              <label className="block font-semibold mt-6 mb-2">
-                Difficulty
-              </label>
+              <label className="block font-semibold mt-6 mb-2">Difficulty</label>
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as Difficulty)}
@@ -246,7 +175,6 @@ const QuizGenerator: React.FC = () => {
                 <option value="Hard">Hard</option>
               </select>
 
-              {/* Question Count */}
               <label className="block font-semibold mt-6 mb-2">
                 Number of Questions: {questionCount}
               </label>
@@ -259,10 +187,7 @@ const QuizGenerator: React.FC = () => {
                 className="w-full"
               />
 
-              {/* Question Types */}
-              <label className="block font-semibold mt-6 mb-2">
-                Question Types
-              </label>
+              <label className="block font-semibold mt-6 mb-2">Question Types</label>
               <div className="flex flex-wrap gap-2">
                 {QUESTION_TYPE_OPTIONS.map((opt) => (
                   <button
@@ -280,11 +205,7 @@ const QuizGenerator: React.FC = () => {
                 ))}
               </div>
 
-              {error && (
-                <p className="mt-4 text-sm text-red-600 font-medium">
-                  {error}
-                </p>
-              )}
+              {error && <p className="mt-4 text-sm text-red-600 font-medium">{error}</p>}
 
               <button
                 type="submit"
@@ -352,9 +273,7 @@ const QuizRunner: React.FC<QuizRunnerProps> = ({
           <div className="text-6xl font-extrabold text-[#2d5f6e] mb-2">
             {score} / {total}
           </div>
-          <p className="text-gray-500">
-            {Math.round((score / total) * 100)}% correct
-          </p>
+          <p className="text-gray-500">{Math.round((score / total) * 100)}% correct</p>
           <button
             onClick={onRestart}
             className="mt-8 h-12 px-8 rounded-2xl bg-[#2d5f6e] text-white font-bold"
@@ -387,8 +306,7 @@ const QuizRunner: React.FC<QuizRunnerProps> = ({
                 </p>
                 {!isCorrect && (
                   <p className="text-sm text-gray-500 mb-1">
-                    Correct answer:{" "}
-                    <span className="text-green-600">{q.correctAnswer}</span>
+                    Correct answer: <span className="text-green-600">{q.correctAnswer}</span>
                   </p>
                 )}
                 <p className="text-sm text-gray-400 mt-2">{q.explanation}</p>
@@ -403,7 +321,6 @@ const QuizRunner: React.FC<QuizRunnerProps> = ({
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-2xl shadow-2xl p-10 text-gray-800">
-        {/* Progress */}
         <div className="flex items-center justify-between mb-6">
           <span className="text-sm font-semibold text-gray-500">
             Question {currentIndex + 1} of {total}
@@ -421,7 +338,6 @@ const QuizRunner: React.FC<QuizRunnerProps> = ({
 
         <h2 className="text-xl font-bold mb-6">{question.question}</h2>
 
-        {/* MCQ */}
         {question.type === "MCQ" && question.options && (
           <div className="space-y-3">
             {question.options.map((opt) => (
@@ -440,7 +356,6 @@ const QuizRunner: React.FC<QuizRunnerProps> = ({
           </div>
         )}
 
-        {/* True / False */}
         {question.type === "TrueFalse" && (
           <div className="flex gap-4">
             {["True", "False"].map((opt) => (
@@ -459,7 +374,6 @@ const QuizRunner: React.FC<QuizRunnerProps> = ({
           </div>
         )}
 
-        {/* Short Answer */}
         {question.type === "ShortAnswer" && (
           <input
             type="text"
@@ -470,7 +384,6 @@ const QuizRunner: React.FC<QuizRunnerProps> = ({
           />
         )}
 
-        {/* Navigation */}
         <div className="flex justify-between mt-10">
           <button
             onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}

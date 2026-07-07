@@ -12,8 +12,6 @@ export interface IQuizQuestion {
 export interface IQuiz extends Document {
   userId: string;
   title: string;
-  sourceType: "topic" | "pdf" | "pptx";
-  sourceFileName?: string;
   difficulty: "Easy" | "Medium" | "Hard";
   questions: IQuizQuestion[];
   createdAt?: Date;
@@ -36,8 +34,6 @@ const QuizSchema = new mongoose.Schema<IQuiz>(
   {
     userId: { type: String, ref: "User", required: true },
     title: { type: String, required: true },
-    sourceType: { type: String, enum: ["topic", "pdf", "pptx"], required: true },
-    sourceFileName: { type: String },
     difficulty: { type: String, enum: ["Easy", "Medium", "Hard"], required: true },
     questions: { type: [QuizQuestionSchema], required: true },
   },
