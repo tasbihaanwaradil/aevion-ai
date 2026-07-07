@@ -13,6 +13,8 @@ import AcademicEmailRoutes from"./routes/AcademicEmailRoutes.js";
 import quizRoutes from "./routes/quiz.js";
 
 import passport from "./configs/passport.js";
+import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
+
 
 declare module 'express-session' {
     interface SessionData {
@@ -54,6 +56,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api/auth', AuthRouter);
 app.use("/api/user", userRoutes);
+app.use("/api/linkedin-posts", linkedinPostRoutes);
 app.use("/api/academic-email", AcademicEmailRoutes);
 app.use("/api/quiz", quizRoutes);
 
