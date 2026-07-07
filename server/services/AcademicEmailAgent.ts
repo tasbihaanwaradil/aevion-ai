@@ -929,7 +929,7 @@ export const runAcademicEmailAgent = async (
     },
     "main:draft"
   );
-  // agentSteps.push(`✅ Draft done (self-confidence: ${draft.confidence}/100)`);
+  agentSteps.push(`✅ Draft done (self-confidence: ${draft.confidence}/100)`);
 
   // ── STEP 4: Critic ────────────────────────────────────────────────────────────
   let finalSubject = draft.subject;
@@ -984,7 +984,7 @@ export const runAcademicEmailAgent = async (
     );
   }
 
-  agentSteps.push(" Email ready");
+  agentSteps.push("🎉 Email ready");
 
   memory = updateMemory(memory, {
     recipient:   input.recipient,

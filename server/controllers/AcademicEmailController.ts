@@ -19,7 +19,18 @@ export const generateEmail = async (req: Request, res: Response) => {
     // 🤖 Run the real agent (plan → tools → reflect → output)
     const result = await runAcademicEmailAgent({ purpose, recipient, tone, senderName });
 
-    // Save to DB
+    // ⚠️ Agent needs more info from the user — return early, do NOT save to DB.
+    // (result.subject / result.body are intentionally empty in this case,
+    // so saving now would trip the schema's `required: true` validators.)
+    if (result.clarificationNeeded) {
+      return res.json({
+        success: true,
+        clarificationNeeded: result.clarificationNeeded,
+        agentSteps: result.agentSteps,
+      });
+    }
+
+    // Save to DB (only reached once we actually have a subject/body)
     const saved = await AcademicEmail.create({
       userId: userId ?? "guest",
       senderName: senderName ?? "",
@@ -33,19 +44,16 @@ export const generateEmail = async (req: Request, res: Response) => {
     });
 
     res.json({
-  success: true,
-  email: {
-    subject: result.subject,
-    body: result.body,
-  },
-
-  audience: result.audience,
-  emailType: result.emailType,
-
-  agentSteps: result.agentSteps,
-
-  emailId: saved._id,
-});
+      success: true,
+      email: {
+        subject: result.subject,
+        body: result.body,
+      },
+      audience: result.audience,
+      emailType: result.emailType,
+      agentSteps: result.agentSteps,
+      emailId: saved._id,
+    });
 
   } catch (error: any) {
     console.error("[generateEmail Agent]", error);
@@ -87,6 +95,71 @@ export const sendGeneratedEmail = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("[sendGeneratedEmail]", error);
     res.status(500).json({ message: error.message });
+  }
+};
+
+// ─── POST /api/academic-email/send-bulk ─────────────────────────────────────
+
+export const sendBulkEmail = async (req: Request, res: Response) => {
+  try {
+    const {
+      deliveryMode,
+      subject,
+      body,
+      senderName,
+      bccList,
+      emailId,
+    } = req.body;
+
+    if (!subject || !body) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject and body are required.",
+      });
+    }
+
+    // Broadcast (BCC)
+    if (deliveryMode === "broadcast") {
+      if (!Array.isArray(bccList) || bccList.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "BCC recipient list is required.",
+        });
+      }
+
+      const result = await sendEmail({
+        bcc: bccList,
+        subject,
+        body,
+        fromName: senderName,
+      });
+
+      if (emailId) {
+        await AcademicEmail.findByIdAndUpdate(emailId, {
+          sent: true,
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: `Broadcast email sent to ${bccList.length} recipients.`,
+        messageId: result.messageId,
+        accepted: result.accepted,
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: "Invalid delivery mode.",
+    });
+
+  } catch (error: any) {
+    console.error("[sendBulkEmail]", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 

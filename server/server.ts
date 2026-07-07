@@ -10,6 +10,7 @@ import MongoStore from 'connect-mongo';
 import AuthRouter from './routes/AuthRoutes.js';
 import userRoutes from "./routes/UserRoutes.js";
 import AcademicEmailRoutes from"./routes/AcademicEmailRoutes.js";
+import ReminderRoutes from "./routes/ReminderRoutes.js";
 
 import passport from "./configs/passport.js";
 
@@ -54,6 +55,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/auth', AuthRouter);
 app.use("/api/user", userRoutes);
 app.use("/api/academic-email", AcademicEmailRoutes);
+app.use("/api/reminder", ReminderRoutes);
 
 const port = process.env.PORT || 3000;
 

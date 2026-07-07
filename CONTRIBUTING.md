@@ -150,7 +150,6 @@ git commit -m "Add login page UI"
 ✔️ Use clear commit messages  
 ❌ Do not commit `.env` or `node_modules`
 
----
 
 ## 7. Push Feature Branch to GitHub
 

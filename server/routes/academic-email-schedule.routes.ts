@@ -26,14 +26,13 @@ const scheduler = createEmailScheduler({
     senderName,
   }) => {
     // Send the same email to each recipient
-    for (const email of bccList) {
+    // for (const email of bccList) {
       await sendEmail({
-        to: email,
-        subject,
-        body,
-        fromName: senderName,
-      });
-    }
+      bcc: bccList,
+      subject,
+      body,
+      fromName: senderName,
+    });
   },
 });
 
