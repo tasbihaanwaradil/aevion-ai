@@ -13,9 +13,23 @@ import PdfToSlidesConverter from "./pages/Pdf-to-SlideConverter";
 import Dashboard  from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-
+import NewTearcherAccount from "./pages/NewTearcherAccount";
+import Aboutyou from "./pages/Aboutyou";
+import TeacherLogin from "./pages/Teacherlogin";
+import VerifyEmail from "./pages/VerifyEmail";
+import Demographics from "./pages/Demographics";
+import ForgotPassword from "./pages/ForgotPassword";
+import TeacherDashboard from "./pages/TeacherDahboard";
+import QuizLaunch from "./pages/QuizLaunch";
+import LaunchSpace from "./pages/LaunchSpace";
+import Library from "./pages/Library";
+import Rooms from "./pages/Rooms";
+import Reports from "./pages/Reports";
+import LiveResults from "./pages/LiveResults";
 import { Toaster } from 'react-hot-toast'
 import QuizGenerator from "./pages/Quizgenerator";
+
+
 
 
 
@@ -40,6 +54,20 @@ export default function App() {
                 <Route path="/Dashboard" element={<Dashboard/>}/>
                 <Route path="/settings" element={<Settings />} />
                 <Route path="*" element={<NotFound />} />
+                <Route path="/NewTeacherAccount" element={<NewTearcherAccount/>}/>
+                <Route path="/Demographics" element={<Demographics/>}/>
+                <Route path="/Aboutyou" element={<Aboutyou/>}/>
+                <Route path="/Teacherlogin" element={<TeacherLogin/>}/>
+                <Route path="/VerifyEmail" element={<VerifyEmail/>}/>
+                <Route path="/ForgotPassword" element={<ForgotPassword/>}/>
+                <Route path="/TeacherDashboard" element={<TeacherDashboard/>}/>
+                <Route path="/QuizLaunch" element={<QuizLaunch/>}/>
+                <Route path="/LaunchSpace" element={<LaunchSpace/>}/>
+                <Route path="/Library" element={<Library/>}/>
+                <Route path="/Rooms" element={<Rooms/>}/>
+                <Route path="/Reports" element={<Reports/>}/>
+                <Route path="/LiveResults" element={<LiveResults/>}/>
+                
             </Routes>
             {/* <Footer /> */}
         </>
