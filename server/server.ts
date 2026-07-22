@@ -14,6 +14,7 @@ import quizRoutes from "./routes/quiz.js";
 
 import passport from "./configs/passport.js";
 import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
+import AdminRouter from "./routes/AdminRoutes.js";
 
 
 declare module 'express-session' {
@@ -59,6 +60,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/linkedin-posts", linkedinPostRoutes);
 app.use("/api/academic-email", AcademicEmailRoutes);
 app.use("/api/quiz", quizRoutes);
+app.use("/api/admin", AdminRouter);
 
 const port = process.env.PORT || 3000;
 

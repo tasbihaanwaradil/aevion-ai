@@ -5,6 +5,8 @@ export interface IUser extends Document {
     email: string;
     password?: string;
     googleId?: string;
+    role: "user" | "admin";
+    isActive: boolean;
 }
 
 const UserSchema = new mongoose.Schema(
@@ -27,6 +29,17 @@ const UserSchema = new mongoose.Schema(
     googleId: {
         type: String,
         default: null
+    },
+
+    role: {
+        type: String,
+        enum: ["user", "admin"],
+        default: "user"
+    },
+
+    isActive: {
+        type: Boolean,
+        default: true
     }
 },
 { timestamps: true }

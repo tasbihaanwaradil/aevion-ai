@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 
 import { Toaster } from 'react-hot-toast'
 import QuizGenerator from "./pages/Quizgenerator";
+import AdminPanel from "./pages/AdminPanel";
 
 
 
@@ -40,6 +41,7 @@ export default function App() {
                 <Route path="/Dashboard" element={<Dashboard/>}/>
                 <Route path="/settings" element={<Settings />} />
                 <Route path="*" element={<NotFound />} />
+                <Route path="/AdminPanel" element={<AdminPanel />} />
             </Routes>
             {/* <Footer /> */}
         </>
