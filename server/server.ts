@@ -11,6 +11,7 @@ import AuthRouter from './routes/AuthRoutes.js';
 import userRoutes from "./routes/UserRoutes.js";
 import AcademicEmailRoutes from"./routes/AcademicEmailRoutes.js";
 import quizRoutes from "./routes/quiz.js";
+import TeacherAuthRouter from './routes/TeacherAuthRoutes.js';
 
 import passport from "./configs/passport.js";
 import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
@@ -20,6 +21,7 @@ declare module 'express-session' {
     interface SessionData {
         isLoggedIn: boolean;
         userId: string
+        teacherId: string
     }
 }
 
@@ -59,6 +61,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/linkedin-posts", linkedinPostRoutes);
 app.use("/api/academic-email", AcademicEmailRoutes);
 app.use("/api/quiz", quizRoutes);
+app.use('/api/teacher-auth', TeacherAuthRouter);
 
 const port = process.env.PORT || 3000;
 
