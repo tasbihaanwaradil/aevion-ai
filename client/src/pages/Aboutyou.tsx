@@ -1,22 +1,47 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useTeacherAuth } from "../context/TeacherAuthContext";
 
 const TOTAL_STEPS = 3;
 const CURRENT_STEP = 3;
 
 const ROLES = ["Teacher", "Administrator", "IT/Technology", "Other"];
 
+type IncomingState = {
+  name?: string;
+  email?: string;
+  password?: string;
+  organizationType?: string;
+};
+
 const AboutYou = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { teacher: user, signUp } = useTeacherAuth();
   const [role, setRole] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
 
-  const handleFinish = (e: React.FormEvent<HTMLFormElement>) => {
+  // Everything collected across steps 1 and 2.
+  const profile = (location.state as IncomingState | null) ?? {};
+
+  useEffect(() => {
+    if (user) {
+      navigate("/Dashboard");
+    }
+  }, [user, navigate]);
+
+  const handleFinish = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
+    if (!profile.name || !profile.email || !profile.password) {
+      setError(
+        "Your profile details are missing — please start over from the beginning."
+      );
+      return;
+    }
     if (!role) {
       setError("Please select your role.");
       return;
@@ -26,10 +51,29 @@ const AboutYou = () => {
       return;
     }
 
-    // Final step — this is where the account creation call / redirect
-    // to the dashboard should happen once the backend contract for
-    // role + phone number is defined.
-    navigate("/Dashboard");
+    // Backend currently only accepts name/email/password on signUp —
+    // organizationType, role, and phoneNumber aren't in that contract
+    // yet, so they're collected here but not sent until the API supports
+    // them. Extend signUp's payload (and the request body it maps to)
+    // once it does.
+    try {
+      await signUp({
+        name: profile.name,
+        email: profile.email,
+        password: profile.password,
+      });
+
+      // registerTeacher no longer starts a session — it emails a
+      // verification code instead — so don't wait on `user` to change.
+      // Go straight to the verification screen with the email.
+      navigate("/VerifyEmail", { state: { email: profile.email } });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong creating your account. Please try again."
+      );
+    }
   };
 
   return (
@@ -158,7 +202,15 @@ const AboutYou = () => {
         <div className="flex gap-4 mt-10">
           <button
             type="button"
-            onClick={() => navigate("/Demographics")}
+            onClick={() =>
+              navigate("/Demographics", {
+                state: {
+                  name: profile.name,
+                  email: profile.email,
+                  password: profile.password,
+                },
+              })
+            }
             className="flex-1 h-14 rounded-2xl border border-[#2d5f6e] text-[#2d5f6e] font-bold hover:bg-gray-50 transition"
           >
             Previous

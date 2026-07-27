@@ -4,9 +4,16 @@ import { useNavigate, Link } from "react-router-dom";
 
 const TOTAL_STEPS = 3;
 
+// Letters and spaces only, 2–50 characters.
+const NAME_REGEX = /^[A-Za-z\s]{2,50}$/;
+// Standard, permissive email shape check.
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// At least 8 characters, with at least one letter and one number.
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+
 const NewTearcherAccount = () => {
   const [step, setStep] = useState(1);
-  const { user, signUp } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -28,22 +35,44 @@ const NewTearcherAccount = () => {
     e.preventDefault();
     setError("");
 
+    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+
+    if (!NAME_REGEX.test(formData.firstName) || !NAME_REGEX.test(formData.lastName)) {
+      setError("Names can only contain letters and spaces.");
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(formData.email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     if (formData.email !== formData.confirmEmail) {
       setError("Email addresses do not match.");
       return;
     }
+
+    if (!PASSWORD_REGEX.test(formData.password)) {
+      setError(
+        "Password must be at least 8 characters and include a letter and a number."
+      );
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
-    // Only Step 1 (Profile) is wired up for now — steps 2 & 3 aren't
-    // specified yet, so submit here. Once those steps exist, move this
-    // call to the final step and just advance to step 2 here instead.
-    signUp({
-      name: `${formData.firstName} ${formData.lastName}`.trim(),
-      email: formData.email,
-      password: formData.password,
+    // Profile data is carried forward via route state so the final step
+    // (AboutYou) can call signUp with everything collected across all
+    // three steps, instead of creating the account here on step 1.
+    navigate("/Demographics", {
+      state: {
+        name: fullName,
+        email: formData.email,
+        password: formData.password,
+      },
     });
   };
 
@@ -127,6 +156,8 @@ const NewTearcherAccount = () => {
               placeholder="First Name"
               value={formData.firstName}
               onChange={handleChange}
+              pattern="[A-Za-z\s]{2,50}"
+              title="Letters and spaces only"
               className="w-full h-14 px-5 bg-transparent text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] rounded-xl"
               required
             />
@@ -139,6 +170,8 @@ const NewTearcherAccount = () => {
               placeholder="Last Name"
               value={formData.lastName}
               onChange={handleChange}
+              pattern="[A-Za-z\s]{2,50}"
+              title="Letters and spaces only"
               className="w-full h-14 px-5 bg-transparent text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] rounded-xl"
               required
             />
@@ -175,6 +208,7 @@ const NewTearcherAccount = () => {
               placeholder="Password"
               value={formData.password}
               onChange={handleChange}
+              title="At least 8 characters, with a letter and a number"
               className="w-full h-14 px-5 bg-transparent text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] rounded-xl"
               required
             />

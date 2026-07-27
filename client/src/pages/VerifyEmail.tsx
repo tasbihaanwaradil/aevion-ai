@@ -1,36 +1,63 @@
 import React, { useState } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useLocation, useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useTeacherAuth } from "../context/TeacherAuthContext";
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { teacher: user, verifyEmail, resendCode } = useTeacherAuth();
 
   // Email comes from whatever just signed the user up — passed via
-  // route state (e.g. navigate("/verify-email", { state: { email } }))
-  // and falling back to the logged-in user if that's already set.
-  const email = (location.state as { email?: string } | null)?.email ?? user?.email ?? "";
+  // route state (e.g. navigate("/VerifyEmail", { state: { email } })),
+  // falling back to a ?email= query param (so this page also works
+  // when visited directly by URL), then to the logged-in user if
+  // that's already set.
+  const email =
+    (location.state as { email?: string } | null)?.email ??
+    searchParams.get("email") ??
+    user?.email ??
+    "";
 
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setResendMessage("");
 
     if (!code.trim()) {
       setError("Please enter the verification code.");
       return;
     }
 
-    // Wire this up to your verify-code endpoint once it exists.
-    console.log("Verifying code:", code, "for", email);
+    setIsSubmitting(true);
+    try {
+      await verifyEmail(email, code.trim());
+      navigate("/TeacherDashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleResend = () => {
-    // Wire this up to your resend-code endpoint once it exists.
-    console.log("Resending code to", email);
+  const handleResend = async () => {
+    setError("");
+    setResendMessage("");
+    setIsResending(true);
+    try {
+      await resendCode(email);
+      setResendMessage("A new code has been sent.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't resend the code. Please try again.");
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -70,12 +97,16 @@ const VerifyEmail = () => {
           </div>
 
           {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
+          {resendMessage && (
+            <p className="text-green-600 text-sm mt-3">{resendMessage}</p>
+          )}
 
           <button
             type="submit"
-            className="mt-6 px-10 h-12 rounded-xl bg-[#2d5f6e] text-white font-bold hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)]"
+            disabled={isSubmitting}
+            className="mt-6 px-10 h-12 rounded-xl bg-[#2d5f6e] text-white font-bold hover:bg-[#244d5a] disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)]"
           >
-            Submit
+            {isSubmitting ? "Verifying..." : "Submit"}
           </button>
         </form>
 
@@ -93,9 +124,10 @@ const VerifyEmail = () => {
           <button
             type="button"
             onClick={handleResend}
-            className="text-[#2d5f6e] font-bold hover:underline"
+            disabled={isResending}
+            className="text-[#2d5f6e] font-bold hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Resend Code
+            {isResending ? "Sending..." : "Resend Code"}
           </button>
         </p>
 

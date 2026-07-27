@@ -1,22 +1,38 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useTeacherAuth } from "../context/TeacherAuthContext";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const { forgotPassword } = useTeacherAuth();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
 
     if (!email.trim()) {
       setError("Please enter your email.");
       return;
     }
 
-    // Wire this up to your password-reset endpoint once it exists.
-    console.log("Sending password reset link to", email);
+    setIsSubmitting(true);
+    try {
+      const message = await forgotPassword(email.trim());
+      setSuccessMessage(message);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -29,35 +45,52 @@ const ForgotPassword = () => {
           Enter your email and we'll send you a password reset link.
         </p>
 
-        <form onSubmit={handleSubmit}>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-600 mb-2 text-left"
-          >
-            Email
-          </label>
-
-          <div className="bg-gray-100 rounded-xl">
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-14 px-5 bg-transparent text-gray-700 outline-none focus:ring-2 focus:ring-[#2d5f6e] rounded-xl"
-              required
-            />
+        {successMessage ? (
+          <div>
+            <p className="text-green-600 text-sm mb-6">{successMessage}</p>
+            <p className="text-gray-500 text-sm mb-6">
+              Didn't get it?{" "}
+              <button
+                type="button"
+                onClick={() => setSuccessMessage("")}
+                className="text-[#2d5f6e] font-bold hover:underline"
+              >
+                Try again
+              </button>
+            </p>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-600 mb-2 text-left"
+            >
+              Email
+            </label>
 
-          {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
+            <div className="bg-gray-100 rounded-xl">
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-14 px-5 bg-transparent text-gray-700 outline-none focus:ring-2 focus:ring-[#2d5f6e] rounded-xl"
+                required
+              />
+            </div>
 
-          <button
-            type="submit"
-            className="mt-8 w-full h-14 rounded-2xl bg-[#2d5f6e] text-white font-bold hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)]"
-          >
-            Submit
-          </button>
-        </form>
+            {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-8 w-full h-14 rounded-2xl bg-[#2d5f6e] text-white font-bold hover:bg-[#244d5a] disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)]"
+            >
+              {isSubmitting ? "Sending..." : "Submit"}
+            </button>
+          </form>
+        )}
 
         <button
           type="button"

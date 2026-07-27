@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useTeacherAuth } from "../context/TeacherAuthContext";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const TeacherLogin = () => {
-  const { user, login } = useAuth();
+  const { teacher, login } = useTeacherAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -21,11 +23,28 @@ const TeacherLogin = () => {
     login(formData);
   };
 
+  // Google redirects back here with a status flag instead of a session
+  // when the teacher isn't eligible to log in yet.
   useEffect(() => {
-    if (user) {
-      navigate("/Dashboard");
+    const status = searchParams.get("authStatus");
+    const email = searchParams.get("email");
+
+    if (status === "unverified") {
+      toast.error("Please verify your email before signing in.");
+      navigate("/VerifyEmail", { state: { email } });
+    } else if (status === "notfound") {
+      toast.error("No account found for that Google email. Please create one first.");
+      navigate("/Newteacheraccount");
+    } else if (status === "error") {
+      toast.error("Something went wrong signing in with Google. Please try again.");
     }
-  }, [user, navigate]);
+  }, [searchParams, navigate]);
+
+  useEffect(() => {
+    if (teacher) {
+      navigate("/TeacherDashboard");
+    }
+  }, [teacher, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#0A1238] px-4 pt-16 pb-12">
@@ -98,7 +117,7 @@ const TeacherLogin = () => {
         <button
           type="button"
           onClick={() => {
-            window.location.href = "http://localhost:3000/api/auth/google";
+            window.location.href = "http://localhost:3000/api/teacher-auth/google";
           }}
           className="w-full h-14 rounded-2xl border border-gray-200 flex items-center justify-center gap-3 hover:bg-gray-100 transition text-gray-700 font-medium"
         >
