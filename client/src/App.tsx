@@ -31,6 +31,7 @@ import QuizGenerator from "./pages/Quizgenerator";
 import { AuthProvider } from "./context/AuthContext";
 import { TeacherAuthProvider } from "./context/TeacherAuthContext";
 import ResetPassword from "./pages/ResetPassword";
+import QuizEditor from "./pages/QuizEditor";
 
 
 export default function App() {
@@ -67,6 +68,7 @@ export default function App() {
                     <Route path="/Reports" element={<Reports/>}/>
                     <Route path="/LiveResults" element={<LiveResults/>}/>
                     <Route path="/ResetPassword" element={<ResetPassword/>}/>
+                    <Route path="/Quiz/Edit/:id" element={<QuizEditor />} />
                 </Routes>
                 {/* <Footer /> */}
             </TeacherAuthProvider>

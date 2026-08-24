@@ -1,4 +1,4 @@
-import mongoose, { Document } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IQuizQuestion {
   id: string;
@@ -10,7 +10,7 @@ export interface IQuizQuestion {
 }
 
 export interface IQuiz extends Document {
-  userId: string;
+  teacherId: mongoose.Types.ObjectId;
   title: string;
   difficulty: "Easy" | "Medium" | "Hard";
   questions: IQuizQuestion[];
@@ -18,7 +18,7 @@ export interface IQuiz extends Document {
   updatedAt?: Date;
 }
 
-const QuizQuestionSchema = new mongoose.Schema<IQuizQuestion>(
+const QuizQuestionSchema = new Schema<IQuizQuestion>(
   {
     id: { type: String, required: true },
     type: { type: String, enum: ["MCQ", "TrueFalse", "ShortAnswer"], required: true },
@@ -30,9 +30,9 @@ const QuizQuestionSchema = new mongoose.Schema<IQuizQuestion>(
   { _id: false }
 );
 
-const QuizSchema = new mongoose.Schema<IQuiz>(
+const QuizSchema = new Schema<IQuiz>(
   {
-    userId: { type: String, ref: "User", required: true },
+    teacherId: { type: Schema.Types.ObjectId, ref: "Teacher", required: true },
     title: { type: String, required: true },
     difficulty: { type: String, enum: ["Easy", "Medium", "Hard"], required: true },
     questions: { type: [QuizQuestionSchema], required: true },

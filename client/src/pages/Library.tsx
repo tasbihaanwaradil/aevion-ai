@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronDownIcon,
@@ -19,13 +19,15 @@ import {
 } from "lucide-react";
 import TeacherNavbar from "../components/TeacherNavabar";
 
+const API_BASE = "http://localhost:3000/api";
+
 const addQuizOptions = {
   ai: [
     {
       icon: FileTextIcon,
       title: "Generate Questions",
       description: "Create questions using a prompt and/or a file upload.",
-      route: "/Quiz/Generate",
+      route: "/Quizgenerator",
     },
   ],
   import: [
@@ -38,7 +40,8 @@ const addQuizOptions = {
     {
       icon: FileInputIcon,
       title: "Extract Questions from Document",
-      description: "Upload a file, and we'll find and extract the questions in it.",
+      description:
+        "Upload a file, and we'll find and extract the questions in it.",
       pro: true,
       route: "/Quiz/ExtractFromDocument",
     },
@@ -59,10 +62,12 @@ type Quiz = {
   modified: string;
 };
 
-// Swap this for your real fetch-on-mount once the quizzes endpoint
-// exists. Starts empty so the folder shows its empty state, same as
-// a freshly created Personal library.
-const quizzes: Quiz[] = [];
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
 const Library = () => {
   const navigate = useNavigate();
@@ -73,27 +78,77 @@ const Library = () => {
   const [joinCode, setJoinCode] = useState("");
   const [showAddQuizModal, setShowAddQuizModal] = useState(false);
 
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchQuizzes = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_BASE}/quiz`, { credentials: "include" });
+      const data = await res.json();
+      if (data.success) {
+        setQuizzes(
+          data.quizzes.map((q: any) => ({
+            id: q._id,
+            name: q.title,
+            modified: formatDate(q.updatedAt),
+          })),
+        );
+      } else {
+        setError(data.message || "Failed to load quizzes.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Could not reach the server.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQuizzes();
+  }, []);
+
+  const handleDeleteQuiz = async (id: string, name: string) => {
+    if (!window.confirm(`Delete "${name}"? This can't be undone.`)) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/quiz/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setQuizzes((prev) => prev.filter((q) => q.id !== id));
+      } else {
+        alert(data.message || "Failed to delete quiz.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Could not reach the server.");
+    }
+  };
+
   const handleJoinLibrary = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Wire this up to your join-library endpoint once it exists.
     console.log("Joining library with code", joinCode);
     setShowJoinModal(false);
     setJoinCode("");
   };
 
   const visibleQuizzes = quizzes.filter((quiz) =>
-    quiz.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
+    quiz.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
   );
 
   return (
     <div className="h-screen overflow-hidden bg-[#0A1238]">
       <TeacherNavbar />
 
-      {/* Body */}
       <div className="pt-20 h-screen">
         <div className="h-[calc(100vh-5rem)] px-4 md:px-16 lg:px-24 xl:px-32 py-8 flex items-center justify-center">
           <div className="w-full max-w-7xl h-full min-h-0 bg-white rounded-2xl shadow-2xl overflow-hidden flex">
-            {/* Sidebar */}
             <aside className="w-64 shrink-0 border-r border-gray-200 px-6 py-8 overflow-y-auto min-h-0">
               <h1 className="text-2xl font-bold text-gray-900 mb-6">Library</h1>
 
@@ -118,7 +173,6 @@ const Library = () => {
               </button>
             </aside>
 
-            {/* Main panel */}
             <main className="flex-1 min-h-0 px-8 py-8 overflow-y-auto">
               <div className="flex items-center justify-between mb-4 gap-4">
                 <div className="flex items-center gap-6 shrink-0">
@@ -200,7 +254,6 @@ const Library = () => {
 
               {tab === "quizzes" ? (
                 <>
-                  {/* Table header */}
                   <div className="grid grid-cols-[28px_1fr_140px_60px] items-center gap-4 border-t border-gray-200 py-3 text-xs font-bold tracking-wide text-[#007a8c]">
                     <span className="w-4 h-4 rounded-full border border-gray-300" />
                     <span>NAME</span>
@@ -211,26 +264,39 @@ const Library = () => {
                     <span className="text-center">DELETE</span>
                   </div>
 
-                  {/* Rows */}
-                  {visibleQuizzes.length > 0 ? (
+                  {loading ? (
+                    <div className="border-t border-gray-100 min-h-[240px] flex items-center justify-center">
+                      <p className="text-gray-500">Loading quizzes...</p>
+                    </div>
+                  ) : error ? (
+                    <div className="border-t border-gray-100 min-h-[240px] flex items-center justify-center">
+                      <p className="text-red-500">{error}</p>
+                    </div>
+                  ) : visibleQuizzes.length > 0 ? (
                     visibleQuizzes.map((quiz) => (
                       <div
                         key={quiz.id}
                         className="grid grid-cols-[28px_1fr_140px_60px] items-center gap-4 border-t border-gray-100 py-3"
                       >
                         <span className="w-4 h-4 rounded-full border border-gray-300" />
-                        <div className="flex items-center gap-2 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/Quiz/Edit/${quiz.id}`)}
+                          className="flex items-center gap-2 min-w-0 text-left"
+                        >
                           <ClipboardListIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                          <span className="text-sm font-medium text-gray-800 truncate">
+                          <span className="text-sm font-medium text-gray-800 truncate hover:underline">
                             {quiz.name}
                           </span>
-                        </div>
-                        <span className="text-sm text-gray-500">{quiz.modified}</span>
+                        </button>
+                        <span className="text-sm text-gray-500">
+                          {quiz.modified}
+                        </span>
 
-                        {/* Visual only for now — not wired up to a delete action yet. */}
                         <button
                           type="button"
                           aria-label={`Delete ${quiz.name}`}
+                          onClick={() => handleDeleteQuiz(quiz.id, quiz.name)}
                           className="text-gray-400 hover:text-red-500 transition flex justify-center"
                         >
                           <Trash2Icon className="w-4 h-4" />
@@ -245,7 +311,6 @@ const Library = () => {
                 </>
               ) : (
                 <>
-                  {/* Table header */}
                   <div className="flex items-center justify-between border-t border-gray-200 py-3 text-xs font-bold tracking-wide text-[#007a8c]">
                     <div className="flex items-center gap-3">
                       <span className="w-4 h-4 rounded-full border border-gray-300" />
@@ -267,7 +332,6 @@ const Library = () => {
         </div>
       </div>
 
-      {/* Join Library modal */}
       {showJoinModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-[70]">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -319,7 +383,6 @@ const Library = () => {
         </div>
       )}
 
-      {/* Add Quiz modal */}
       {showAddQuizModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-[70]">
           <div className="w-full max-w-lg max-h-[85vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
@@ -336,7 +399,6 @@ const Library = () => {
             </div>
 
             <div className="flex-1 min-h-0 overflow-y-auto border-t border-gray-100 px-6 py-5 space-y-6">
-              {/* Create with AI */}
               <div>
                 <h3 className="flex items-center gap-1.5 text-sm font-bold text-gray-800 mb-3">
                   Create with AI
@@ -372,7 +434,6 @@ const Library = () => {
                 </div>
               </div>
 
-              {/* Import Questions */}
               <div>
                 <h3 className="text-sm font-bold text-gray-800 mb-3">
                   Import Questions
@@ -396,11 +457,6 @@ const Library = () => {
                         <div>
                           <p className="text-sm font-semibold text-[#007a8c] flex items-center gap-2">
                             {option.title}
-                            {/* {option.pro && (
-                              <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                                PRO
-                              </span>
-                            )} */}
                           </p>
                           <p className="text-sm text-gray-500 mt-0.5">
                             {option.description}
@@ -412,7 +468,6 @@ const Library = () => {
                 </div>
               </div>
 
-              {/* Start From Scratch */}
               <div>
                 <h3 className="text-sm font-bold text-gray-800 mb-3">
                   Start From Scratch
