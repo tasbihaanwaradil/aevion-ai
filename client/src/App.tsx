@@ -1,27 +1,75 @@
-import Footer from "./components/footer";
+// import Footer from "./components/footer";
 import LenisScroll from "./components/lenis";
-import Navbar from "./components/navbar";
-import FaqSection from "./sections/faq-section";
-import FeaturesSection from "./sections/features-section";
-import HeroSection from "./sections/hero-section";
-import OurTeamSection from "./sections/our-team";
-import PricingSection from "./sections/pricing-section";
-import StatsSection from "./sections/stats-section";
-import TestimonialSection from "./sections/testimonial-section";
+// import Navbar from "./components/navbar";
+import { Route, Routes } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import UseCases from "./pages/UseCases";
+import Login from "./components/Login";
+import LinkedInPostGenerator from "./pages/LinkedInPostGenerator";
+import AcademicEmailGenerator from "./pages/AcademicEmailGenerator";
+import AutoCreatePresentationSlides from "./pages/AutoCreatePresentationSlides";
+import TimetableReminder from "./pages/Reminder";
+import PdfToSlidesConverter from "./pages/Pdf-to-SlideConverter";
+import Dashboard  from "./pages/Dashboard";
+import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
+import NewTearcherAccount from "./pages/NewTearcherAccount";
+import Aboutyou from "./pages/Aboutyou";
+import TeacherLogin from "./pages/Teacherlogin";
+import VerifyEmail from "./pages/VerifyEmail";
+import Demographics from "./pages/Demographics";
+import ForgotPassword from "./pages/ForgotPassword";
+import TeacherDashboard from "./pages/TeacherDahboard";
+import QuizLaunch from "./pages/QuizLaunch";
+import LaunchSpace from "./pages/LaunchSpace";
+import Library from "./pages/Library";
+import Rooms from "./pages/Rooms";
+import Reports from "./pages/Reports";
+import LiveResults from "./pages/LiveResults";
+import { Toaster } from 'react-hot-toast'
+import QuizGenerator from "./pages/Quizgenerator";
+import { AuthProvider } from "./context/AuthContext";
+import { TeacherAuthProvider } from "./context/TeacherAuthContext";
+import ResetPassword from "./pages/ResetPassword";
+
 
 export default function App() {
     return (
-        <div>
-            <LenisScroll />
-            <Navbar />
-            <HeroSection />
-            <StatsSection />
-            <FeaturesSection />
-            <FaqSection />
-            <OurTeamSection />
-            <PricingSection />
-            <TestimonialSection />
-            <Footer />
-        </div>
+        <AuthProvider>
+            <TeacherAuthProvider>
+                <Toaster />
+                <LenisScroll />
+                {/* <Navbar /> */}
+                <Routes>
+                    <Route path="/" element={<HomePage />}></Route>
+                    <Route path="/UseCases" element={<UseCases />} />
+                    <Route path="/login" element={<Login />}></Route>
+                    <Route path="/LinkedInPostGenerator" element={<LinkedInPostGenerator/>}/>
+                    <Route path="/AcademicEmailGenerator" element={<AcademicEmailGenerator/>}/>
+                    <Route path="/Quizgenerator" element={<QuizGenerator/>}/>
+                    <Route path="/AutoCreatePresentationSlides" element={<AutoCreatePresentationSlides/>}/>
+                    <Route path="/Pdf-to-SlideConverter" element={<PdfToSlidesConverter/>}/>
+                    <Route path="/Reminder" element={<TimetableReminder/>}/>
+                    <Route path="/Dashboard" element={<Dashboard/>}/>
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="*" element={<NotFound />} />
+                    <Route path="/NewTeacherAccount" element={<NewTearcherAccount/>}/>
+                    <Route path="/Demographics" element={<Demographics/>}/>
+                    <Route path="/Aboutyou" element={<Aboutyou/>}/>
+                    <Route path="/Teacherlogin" element={<TeacherLogin/>}/>
+                    <Route path="/VerifyEmail" element={<VerifyEmail/>}/>
+                    <Route path="/ForgotPassword" element={<ForgotPassword/>}/>
+                    <Route path="/TeacherDashboard" element={<TeacherDashboard/>}/>
+                    <Route path="/QuizLaunch" element={<QuizLaunch/>}/>
+                    <Route path="/LaunchSpace" element={<LaunchSpace/>}/>
+                    <Route path="/Library" element={<Library/>}/>
+                    <Route path="/Rooms" element={<Rooms/>}/>
+                    <Route path="/Reports" element={<Reports/>}/>
+                    <Route path="/LiveResults" element={<LiveResults/>}/>
+                    <Route path="/ResetPassword" element={<ResetPassword/>}/>
+                </Routes>
+                {/* <Footer /> */}
+            </TeacherAuthProvider>
+        </AuthProvider>
     )
 }
