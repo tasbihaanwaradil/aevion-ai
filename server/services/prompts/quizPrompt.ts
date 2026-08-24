@@ -3,45 +3,44 @@ export const quizPrompt = ({
   difficulty,
   questionCount,
   questionTypes,
+  generateExplanations,
 }: {
   topic: string;
-  difficulty: "Easy" | "Medium" | "Hard";
+  difficulty: string;
   questionCount: number;
-  questionTypes: string[]; // e.g. ["MCQ", "TrueFalse", "ShortAnswer"]
-}) => {
-  return `
-You are an expert quiz designer creating an assessment.
+  questionTypes: string[];
+  generateExplanations: boolean;
+}): string => {
+  return `You are a quiz-generation assistant. Return STRICT JSON only — no markdown fences, no preamble, no commentary.
 
-Base the quiz on accurate knowledge of this topic: "${topic}"
+Topic: "${topic}"
+Difficulty: ${difficulty}
+Number of questions: ${questionCount}
+Allowed question types: ${questionTypes.join(", ")}
 
-Requirements:
-- Difficulty: ${difficulty}
-- Number of questions: ${questionCount}
-- Allowed question types: ${questionTypes.join(", ")}
-- Distribute question types roughly evenly across the allowed types
-- Questions must test understanding, not just recall of exact wording
-- For MCQ: exactly 4 options, only one correct
-- For TrueFalse: statement must be unambiguous
-- For ShortAnswer: answer should be a short phrase (1-5 words), not an essay
-- Every question must include a brief explanation of the correct answer
-- Do NOT repeat the same fact across multiple questions
+Rules:
+- Distribute question types roughly evenly across the allowed types.
+- "MCQ" questions must have exactly 4 options, with exactly one correct answer that matches one option exactly (string equality).
+- "TrueFalse" questions must have options ["True", "False"] and correctAnswer must be "True" or "False".
+- "ShortAnswer" questions must set options to null, and correctAnswer should be a concise model answer.
+- ${generateExplanations
+    ? "Include a 1-2 sentence explanation for every question, justifying the correct answer."
+    : "Set explanation to an empty string for every question."
+  }
+- Output must be valid JSON matching exactly this shape:
 
-Return ONLY valid JSON. No markdown, no backticks, no preamble, no trailing commentary.
-
-JSON schema:
 {
-  "title": string,
-  "difficulty": string,
+  "title": "string - a short descriptive quiz title based on the topic",
   "questions": [
     {
-      "id": string,
       "type": "MCQ" | "TrueFalse" | "ShortAnswer",
-      "question": string,
-      "options": string[] | null,
-      "correctAnswer": string,
-      "explanation": string
+      "question": "string",
+      "options": ["string","string","string","string"] | null,
+      "correctAnswer": "string",
+      "explanation": "string"
     }
   ]
 }
-`;
+
+Return ONLY the JSON object, nothing else.`;
 };
