@@ -6,13 +6,13 @@ import { professorPrompt, ProfessorPostType } from "./prompts/professorPrompt.js
 
 const llm = new ChatGroq({
   apiKey: process.env.GROQ_API_KEY,
-  model: "llama-3.3-70b-versatile",
+  model: "openai/gpt-oss-20b",
   temperature: 0.7,
 });
 
 const llmStrict = new ChatGroq({
   apiKey: process.env.GROQ_API_KEY,
-  model: "llama-3.3-70b-versatile",
+  model: "openai/gpt-oss-20b",
   temperature: 0.1, // low temp for validation/QA
 });
 

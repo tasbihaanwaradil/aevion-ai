@@ -3,13 +3,12 @@ import { StringOutputParser } from "@langchain/core/output_parsers";
 
 export const llm = new ChatGroq({
   apiKey: process.env.GROQ_API_KEY,
-  model: "llama-3.3-70b-versatile",
+  model: "openai/gpt-oss-20b",
   temperature: 0.7,
 });
 
 export const outputParser = new StringOutputParser();
 
-// Reusable helper
 export const generateText = async (
   prompt: string
 ): Promise<string> => {
