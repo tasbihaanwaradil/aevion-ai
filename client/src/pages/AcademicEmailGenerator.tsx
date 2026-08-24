@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import SideNavbar from "../components/SideNavbar";
 
 // ─────────────────────────────────────────────────────────────
@@ -71,6 +71,14 @@ interface ScheduleResponse {
 interface ScheduleListResponse {
   success: boolean;
   scheduled: ScheduledEmailEntry[];
+}
+
+type ToastKind = "info" | "success" | "error";
+
+interface Toast {
+  id: number;
+  kind: ToastKind;
+  message: string;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -243,6 +251,45 @@ const formatScheduledFor = (iso: string): string =>
     minute: "2-digit",
   });
 
+const PURPOSE_MAX = 400;
+
+// ─────────────────────────────────────────────────────────────
+// Toast (replaces blocking alert() calls)
+// ─────────────────────────────────────────────────────────────
+
+const ToastStack: React.FC<{ toasts: Toast[]; onDismiss: (id: number) => void }> = ({
+  toasts,
+  onDismiss,
+}) => (
+  <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm">
+    {toasts.map((t) => (
+      <div
+        key={t.id}
+        role="status"
+        className={`flex items-start gap-2.5 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium border animate-[fadeIn_0.15s_ease-out] ${
+          t.kind === "success"
+            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+            : t.kind === "error"
+            ? "bg-red-50 text-red-700 border-red-200"
+            : "bg-white text-gray-700 border-gray-200"
+        }`}
+      >
+        <span className="mt-0.5">
+          {t.kind === "success" ? "✓" : t.kind === "error" ? "⚠️" : "ℹ️"}
+        </span>
+        <span className="flex-1 leading-snug">{t.message}</span>
+        <button
+          onClick={() => onDismiss(t.id)}
+          aria-label="Dismiss notification"
+          className="text-gray-400 hover:text-gray-600 shrink-0"
+        >
+          ✕
+        </button>
+      </div>
+    ))}
+  </div>
+);
+
 // ─────────────────────────────────────────────────────────────
 // Main Component
 // ─────────────────────────────────────────────────────────────
@@ -259,9 +306,11 @@ const AcademicEmailGenerator: React.FC = () => {
     tone: "Formal",
     senderName: "",
   });
+  const [recipientEmailTouched, setRecipientEmailTouched] = useState(false);
 
   // Bulk mode state
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("single");
+  const [pendingModeSwitch, setPendingModeSwitch] = useState<DeliveryMode | null>(null);
   const [recipientListRaw, setRecipientListRaw] = useState("");
   const [parsedRecipients, setParsedRecipients] = useState<Recipient[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -278,6 +327,7 @@ const AcademicEmailGenerator: React.FC = () => {
   const [editableEmail, setEditableEmail] = useState<GeneratedEmail | null>(null);
   const [bulkMeta, setBulkMeta] = useState<BulkMeta | null>(null);
   const [agentSteps, setAgentSteps] = useState<string[]>([]);
+  const [showAgentSteps, setShowAgentSteps] = useState(false);
   const [emailId, setEmailId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [hasEdited, setHasEdited] = useState(false);
@@ -291,6 +341,7 @@ const AcademicEmailGenerator: React.FC = () => {
   const [sendErrorMsg, setSendErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
   const [showBccPreview, setShowBccPreview] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   // Scheduler state
   const [sendTiming, setSendTiming] = useState<SendTiming>("now");
@@ -304,6 +355,41 @@ const AcademicEmailGenerator: React.FC = () => {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const debouncedPurpose = useDebounce(formData.purpose, 700);
+  const purposeRef = useRef<HTMLTextAreaElement>(null);
+  const recipientListRef = useRef<HTMLTextAreaElement>(null);
+  const senderNameRef = useRef<HTMLInputElement>(null);
+
+  // Grows a textarea to fit its content (up to a cap) instead of always
+  // reserving a fixed block of empty space for short input.
+  const autoResize = (el: HTMLTextAreaElement | null, maxPx = 220) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, maxPx)}px`;
+  };
+
+  useEffect(() => {
+    autoResize(purposeRef.current);
+  }, [formData.purpose]);
+
+  useEffect(() => {
+    autoResize(recipientListRef.current);
+  }, [recipientListRaw]);
+
+  // ── Toast helpers ────────────────────────────────────────────────────────────
+  const showToast = useCallback((message: string, kind: ToastKind = "info") => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, kind, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, kind === "error" ? 6000 : 4000);
+  }, []);
+  const dismissToast = (id: number) =>
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+
+  // ── Autofocus the first field on mount ───────────────────────────────────────
+  useEffect(() => {
+    senderNameRef.current?.focus();
+  }, []);
 
   // ── Parse recipient list on change ───────────────────────────────────────────
   useEffect(() => {
@@ -337,7 +423,7 @@ const AcademicEmailGenerator: React.FC = () => {
         const data: SuggestResponse = await res.json();
         if (data.success) setSuggestions(data.suggestions || []);
       } catch {
-        /* silent */
+        /* silent — suggestions are a non-critical enhancement */
       } finally {
         setLoadingSuggest(false);
       }
@@ -356,7 +442,7 @@ const AcademicEmailGenerator: React.FC = () => {
       const data: ScheduleListResponse = await res.json();
       if (data.success) setScheduledList(data.scheduled || []);
     } catch {
-      /* silent */
+      showToast("Couldn't load scheduled emails. Try refreshing.", "error");
     } finally {
       setLoadingScheduledList(false);
     }
@@ -364,6 +450,7 @@ const AcademicEmailGenerator: React.FC = () => {
 
   useEffect(() => {
     if (showScheduledPanel) fetchScheduledList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showScheduledPanel]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
@@ -373,6 +460,7 @@ const AcademicEmailGenerator: React.FC = () => {
     >
   ) => {
     const { name, value } = e.target;
+    if (name === "purpose" && value.length > PURPOSE_MAX) return;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (name === "purpose") setSuggestions([]);
     setSendStatus("idle");
@@ -382,15 +470,39 @@ const AcademicEmailGenerator: React.FC = () => {
   };
 
   const applySuggestion = (s: string) => {
-    setFormData((prev) => ({ ...prev, purpose: s }));
+    setFormData((prev) => ({ ...prev, purpose: s.slice(0, PURPOSE_MAX) }));
     setSuggestions([]);
+  };
+
+  const hasUnsentContent = generatedEmail !== null && sendStatus !== "success" && scheduleStatus !== "success";
+
+  const requestModeSwitch = (mode: DeliveryMode) => {
+    if (mode === deliveryMode) return;
+    if (hasUnsentContent) {
+      setPendingModeSwitch(mode);
+      return;
+    }
+    switchMode(mode);
+  };
+
+  const switchMode = (mode: DeliveryMode) => {
+    setDeliveryMode(mode);
+    setGeneratedEmail(null);
+    setEditableEmail(null);
+    setBulkMeta(null);
+    setAgentSteps([]);
+    setCommittedRecipients([]); // clear stale snapshot on mode switch
+    setPendingModeSwitch(null);
   };
 
   const handleGenerate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.purpose.trim() || !formData.recipient.trim()) return;
+    if (!formData.purpose.trim() || !formData.recipient.trim()) {
+      showToast("Fill in the recipient and purpose fields first.", "error");
+      return;
+    }
     if (deliveryMode !== "single" && parsedRecipients.length === 0) {
-      alert("Please enter at least one recipient email address.");
+      showToast("Add at least one recipient email address.", "error");
       return;
     }
 
@@ -451,13 +563,22 @@ const AcademicEmailGenerator: React.FC = () => {
         }
 
         if (data.agentSteps) setAgentSteps(data.agentSteps);
+        showToast("Email drafted — review it before sending.", "success");
       } else {
-        alert(data.message ?? "Something went wrong");
+        showToast(data.message ?? "Couldn't generate the email. Try again.", "error");
       }
     } catch {
-      alert("Error connecting to server");
+      showToast("Couldn't reach the server. Check your connection and try again.", "error");
     } finally {
       setLoadingGenerate(false);
+    }
+  };
+
+  // Ctrl/Cmd+Enter from the purpose field submits the form
+  const handlePurposeKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      purposeRef.current?.closest("form")?.requestSubmit();
     }
   };
 
@@ -486,7 +607,13 @@ const AcademicEmailGenerator: React.FC = () => {
     }
 
     if (!formData.recipientEmail.trim()) {
-      alert("Please enter the recipient's email address.");
+      setRecipientEmailTouched(true);
+      showToast("Enter the recipient's email address first.", "error");
+      return;
+    }
+    if (!isValidEmail(formData.recipientEmail)) {
+      setRecipientEmailTouched(true);
+      showToast("That doesn't look like a valid email address.", "error");
       return;
     }
 
@@ -510,6 +637,7 @@ const AcademicEmailGenerator: React.FC = () => {
       if (data.success) {
         setSendStatus("success");
         setIsEditing(false);
+        showToast("Email sent successfully.", "success");
       } else {
         setSendStatus("error");
         setSendErrorMsg(data.message ?? "Failed to send email.");
@@ -526,7 +654,7 @@ const AcademicEmailGenerator: React.FC = () => {
     if (!editableEmail || !bulkMeta) return;
 
     if (committedRecipients.length === 0) {
-      alert("No recipients to send to. Please regenerate the email.");
+      showToast("No recipients to send to — regenerate the email.", "error");
       return;
     }
 
@@ -559,6 +687,7 @@ const AcademicEmailGenerator: React.FC = () => {
       if (data.success) {
         setSendStatus("success");
         setIsEditing(false);
+        showToast(`Sent to ${bccList.length} recipient${bccList.length !== 1 ? "s" : ""}.`, "success");
       } else {
         setSendStatus("error");
         setSendErrorMsg(data.message ?? "Bulk send failed.");
@@ -582,12 +711,13 @@ const AcademicEmailGenerator: React.FC = () => {
     }
 
     if (deliveryMode === "single" && !formData.recipientEmail.trim()) {
-      alert("Please enter the recipient's email address.");
+      setRecipientEmailTouched(true);
+      showToast("Enter the recipient's email address first.", "error");
       return;
     }
 
     if (deliveryMode !== "single" && committedRecipients.length === 0) {
-      alert("No recipients to schedule for. Please regenerate the email.");
+      showToast("No recipients to schedule for — regenerate the email.", "error");
       return;
     }
 
@@ -628,6 +758,7 @@ const AcademicEmailGenerator: React.FC = () => {
       if (data.success) {
         setScheduleStatus("success");
         setIsEditing(false);
+        showToast(`Scheduled for ${formatScheduledFor(scheduledForISO)}.`, "success");
         if (showScheduledPanel) fetchScheduledList();
       } else {
         setScheduleStatus("error");
@@ -651,11 +782,12 @@ const AcademicEmailGenerator: React.FC = () => {
       const data = await res.json();
       if (data.success) {
         setScheduledList((prev) => prev.filter((e) => e.id !== id));
+        showToast("Scheduled email cancelled.", "success");
       } else {
-        alert(data.message ?? "Failed to cancel.");
+        showToast(data.message ?? "Failed to cancel.", "error");
       }
     } catch {
-      alert("Error connecting to server.");
+      showToast("Error connecting to server.", "error");
     } finally {
       setCancellingId(null);
     }
@@ -679,6 +811,11 @@ const AcademicEmailGenerator: React.FC = () => {
     ? 1
     : 0;
 
+  const recipientEmailInvalid =
+    recipientEmailTouched &&
+    formData.recipientEmail.trim().length > 0 &&
+    !isValidEmail(formData.recipientEmail);
+
   const sendDisabled =
     loadingSend ||
     loadingSchedule ||
@@ -700,17 +837,19 @@ const AcademicEmailGenerator: React.FC = () => {
         title="AI Tools"
       />
 
+      <ToastStack toasts={toasts} onDismiss={dismissToast} />
+
       <div
-        className={`px-6 pt-28 pb-16 transition-all duration-300 ${
+        className={`px-6 pt-20 pb-16 transition-all duration-300 ${
           isOpen ? "ml-64" : "ml-0"
         }`}
       >
         {/* Header */}
-        <div className="text-center mb-10 flex flex-col items-center gap-3">
+        <div className="text-center mb-8 flex flex-col items-center gap-3">
           <h1 className="text-4xl font-bold text-white">
             Academic Email Generator
           </h1>
-          <p className="text-gray-400 mt-2">
+          <p className="text-gray-400 mt-1">
             Generate, edit, schedule, and send professional academic emails —
             single or broadcast
           </p>
@@ -720,7 +859,7 @@ const AcademicEmailGenerator: React.FC = () => {
             onClick={() => setShowScheduledPanel((v) => !v)}
             className="mt-1 text-xs px-4 py-2 rounded-full bg-white/10 text-gray-200 border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
           >
-             {showScheduledPanel ? "Hide" : "View"} Scheduled Emails
+            {showScheduledPanel ? "Hide" : "View"} Scheduled Emails
           </button>
         </div>
 
@@ -741,12 +880,17 @@ const AcademicEmailGenerator: React.FC = () => {
             </div>
 
             {loadingScheduledList ? (
-              <p className="text-sm text-gray-400 text-center py-6">
-                Loading...
-              </p>
+              <div className="flex flex-col gap-2 py-4">
+                {[0, 1].map((i) => (
+                  <div
+                    key={i}
+                    className="h-14 rounded-xl bg-gray-100 animate-pulse"
+                  />
+                ))}
+              </div>
             ) : scheduledList.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-6">
-                No scheduled emails yet.
+                Nothing scheduled yet — emails you schedule for later will show up here.
               </p>
             ) : (
               <div className="flex flex-col gap-3 max-h-80 overflow-y-auto">
@@ -766,7 +910,7 @@ const AcademicEmailGenerator: React.FC = () => {
                         >
                           {entry.deliveryMode === "broadcast"
                             ? " Broadcast"
-                            : " Single"}
+                            : "Single"}
                         </span>
                         <p className="text-sm font-semibold text-gray-900 truncate">
                           {entry.subject}
@@ -804,13 +948,7 @@ const AcademicEmailGenerator: React.FC = () => {
             <button
               key={mode}
               type="button"
-              onClick={() => {
-                setDeliveryMode(mode);
-                setGeneratedEmail(null);
-                setEditableEmail(null);
-                setBulkMeta(null);
-                setCommittedRecipients([]); // clear stale snapshot on mode switch
-              }}
+              onClick={() => requestModeSwitch(mode)}
               className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border ${
                 deliveryMode === mode
                   ? "bg-[#2d5f6e] text-white border-[#2d5f6e] shadow-lg"
@@ -823,7 +961,28 @@ const AcademicEmailGenerator: React.FC = () => {
           ))}
         </div>
 
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+        {/* Mode-switch confirmation — replaces a jarring window.confirm() */}
+        {pendingModeSwitch && (
+          <div className="max-w-6xl mx-auto mb-6 flex items-center justify-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-4 py-3">
+            <span>
+              Switching modes will discard the drafted email above — it hasn't been sent yet.
+            </span>
+            <button
+              onClick={() => switchMode(pendingModeSwitch)}
+              className="font-semibold underline shrink-0"
+            >
+              Switch anyway
+            </button>
+            <button
+              onClick={() => setPendingModeSwitch(null)}
+              className="text-amber-600 shrink-0"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-start">
 
           {/* ── LEFT: Input ── */}
           <form
@@ -836,6 +995,7 @@ const AcademicEmailGenerator: React.FC = () => {
                 Your Name
               </label>
               <input
+                ref={senderNameRef}
                 type="text"
                 name="senderName"
                 value={formData.senderName}
@@ -849,6 +1009,7 @@ const AcademicEmailGenerator: React.FC = () => {
             <div>
               <label className="block font-semibold mb-1.5 text-gray-800 text-sm">
                 {isBulkMode ? "Recipient Group Label" : "Recipient Name"}
+                <span className="text-red-400 ml-0.5">*</span>
               </label>
               <input
                 type="text"
@@ -870,21 +1031,34 @@ const AcademicEmailGenerator: React.FC = () => {
               <div>
                 <label className="block font-semibold mb-1.5 text-gray-800 text-sm">
                   Recipient Email
+                  <span className="text-red-400 ml-0.5">*</span>
                 </label>
                 <input
                   type="email"
                   name="recipientEmail"
                   value={formData.recipientEmail}
                   onChange={handleChange}
+                  onBlur={() => setRecipientEmailTouched(true)}
                   placeholder="E.g. drsmith@university.edu"
-                  className="w-full h-11 px-4 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] text-sm"
+                  aria-invalid={recipientEmailInvalid}
+                  className={`w-full h-11 px-4 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 text-sm ${
+                    recipientEmailInvalid
+                      ? "ring-2 ring-red-300 focus:ring-red-400"
+                      : "focus:ring-[#2d5f6e]"
+                  }`}
                 />
+                {recipientEmailInvalid && (
+                  <p className="text-red-500 text-xs mt-1">
+                    That doesn't look like a valid email address.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <label className="block font-semibold text-gray-800 text-sm">
                     Recipient List
+                    <span className="text-red-400 ml-0.5">*</span>
                   </label>
                   {parsedRecipients.length > 0 && (
                     <span className="text-xs text-emerald-600 font-medium">
@@ -895,14 +1069,16 @@ const AcademicEmailGenerator: React.FC = () => {
                 </div>
 
                 <textarea
+                  ref={recipientListRef}
                   value={recipientListRaw}
                   onChange={(e) => setRecipientListRaw(e.target.value)}
+                  rows={3}
                   placeholder={`One email per line (or comma-separated on one line):\nalice@university.edu\nnimra@gmail.com\ndua@university.edu\n\nOr JSON: ["alice@uni.edu", "bob@uni.edu"]`}
-                  className="w-full h-28 px-4 py-3 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] text-sm font-mono resize-none"
+                  className="w-full min-h-[72px] max-h-[220px] px-4 py-3 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] text-sm font-mono resize-none overflow-y-auto"
                 />
 
                 {parseError && (
-                  <p className="text-red-500 text-xs">⚠️ {parseError}</p>
+                  <p className="text-red-500 text-xs"> {parseError}</p>
                 )}
 
                 {parsedRecipients.length > 0 && !parseError && (
@@ -914,7 +1090,7 @@ const AcademicEmailGenerator: React.FC = () => {
                     }`}
                   >
                     <span className="text-base">
-                      {parsedRecipients.length >= 60 ? "" : "✓"}
+                      {parsedRecipients.length >= 60 ? "🚀" : "✓"}
                     </span>
                     <span className="font-semibold">
                       {parsedRecipients.length} recipient
@@ -940,22 +1116,40 @@ const AcademicEmailGenerator: React.FC = () => {
 
             {/* Purpose */}
             <div className="relative">
-              <label className="block font-semibold mb-1.5 text-gray-800 text-sm">
-                Email Purpose
-                {loadingSuggest && (
-                  <span className="ml-2 text-xs font-normal text-[#2d5f6e] animate-pulse">
-                    Generating suggestions...
-                  </span>
-                )}
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block font-semibold text-gray-800 text-sm">
+                  Email Purpose
+                  <span className="text-red-400 ml-0.5">*</span>
+                  {loadingSuggest && (
+                    <span className="ml-2 text-xs font-normal text-[#2d5f6e] animate-pulse">
+                      Generating suggestions...
+                    </span>
+                  )}
+                </label>
+                <span
+                  className={`text-xs ${
+                    formData.purpose.length >= PURPOSE_MAX
+                      ? "text-red-400"
+                      : "text-gray-300"
+                  }`}
+                >
+                  {formData.purpose.length}/{PURPOSE_MAX}
+                </span>
+              </div>
               <textarea
+                ref={purposeRef}
                 name="purpose"
                 value={formData.purpose}
                 onChange={handleChange}
+                onKeyDown={handlePurposeKeyDown}
                 required
+                rows={2}
                 placeholder="E.g. Inform students that the AI Quiz is postponed to Monday June 9..."
-                className="w-full h-24 px-4 py-3 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] resize-none text-sm"
+                className="w-full min-h-[64px] max-h-[220px] px-4 py-3 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] resize-none text-sm overflow-y-auto"
               />
+              <p className="text-[11px] text-gray-300 mt-1">
+                Tip: press ⌘/Ctrl + Enter to generate
+              </p>
 
               {suggestions.length > 0 &&
                 (() => {
@@ -979,7 +1173,7 @@ const AcademicEmailGenerator: React.FC = () => {
                   return (
                     <div className="mt-2 flex flex-col gap-1.5">
                       <p className="text-xs text-gray-500 font-medium">
-                         Suggestions — click to apply:
+                        💡 Suggestions — click to apply:
                       </p>
                       {safeSuggestions.map((s, i) => (
                         <button
@@ -1027,8 +1221,11 @@ const AcademicEmailGenerator: React.FC = () => {
                   recipientListRaw.trim().length > 0 &&
                   !!parseError)
               }
-              className="mt-1 w-full h-13 py-3.5 rounded-2xl bg-[#2d5f6e] text-white font-bold text-base hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)] disabled:opacity-50"
+              className="mt-1 w-full h-13 py-3.5 rounded-2xl bg-[#2d5f6e] text-white font-bold text-base hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)] disabled:opacity-50 flex items-center justify-center gap-2"
             >
+              {loadingGenerate && (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              )}
               {loadingGenerate
                 ? "Generating..."
                 : isBulkMode && parsedRecipients.length > 0
@@ -1073,7 +1270,7 @@ const AcademicEmailGenerator: React.FC = () => {
                       onClick={handleDoneEditing}
                       className="text-sm font-semibold text-white bg-[#2d5f6e] px-3 py-1.5 rounded-lg hover:bg-[#244d5a] transition-all"
                     >
-                      ✓ Done
+                       Done
                     </button>
                   ) : (
                     <button
@@ -1087,7 +1284,7 @@ const AcademicEmailGenerator: React.FC = () => {
                     onClick={handleCopy}
                     className="text-sm text-[#2d5f6e] hover:underline font-medium"
                   >
-                    {copied ? " Copied!" : "Copy"}
+                    {copied ? "✓ Copied!" : "Copy"}
                   </button>
                 </div>
               )}
@@ -1102,7 +1299,7 @@ const AcademicEmailGenerator: React.FC = () => {
               )}
               {hasEdited && (
                 <span className="text-xs text-yellow-600 font-medium">
-                 Edited by you
+                  Edited by you
                 </span>
               )}
               {bulkMeta && (
@@ -1111,10 +1308,35 @@ const AcademicEmailGenerator: React.FC = () => {
                   {bulkMeta.status}
                 </span>
               )}
+              {/* {agentSteps.length > 0 && (
+                // <button
+                //   onClick={() => setShowAgentSteps((v) => !v)}
+                //   className="text-xs text-gray-500 hover:text-[#2d5f6e] underline"
+                // >
+                //   {showAgentSteps ? "Hide" : "Show"} how this was drafted ({agentSteps.length} steps)
+                // </button>
+              )} */}
             </div>
 
+            {/* Agent thinking log — shows work the agent already does, previously hidden */}
+            {showAgentSteps && agentSteps.length > 0 && (
+              <div className="mb-3 bg-gray-900 rounded-xl p-3 max-h-32 overflow-y-auto">
+                {agentSteps.map((step, i) => (
+                  <p key={i} className="text-[11px] text-emerald-400 font-mono leading-relaxed">
+                    <span className="text-gray-500">[{i + 1}]</span> {step}
+                  </p>
+                ))}
+              </div>
+            )}
+
             {/* Email content */}
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 bg-gray-50 flex-1 overflow-y-auto min-h-[260px]">
+            <div
+              className={`border-2 border-dashed border-gray-300 rounded-xl p-5 bg-gray-50 overflow-y-auto ${
+                editableEmail && !loadingGenerate
+                  ? "max-h-[480px]"
+                  : "min-h-[260px] flex-1"
+              }`}
+            >
               {loadingGenerate ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3">
                   <div className="w-8 h-8 border-3 border-[#2d5f6e] border-t-transparent rounded-full animate-spin" />
@@ -1125,6 +1347,7 @@ const AcademicEmailGenerator: React.FC = () => {
                       : ""}
                     ...
                   </p>
+                  <p className="text-gray-300 text-xs">This usually takes a few seconds</p>
                 </div>
               ) : editableEmail ? (
                 <div className="flex flex-col gap-3 h-full">
@@ -1176,9 +1399,12 @@ const AcademicEmailGenerator: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <p className="text-gray-400 text-center mt-16 text-sm">
-                  Fill in the form and click Generate Email
-                </p>
+                <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
+                  {/* <span className="text-3xl">📝</span>
+                  <p className="text-gray-400 text-sm">
+                    Fill in the form and click Generate Email
+                  </p> */}
+                </div>
               )}
             </div>
 
@@ -1187,7 +1413,7 @@ const AcademicEmailGenerator: React.FC = () => {
               <div className="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold text-gray-700">
-                    📣 Broadcast Details
+                     Broadcast Details
                   </p>
                   <span
                     className={`text-xs font-bold px-2 py-0.5 rounded-full ${
@@ -1197,7 +1423,7 @@ const AcademicEmailGenerator: React.FC = () => {
                     }`}
                   >
                     {bulkMeta.status === "ready_to_send"
-                      ? "✓ Ready"
+                      ? " Ready"
                       : bulkMeta.status}
                   </span>
                 </div>
@@ -1215,7 +1441,7 @@ const AcademicEmailGenerator: React.FC = () => {
                   </div>
                   <div className="col-span-2">
                     <span className="font-medium text-gray-700">Privacy:</span>{" "}
-                    All addresses hidden via BCC ✓
+                    All addresses hidden via BCC 
                   </div>
                 </div>
 
@@ -1284,7 +1510,7 @@ const AcademicEmailGenerator: React.FC = () => {
                           : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
                       }`}
                     >
-                       Schedule for Later
+                      Schedule for Later
                     </button>
                   </div>
                 )}
@@ -1316,7 +1542,7 @@ const AcademicEmailGenerator: React.FC = () => {
                 {/* Status messages */}
                 {sendStatus === "success" && (
                   <p className="text-teal-600 font-medium text-sm mb-3 text-center">
-                    ✓{" "}
+                    {" "}
                     {isBulkMode
                       ? `Email sent to ${recipientCount} recipients!`
                       : "Email sent successfully!"}
@@ -1324,19 +1550,19 @@ const AcademicEmailGenerator: React.FC = () => {
                 )}
                 {sendStatus === "error" && (
                   <p className="text-red-500 font-medium text-sm mb-3 text-center">
-                     {sendErrorMsg}
+                    {sendErrorMsg}
                   </p>
                 )}
                 {scheduleStatus === "success" && (
                   <p className="text-teal-600 font-medium text-sm mb-3 text-center">
-                    ✓ Scheduled for{" "}
+                    Scheduled for{" "}
                     {formatScheduledFor(localToISOString(scheduledForLocal))}
                     {isBulkMode ? ` — ${recipientCount} recipients` : ""}!
                   </p>
                 )}
                 {scheduleStatus === "error" && (
                   <p className="text-red-500 font-medium text-sm mb-3 text-center">
-                     {scheduleErrorMsg}
+                   {scheduleErrorMsg}
                   </p>
                 )}
 
@@ -1345,14 +1571,17 @@ const AcademicEmailGenerator: React.FC = () => {
                     onClick={handleDoneEditing}
                     className="w-full py-3.5 rounded-2xl bg-[#245463] text-white font-bold text-base hover:bg-[#245463] transition-all"
                   >
-                    ✓ Done Editing — Ready to Send
+                    Done Editing — Ready to Send
                   </button>
                 ) : (
                   <button
                     onClick={handleSend}
                     disabled={sendDisabled}
-                    className="w-full py-3.5 rounded-2xl bg-[#2d5f6e] text-white font-bold text-base hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3.5 rounded-2xl bg-[#2d5f6e] text-white font-bold text-base hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
+                    {(loadingSend || loadingSchedule) && (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    )}
                     {loadingSend || loadingSchedule
                       ? sendTiming === "schedule"
                         ? "Scheduling..."

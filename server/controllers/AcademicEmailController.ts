@@ -12,8 +12,25 @@ export const generateEmail = async (req: Request, res: Response) => {
     const { userId } = req.session;
     const { purpose, recipient, recipientEmail, tone, senderName } = req.body;
 
-    if (!purpose || !recipient || !tone) {
-      return res.status(400).json({ message: "purpose, recipient, and tone are required." });
+    if (!purpose || !purpose.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please describe the purpose of the email before generating.",
+      });
+    }
+
+    if (!recipient || !recipient.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a recipient name before generating.",
+      });
+    }
+
+    if (!tone || !tone.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a tone before generating.",
+      });
     }
 
     // 🤖 Run the real agent (plan → tools → reflect → output)
@@ -33,23 +50,26 @@ export const generateEmail = async (req: Request, res: Response) => {
     });
 
     res.json({
-  success: true,
-  email: {
-    subject: result.subject,
-    body: result.body,
-  },
+      success: true,
+      email: {
+        subject: result.subject,
+        body: result.body,
+      },
 
-  audience: result.audience,
-  emailType: result.emailType,
+      audience: result.audience,
+      emailType: result.emailType,
 
-  agentSteps: result.agentSteps,
+      agentSteps: result.agentSteps,
 
-  emailId: saved._id,
-});
+      emailId: saved._id,
+    });
 
   } catch (error: any) {
     console.error("[generateEmail Agent]", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while generating the email. Please try again.",
+    });
   }
 };
 
@@ -62,7 +82,9 @@ export const suggestContent = async (req: Request, res: Response) => {
     res.json({ success: true, suggestions });
   } catch (error: any) {
     console.error("[suggestContent]", error);
-    res.status(500).json({ message: error.message });
+    // Suggestions are a non-critical enhancement — fail quietly with an empty list
+    // rather than surfacing a scary error for something the user didn't explicitly request.
+    res.json({ success: true, suggestions: [] });
   }
 };
 
@@ -72,8 +94,25 @@ export const sendGeneratedEmail = async (req: Request, res: Response) => {
   try {
     const { recipientEmail, subject, body, senderName, emailId } = req.body;
 
-    if (!recipientEmail || !subject || !body) {
-      return res.status(400).json({ message: "recipientEmail, subject, and body are required." });
+    if (!recipientEmail || !recipientEmail.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a recipient email address before sending.",
+      });
+    }
+
+    if (!subject || !subject.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "This email needs a subject line before it can be sent.",
+      });
+    }
+
+    if (!body || !body.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "This email needs a body before it can be sent.",
+      });
     }
 
     const result = await sendEmail({ to: recipientEmail, subject, body, fromName: senderName });
@@ -86,7 +125,10 @@ export const sendGeneratedEmail = async (req: Request, res: Response) => {
 
   } catch (error: any) {
     console.error("[sendGeneratedEmail]", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while sending the email. Please check your connection and try again.",
+    });
   }
 };
 
@@ -97,7 +139,10 @@ export const getEmailHistory = async (req: Request, res: Response) => {
     const { userId } = req.session;
 
     if (!userId) {
-      return res.status(401).json({ message: "Not logged in." });
+      return res.status(401).json({
+        success: false,
+        message: "Please log in to view your email history.",
+      });
     }
 
     const emails = await AcademicEmail.find({ userId }).sort({ createdAt: -1 });
@@ -105,6 +150,9 @@ export const getEmailHistory = async (req: Request, res: Response) => {
 
   } catch (error: any) {
     console.error("[getEmailHistory]", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Couldn't load your email history. Please try again.",
+    });
   }
 };
