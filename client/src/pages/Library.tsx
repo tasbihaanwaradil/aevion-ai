@@ -16,6 +16,9 @@ import {
   FilePlusIcon,
   ClipboardListIcon,
   Trash2Icon,
+  MoreVerticalIcon,
+  Share2Icon,
+  DownloadIcon,
 } from "lucide-react";
 import TeacherNavbar from "../components/TeacherNavabar";
 
@@ -60,6 +63,8 @@ type Quiz = {
   id: string;
   name: string;
   modified: string;
+  isShared: boolean;
+  shareCode: string | null;
 };
 
 const formatDate = (iso: string) =>
@@ -82,6 +87,11 @@ const Library = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [shareModalQuiz, setShareModalQuiz] = useState<Quiz | null>(null);
+  const [shareSaving, setShareSaving] = useState(false);
+  const [copiedField, setCopiedField] = useState<"link" | "code" | null>(null);
+
   const fetchQuizzes = async () => {
     setLoading(true);
     setError("");
@@ -94,6 +104,8 @@ const Library = () => {
             id: q._id,
             name: q.title,
             modified: formatDate(q.updatedAt),
+            isShared: Boolean(q.isShared),
+            shareCode: q.shareCode ?? null,
           })),
         );
       } else {
@@ -113,7 +125,6 @@ const Library = () => {
 
   const handleDeleteQuiz = async (id: string, name: string) => {
     if (!window.confirm(`Delete "${name}"? This can't be undone.`)) return;
-
     try {
       const res = await fetch(`${API_BASE}/quiz/${id}`, {
         method: "DELETE",
@@ -131,6 +142,103 @@ const Library = () => {
     }
   };
 
+  const handleDuplicate = async (id: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/quiz/${id}/duplicate`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setQuizzes((prev) => [
+          {
+            id: data.quiz._id,
+            name: data.quiz.title,
+            modified: formatDate(data.quiz.updatedAt),
+            isShared: Boolean(data.quiz.isShared),
+            shareCode: data.quiz.shareCode ?? null,
+          },
+          ...prev,
+        ]);
+      } else {
+        alert(data.message || "Failed to duplicate quiz.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Could not reach the server.");
+    }
+  };
+
+  const handleDownload = async (id: string, name: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/quiz/${id}/export-pdf`, {
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.message || "Failed to download quiz.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${name.replace(/[^a-z0-9]/gi, "_")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Could not reach the server.");
+    }
+  };
+
+  const handleOpenShare = (quiz: Quiz) => {
+    setShareModalQuiz(quiz);
+    setCopiedField(null);
+  };
+
+  const handleToggleSharing = async (enabled: boolean) => {
+    if (!shareModalQuiz) return;
+    setShareSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/quiz/${shareModalQuiz.id}/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const updated = {
+          ...shareModalQuiz,
+          isShared: data.quiz.isShared,
+          shareCode: data.quiz.shareCode ?? null,
+        };
+        setShareModalQuiz(updated);
+        setQuizzes((prev) =>
+          prev.map((q) => (q.id === updated.id ? updated : q)),
+        );
+      } else {
+        alert(data.message || "Failed to update sharing.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Could not reach the server.");
+    } finally {
+      setShareSaving(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, field: "link" | "code") => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 1500);
+  };
+
   const handleJoinLibrary = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Joining library with code", joinCode);
@@ -141,6 +249,10 @@ const Library = () => {
   const visibleQuizzes = quizzes.filter((quiz) =>
     quiz.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
   );
+
+  const shareLink = shareModalQuiz?.shareCode
+    ? `${window.location.origin}/Quiz/Import/${shareModalQuiz.shareCode}`
+    : "";
 
   return (
     <div className="h-screen overflow-hidden bg-[#0A1238]">
@@ -254,14 +366,14 @@ const Library = () => {
 
               {tab === "quizzes" ? (
                 <>
-                  <div className="grid grid-cols-[28px_1fr_140px_60px] items-center gap-4 border-t border-gray-200 py-3 text-xs font-bold tracking-wide text-[#007a8c]">
+                  <div className="grid grid-cols-[28px_1fr_120px_140px] items-center gap-4 border-t border-gray-200 py-3 text-xs font-bold tracking-wide text-[#007a8c]">
                     <span className="w-4 h-4 rounded-full border border-gray-300" />
                     <span>NAME</span>
                     <span className="flex items-center gap-1">
                       MODIFIED
                       <ChevronDownIcon className="w-3 h-3" />
                     </span>
-                    <span className="text-center">DELETE</span>
+                    <span className="text-right">ACTIONS</span>
                   </div>
 
                   {loading ? (
@@ -276,7 +388,7 @@ const Library = () => {
                     visibleQuizzes.map((quiz) => (
                       <div
                         key={quiz.id}
-                        className="grid grid-cols-[28px_1fr_140px_60px] items-center gap-4 border-t border-gray-100 py-3"
+                        className="grid grid-cols-[28px_1fr_120px_140px] items-center gap-4 border-t border-gray-100 py-3"
                       >
                         <span className="w-4 h-4 rounded-full border border-gray-300" />
                         <button
@@ -293,14 +405,72 @@ const Library = () => {
                           {quiz.modified}
                         </span>
 
-                        <button
-                          type="button"
-                          aria-label={`Delete ${quiz.name}`}
-                          onClick={() => handleDeleteQuiz(quiz.id, quiz.name)}
-                          className="text-gray-400 hover:text-red-500 transition flex justify-center"
-                        >
-                          <Trash2Icon className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenShare(quiz)}
+                            aria-label={`Share ${quiz.name}`}
+                            className="text-gray-400 hover:text-[#007a8c] transition"
+                          >
+                            <Share2Icon className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDuplicate(quiz.id)}
+                            aria-label={`Duplicate ${quiz.name}`}
+                            className="text-gray-400 hover:text-[#007a8c] transition"
+                          >
+                            <CopyIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(quiz.id, quiz.name)}
+                            aria-label={`Download ${quiz.name}`}
+                            className="text-gray-400 hover:text-[#007a8c] transition"
+                          >
+                            <DownloadIcon className="w-4 h-4" />
+                          </button>
+
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenMenuId(
+                                  openMenuId === quiz.id ? null : quiz.id,
+                                )
+                              }
+                              className={`p-1 rounded transition ${
+                                openMenuId === quiz.id
+                                  ? "bg-sky-50 text-[#007a8c]"
+                                  : "text-gray-400 hover:text-gray-600"
+                              }`}
+                              aria-label={`More options for ${quiz.name}`}
+                            >
+                              <MoreVerticalIcon className="w-4 h-4" />
+                            </button>
+
+                            {openMenuId === quiz.id && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-40"
+                                  onClick={() => setOpenMenuId(null)}
+                                />
+                                <div className="absolute right-0 top-7 z-50 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenMenuId(null);
+                                      handleDeleteQuiz(quiz.id, quiz.name);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 text-left"
+                                  >
+                                    <Trash2Icon className="w-4 h-4" /> Delete
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -332,6 +502,7 @@ const Library = () => {
         </div>
       </div>
 
+      {/* Join Library modal */}
       {showJoinModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-[70]">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -383,6 +554,7 @@ const Library = () => {
         </div>
       )}
 
+      {/* Add Quiz modal */}
       {showAddQuizModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-[70]">
           <div className="w-full max-w-lg max-h-[85vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
@@ -501,6 +673,105 @@ const Library = () => {
                   })}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Quiz modal */}
+      {shareModalQuiz && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-[70]">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5">
+              <h2 className="text-lg font-bold text-gray-800">Share Quiz</h2>
+              <button
+                type="button"
+                onClick={() => setShareModalQuiz(null)}
+                className="text-gray-400 hover:text-gray-600 transition"
+                aria-label="Close"
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 border-t border-gray-100 space-y-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-gray-800">Enable Sharing</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Allows anyone with the link or code to directly import a
+                    copy of this quiz into their library.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={shareSaving}
+                  onClick={() => handleToggleSharing(!shareModalQuiz.isShared)}
+                  className={`w-11 h-6 rounded-full transition relative shrink-0 disabled:opacity-50 ${
+                    shareModalQuiz.isShared ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition ${
+                      shareModalQuiz.isShared ? "left-5" : "left-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {shareModalQuiz.isShared && shareModalQuiz.shareCode && (
+                <>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Link
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        readOnly
+                        value={shareLink}
+                        className="flex-1 h-11 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(shareLink, "link")}
+                        className="h-11 w-11 shrink-0 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                        aria-label="Copy link"
+                      >
+                        <CopyIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {copiedField === "link" && (
+                      <p className="text-xs text-green-600 mt-1">Copied!</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Code
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        readOnly
+                        value={shareModalQuiz.shareCode}
+                        className="flex-1 h-11 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none font-semibold"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          copyToClipboard(shareModalQuiz.shareCode!, "code")
+                        }
+                        className="h-11 w-11 shrink-0 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                        aria-label="Copy code"
+                      >
+                        <CopyIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {copiedField === "code" && (
+                      <p className="text-xs text-green-600 mt-1">Copied!</p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

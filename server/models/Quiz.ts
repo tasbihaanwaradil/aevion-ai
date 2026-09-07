@@ -1,3 +1,5 @@
+
+
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IQuizQuestion {
@@ -14,6 +16,8 @@ export interface IQuiz extends Document {
   title: string;
   difficulty: "Easy" | "Medium" | "Hard";
   questions: IQuizQuestion[];
+  isShared: boolean;
+  shareCode: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -36,6 +40,8 @@ const QuizSchema = new Schema<IQuiz>(
     title: { type: String, required: true },
     difficulty: { type: String, enum: ["Easy", "Medium", "Hard"], required: true },
     questions: { type: [QuizQuestionSchema], required: true },
+    isShared: { type: Boolean, default: false },
+    shareCode: { type: String, default: null },
   },
   { timestamps: true }
 );
