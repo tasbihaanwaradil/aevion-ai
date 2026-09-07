@@ -1,9 +1,10 @@
 "use client";
 
-import { SparkleIcon } from "lucide-react";
-import CustomIcon from "../components/custom-icon";
+import { useNavigate } from "react-router-dom";
 
 export default function HeroSection() {
+  const navigate = useNavigate();
+
   return (
     <section
       className="
@@ -16,18 +17,44 @@ export default function HeroSection() {
         bg-sky-900
       "
     >
-      {/* Optional subtle radial glow for depth */}
+      {/* Subtle radial glow for depth */}
       <div
         className="absolute inset-0 z-0"
         style={{
-          background: "radial-gradient(circle at 50% 40%, #1e3a8a 0%, #0c4a6e 80%)",
+          background:
+            "radial-gradient(circle at 50% 40%, #1e3a8a 0%, #0c4a6e 80%)",
           opacity: 0.3,
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
+      {/* Hero Content */}
+      <div
+        className="
+          relative
+          z-10
+          max-w-7xl
+          mx-auto
+          flex
+          flex-col
+          items-center
+          justify-center
+          text-center
+        "
+      >
+        {/* Heading */}
         <div className="relative">
-          <h1 className="font-urbanist text-4xl md:text-6xl font-extrabold max-w-10xl leading-tight text-white drop-shadow-2xl">
+          <h1
+            className="
+              font-urbanist
+              text-4xl
+              md:text-6xl
+              font-extrabold
+              max-w-10xl
+              leading-tight
+              text-white
+              drop-shadow-2xl
+            "
+          >
             Empower Educators with AI
             <br />
             <span className="text-white">Automate</span>,{" "}
@@ -36,38 +63,81 @@ export default function HeroSection() {
           </h1>
         </div>
 
-        <p className="mt-8 max-w-2xl text-lg md:text-xl text-white/90 font-medium leading-relaxed">
-         Aevion.AI helps teachers generate LinkedIn posts, academic emails, quizzes, presentation slides, PDF-to-slides, timetable reminders, and merged slide summaries—effortlessly.
+        {/* Description */}
+        <p
+          className="
+            mt-8
+            max-w-2xl
+            text-lg
+            md:text-xl
+            text-white/90
+            font-medium
+            leading-relaxed
+          "
+        >
+          Aevion.AI helps teachers generate LinkedIn posts, academic emails,
+          quizzes, presentation slides, PDF-to-slides, timetable reminders, and
+          merged slide summaries—effortlessly.
         </p>
 
-        <div className="mt-12 flex flex-col md:flex-row items-center gap-6">
-          <a
-            href="Login"
+        {/* CTA Buttons */}
+        <div
+          className="
+            mt-12
+            flex
+            flex-col
+            sm:flex-row
+            items-center
+            gap-5
+          "
+        >
+          {/* User / General Login */}
+          <button
+            type="button"
+            onClick={() => navigate("/Login")}
             className="
-              px-10 py-4 rounded-xl
-              bg-white text-sky-900 font-bold text-lg
+              min-w-[200px]
+              px-10
+              py-4
+              rounded-xl
+              bg-white
+              text-sky-900
+              font-bold
+              text-lg
               hover:bg-white/90
-              transition-all duration-300
-              shadow-lg shadow-black/20
+              transition-all
+              duration-300
+              shadow-lg
+              shadow-black/20
+              hover:-translate-y-0.5
             "
           >
             Get Started
-          </a>
-          
+          </button>
 
-          <a
-  href="/"
-  className="
-    px-10 py-4 rounded-xl
-    bg-white text-sky-900 font-bold text-lg
-    hover:bg-white/90
-    transition-all duration-300
-    shadow-lg shadow-black/20
-  "
->
-  Watch Demo
-</a>
-
+          {/* Teacher Login */}
+          <button
+            type="button"
+            onClick={() => navigate("/TeacherLogin")}
+            className="
+              min-w-[200px]
+              px-10
+              py-4
+              rounded-xl
+              bg-white
+              text-sky-900
+              font-bold
+              text-lg
+              hover:bg-white/90
+              transition-all
+              duration-300
+              shadow-lg
+              shadow-black/20
+              hover:-translate-y-0.5
+            "
+          >
+            Teacher Login
+          </button>
         </div>
       </div>
     </section>
