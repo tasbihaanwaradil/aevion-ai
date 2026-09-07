@@ -12,6 +12,31 @@ type StudentQuestion = {
   options: string[] | null;
 };
 
+type SessionQuestion = {
+  id: string;
+  type: "MCQ" | "TrueFalse" | "ShortAnswer";
+  question: string;
+  options: string[] | null;
+  correctAnswer: string;
+  explanation?: string;
+};
+
+type ParticipantAnswer = {
+  questionId: string;
+  answer: string;
+  isCorrect: boolean;
+};
+
+type SessionParticipant = {
+  participantId: string;
+  name: string;
+  score: number;
+  currentIndex: number;
+  completed: boolean;
+  answers: ParticipantAnswer[];
+  completedAt?: Date;
+};
+
 let io: SocketIOServer;
 
 export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
@@ -33,7 +58,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
     session: InstanceType<typeof Session>,
   ) => {
     io.to(`session:${sessionId}`).emit("teacher:participant-update", {
-      participants: session.participants.map((p) => ({
+      participants: session.participants.map((p: SessionParticipant) => ({
         participantId: p.participantId,
         name: p.name,
         score: p.score,
@@ -57,6 +82,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
         }
 
         const session = await Session.findById(sessionId);
+
         if (!session) {
           return socket.emit("teacher:join-error", {
             message: "Session not found.",
@@ -94,16 +120,19 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
               message: "Room not found.",
             });
           }
+
           if (session.status === "finished") {
             return socket.emit("student:join-error", {
               message: "This activity has ended.",
             });
           }
+
           if (session.status === "paused") {
             return socket.emit("student:join-error", {
               message: "This activity is paused.",
             });
           }
+
           if (session.settings.requireNames && !name?.trim()) {
             return socket.emit("student:join-error", {
               message: "Please enter your name.",
@@ -111,6 +140,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           }
 
           const participantId = crypto.randomUUID();
+
           session.participants.push({
             participantId,
             name: name?.trim() || "Anonymous",
@@ -131,7 +161,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           socket.data.sessionId = String(session._id);
 
           const sanitizedQuestions: StudentQuestion[] = session.questions.map(
-            ({ id, type, question, options }) => ({
+            ({ id, type, question, options }: SessionQuestion) => ({
               id,
               type,
               question,
@@ -149,6 +179,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           broadcastParticipants(String(session._id), session);
         } catch (err) {
           console.error(err);
+
           socket.emit("student:join-error", {
             message: "Something went wrong joining the room.",
           });
@@ -171,6 +202,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       }) => {
         try {
           const session = await Session.findById(sessionId);
+
           if (!session) return;
 
           if (
@@ -200,8 +232,9 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           }
 
           const participant = session.participants.find(
-            (p) => p.participantId === participantId,
+            (p: SessionParticipant) => p.participantId === participantId,
           );
+
           if (!participant) return;
 
           if (participant.completed) {
@@ -211,10 +244,13 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           }
 
           const expectedQuestion = session.questions[participant.currentIndex];
+
           if (!expectedQuestion) {
             participant.completed = true;
             participant.completedAt = new Date();
+
             await session.save();
+
             return socket.emit("student:answer-error", {
               message: "This activity is already complete.",
             });
@@ -227,24 +263,37 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           }
 
           const hasAlreadyAnswered = participant.answers.some(
-            (entry) => entry.questionId === questionId,
+            (entry: ParticipantAnswer) => entry.questionId === questionId,
           );
+
           if (hasAlreadyAnswered) {
             return socket.emit("student:answer-error", {
               message: "You have already answered this question.",
             });
           }
 
-          const question = session.questions.find((q) => q.id === questionId);
+          const question = session.questions.find(
+            (q: SessionQuestion) => q.id === questionId,
+          );
+
           if (!question) return;
 
           const isCorrect =
             answer.trim().toLowerCase() ===
             question.correctAnswer.trim().toLowerCase();
 
-          participant.answers.push({ questionId, answer, isCorrect });
-          if (isCorrect) participant.score += 1;
+          participant.answers.push({
+            questionId,
+            answer,
+            isCorrect,
+          });
+
+          if (isCorrect) {
+            participant.score += 1;
+          }
+
           participant.currentIndex += 1;
+
           if (participant.currentIndex >= session.questions.length) {
             participant.completed = true;
             participant.completedAt = new Date();
@@ -255,17 +304,22 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           socket.emit("student:answer-result", {
             isCorrect,
             showFeedback: session.settings.showQuestionFeedback,
+
             correctAnswer: session.settings.showQuestionFeedback
               ? question.correctAnswer
               : undefined,
+
             explanation: session.settings.showQuestionFeedback
               ? question.explanation
               : undefined,
+
             completed: participant.completed,
+
             score:
               session.settings.showFinalScore && participant.completed
                 ? participant.score
                 : undefined,
+
             total: session.questions.length,
           });
 
@@ -280,6 +334,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       "teacher:pause-session",
       async ({ sessionId }: { sessionId: string }) => {
         const teacherId = (socket.request as any)?.session?.teacherId;
+
         const session = await Session.findById(sessionId);
 
         if (
@@ -292,7 +347,10 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           });
         }
 
-        await Session.findByIdAndUpdate(sessionId, { status: "paused" });
+        await Session.findByIdAndUpdate(sessionId, {
+          status: "paused",
+        });
+
         io.to(`session:${sessionId}`).emit("session:status-changed", {
           status: "paused",
         });
@@ -303,6 +361,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       "teacher:resume-session",
       async ({ sessionId }: { sessionId: string }) => {
         const teacherId = (socket.request as any)?.session?.teacherId;
+
         const session = await Session.findById(sessionId);
 
         if (
@@ -315,7 +374,10 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           });
         }
 
-        await Session.findByIdAndUpdate(sessionId, { status: "active" });
+        await Session.findByIdAndUpdate(sessionId, {
+          status: "active",
+        });
+
         io.to(`session:${sessionId}`).emit("session:status-changed", {
           status: "active",
         });
@@ -326,6 +388,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       "teacher:finish-session",
       async ({ sessionId }: { sessionId: string }) => {
         const teacherId = (socket.request as any)?.session?.teacherId;
+
         const session = await Session.findById(sessionId);
 
         if (
@@ -338,7 +401,10 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           });
         }
 
-        await Session.findByIdAndUpdate(sessionId, { status: "finished" });
+        await Session.findByIdAndUpdate(sessionId, {
+          status: "finished",
+        });
+
         io.to(`session:${sessionId}`).emit("session:status-changed", {
           status: "finished",
         });
@@ -352,10 +418,12 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       if (!sessionId || !participantId) return;
 
       const session = await Session.findById(sessionId);
+
       if (!session) return;
 
       session.participants = session.participants.filter(
-        (participant) => participant.participantId !== participantId,
+        (participant: SessionParticipant) =>
+          participant.participantId !== participantId,
       );
 
       if (session.participants.length === 0 && session.status !== "finished") {
@@ -363,6 +431,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       }
 
       await session.save();
+
       broadcastParticipants(String(sessionId), session);
     });
   });
