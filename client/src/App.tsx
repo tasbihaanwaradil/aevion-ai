@@ -10,7 +10,7 @@ import AcademicEmailGenerator from "./pages/AcademicEmailGenerator";
 import AutoCreatePresentationSlides from "./pages/AutoCreatePresentationSlides";
 import TimetableReminder from "./pages/Reminder";
 import PdfToSlidesConverter from "./pages/Pdf-to-SlideConverter";
-import Dashboard  from "./pages/Dashboard";
+import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import NewTearcherAccount from "./pages/NewTearcherAccount";
@@ -26,52 +26,66 @@ import Library from "./pages/Library";
 import Rooms from "./pages/Rooms";
 import Reports from "./pages/Reports";
 import LiveResults from "./pages/LiveResults";
-import { Toaster } from 'react-hot-toast'
+import { Toaster } from "react-hot-toast";
 import QuizGenerator from "./pages/Quizgenerator";
 import { AuthProvider } from "./context/AuthContext";
 import { TeacherAuthProvider } from "./context/TeacherAuthContext";
 import ResetPassword from "./pages/ResetPassword";
 import QuizEditor from "./pages/QuizEditor";
-
+import StudentJoin from "./pages/StudentJoin";
 
 export default function App() {
-    return (
-        <AuthProvider>
-            <TeacherAuthProvider>
-                <Toaster />
-                <LenisScroll />
-                {/* <Navbar /> */}
-                <Routes>
-                    <Route path="/" element={<HomePage />}></Route>
-                    <Route path="/UseCases" element={<UseCases />} />
-                    <Route path="/login" element={<Login />}></Route>
-                    <Route path="/LinkedInPostGenerator" element={<LinkedInPostGenerator/>}/>
-                    <Route path="/AcademicEmailGenerator" element={<AcademicEmailGenerator/>}/>
-                    <Route path="/Quizgenerator" element={<QuizGenerator/>}/>
-                    <Route path="/AutoCreatePresentationSlides" element={<AutoCreatePresentationSlides/>}/>
-                    <Route path="/Pdf-to-SlideConverter" element={<PdfToSlidesConverter/>}/>
-                    <Route path="/Reminder" element={<TimetableReminder/>}/>
-                    <Route path="/Dashboard" element={<Dashboard/>}/>
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="*" element={<NotFound />} />
-                    <Route path="/NewTeacherAccount" element={<NewTearcherAccount/>}/>
-                    <Route path="/Demographics" element={<Demographics/>}/>
-                    <Route path="/Aboutyou" element={<Aboutyou/>}/>
-                    <Route path="/Teacherlogin" element={<TeacherLogin/>}/>
-                    <Route path="/VerifyEmail" element={<VerifyEmail/>}/>
-                    <Route path="/ForgotPassword" element={<ForgotPassword/>}/>
-                    <Route path="/TeacherDashboard" element={<TeacherDashboard/>}/>
-                    <Route path="/QuizLaunch" element={<QuizLaunch/>}/>
-                    <Route path="/LaunchSpace" element={<LaunchSpace/>}/>
-                    <Route path="/Library" element={<Library/>}/>
-                    <Route path="/Rooms" element={<Rooms/>}/>
-                    <Route path="/Reports" element={<Reports/>}/>
-                    <Route path="/LiveResults" element={<LiveResults/>}/>
-                    <Route path="/ResetPassword" element={<ResetPassword/>}/>
-                    <Route path="/Quiz/Edit/:id" element={<QuizEditor />} />
-                </Routes>
-                {/* <Footer /> */}
-            </TeacherAuthProvider>
-        </AuthProvider>
-    )
+  return (
+    <AuthProvider>
+      <TeacherAuthProvider>
+        <Toaster />
+        <LenisScroll />
+        {/* <Navbar /> */}
+        <Routes>
+          <Route path="/" element={<HomePage />}></Route>
+          <Route path="/UseCases" element={<UseCases />} />
+          <Route path="/login" element={<Login />}></Route>
+          <Route
+            path="/LinkedInPostGenerator"
+            element={<LinkedInPostGenerator />}
+          />
+          <Route
+            path="/AcademicEmailGenerator"
+            element={<AcademicEmailGenerator />}
+          />
+          <Route path="/Quizgenerator" element={<QuizGenerator />} />
+          <Route
+            path="/AutoCreatePresentationSlides"
+            element={<AutoCreatePresentationSlides />}
+          />
+          <Route
+            path="/Pdf-to-SlideConverter"
+            element={<PdfToSlidesConverter />}
+          />
+          <Route path="/Reminder" element={<TimetableReminder />} />
+          <Route path="/Dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+          <Route path="/NewTeacherAccount" element={<NewTearcherAccount />} />
+          <Route path="/Demographics" element={<Demographics />} />
+          <Route path="/Aboutyou" element={<Aboutyou />} />
+          <Route path="/Teacherlogin" element={<TeacherLogin />} />
+          <Route path="/VerifyEmail" element={<VerifyEmail />} />
+          <Route path="/ForgotPassword" element={<ForgotPassword />} />
+          <Route path="/TeacherDashboard" element={<TeacherDashboard />} />
+          <Route path="/QuizLaunch" element={<QuizLaunch />} />
+          <Route path="/LaunchSpace" element={<LaunchSpace />} />
+          <Route path="/Library" element={<Library />} />
+          <Route path="/Rooms" element={<Rooms />} />
+          <Route path="/Reports" element={<Reports />} />
+          <Route path="/LiveResults" element={<LiveResults />} />
+          <Route path="/ResetPassword" element={<ResetPassword />} />
+          <Route path="/Quiz/Edit/:id" element={<QuizEditor />} />
+          <Route path="/LiveResults/:id" element={<LiveResults />} />
+          <Route path="/join" element={<StudentJoin />} />
+        </Routes>
+        {/* <Footer /> */}
+      </TeacherAuthProvider>
+    </AuthProvider>
+  );
 }
