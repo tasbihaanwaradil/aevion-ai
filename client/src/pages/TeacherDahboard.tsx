@@ -13,9 +13,9 @@ import TeacherNavbar from "../components/TeacherNavabar";
 
 const activityTypes = [
   {
-    title: "Quiz",
+    title: "Generate Quiz",
     icon: ClipboardListIcon,
-    route: "/QuizLaunch",
+    route: "/QuizGenerator",
     border: "border-sky-400",
     text: "text-sky-300",
     glow: "group-hover:shadow-[0_0_35px_-5px_rgba(56,189,248,0.6)]",
@@ -116,9 +116,12 @@ const TeacherDashboard = () => {
                     <div
                       className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full border-2 ${activity.border} ${activity.text} bg-gradient-to-br ${activity.fill} flex items-center justify-center transition-all duration-300 ${activity.glow} group-hover:scale-110 group-hover:-translate-y-1`}
                     >
-                      <Icon className="w-9 h-9 md:w-10 md:h-10" strokeWidth={1.5} />
+                      <Icon
+                        className="w-9 h-9 md:w-10 md:h-10"
+                        strokeWidth={1.5}
+                      />
                     </div>
-                    <span className="text-sm md:text-base font-semibold text-gray-100 group-hover:text-white transition-colors">
+                    <span className="text-sm md:text-base font-semibold text-gray-100 group-hover:text-white transition-colors text-center">
                       {activity.title}
                     </span>
                   </button>
