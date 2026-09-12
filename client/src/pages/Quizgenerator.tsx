@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useCallback, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import SideNavbar from "../components/SideNavbar";
+import { useNavigate, useParams } from "react-router-dom";
+import TeacherSideNavbar from "../components/TeacherSideNavbar";
 import {
   SparklesIcon,
   Wand2Icon,
@@ -66,8 +66,7 @@ const TYPE_BADGE: Record<QuestionType, { label: string; className: string }> = {
 
 const QuizGenerator: React.FC = () => {
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("tools");
+  const [isOpen, setIsOpen] = useState(true);
 
   const [step, setStep] = useState<Step>("form");
   const [mode, setMode] = useState<InputMode>("topic");
@@ -105,6 +104,24 @@ const QuizGenerator: React.FC = () => {
   const switchMode = (next: InputMode) => {
     setMode(next);
     setError("");
+  };
+
+  // ---------- Reset (used by the sidebar's "New quiz" button) ----------
+
+  const resetToBlankForm = () => {
+    setStep("form");
+    setMode("topic");
+    setTopic("");
+    setPdfFile(null);
+    setPdfFocus("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setDifficulty("Medium");
+    setQuestionCount(10);
+    setSelectedTypes([]);
+    setGenerateExplanations(true);
+    setError("");
+    setQuestions([]);
+    setAddedIds(new Set());
   };
 
   // ---------- PDF handling ----------
@@ -287,17 +304,15 @@ const QuizGenerator: React.FC = () => {
       <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-0 right-0 w-[30rem] h-[26rem] rounded-full bg-teal-400/10 blur-[130px]" />
 
-      <SideNavbar
+      <TeacherSideNavbar
         isOpen={isOpen}
         setIsOpen={setIsOpen}
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-        title="AI Tools"
+        onNewQuiz={resetToBlankForm}
       />
 
       <div
-        className={`relative z-10 px-6 md:px-10 pt-24 pb-14 transition-all duration-300 ${
-          isOpen ? "ml-64" : "ml-0"
+        className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${
+          isOpen ? "ml-72" : "ml-16"
         }`}
       >
         {/* Header — left aligned, no centering */}

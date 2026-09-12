@@ -91,7 +91,7 @@ const TeacherDashboard = () => {
             <div className="text-center mb-12">
               <p className="flex items-center justify-center gap-2 text-xs font-bold tracking-[0.2em] text-sky-300 uppercase mb-3">
                 <SparklesIcon className="w-4 h-4" />
-                Ready when you are
+                Ready when you arezz
               </p>
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
                 Welcome back, {teacher?.name || "Teacher"}!
