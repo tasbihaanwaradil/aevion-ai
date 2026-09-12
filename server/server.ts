@@ -12,6 +12,7 @@ import userRoutes from "./routes/UserRoutes.js";
 import AcademicEmailRoutes from"./routes/AcademicEmailRoutes.js";
 import quizRoutes from "./routes/quiz.js";
 import TeacherAuthRouter from './routes/TeacherAuthRoutes.js';
+import reminderRoutes from "./routes/ReminderRoutes.js";
 
 import passport from "./configs/passport.js";
 import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
@@ -51,9 +52,25 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.json())
+app.use((req, _res, next) => {
+    console.log("➡️ Incoming request:", req.method, req.originalUrl);
+    next();
+});
+app.use("/", reminderRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Server is Live!');
+});
+
+app.use("/", reminderRoutes);
+
+app.get("/api/server-test", (req: Request, res: Response) => {
+    console.log("🔥 SERVER TEST ROUTE HIT");
+
+    res.json({
+        success: true,
+        message: "server.ts routes are working"
+    });
 });
 
 app.use('/api/auth', AuthRouter);
@@ -62,7 +79,14 @@ app.use("/api/linkedin-posts", linkedinPostRoutes);
 app.use("/api/academic-email", AcademicEmailRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use('/api/teacher-auth', TeacherAuthRouter);
-
+console.log(
+  "Mounted app routes:",
+  (app as any).router?.stack?.map((layer: any) => ({
+    path: layer.route?.path,
+    methods: layer.route?.methods,
+    name: layer.name,
+  }))
+);
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
