@@ -1,3 +1,4 @@
+
 import dns from "node:dns";
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
@@ -13,6 +14,7 @@ import userRoutes from "./routes/UserRoutes.js";
 import AcademicEmailRoutes from "./routes/AcademicEmailRoutes.js";
 import quizRoutes from "./routes/quiz.js";
 import TeacherAuthRouter from "./routes/TeacherAuthRoutes.js";
+import reminderRoutes from "./routes/ReminderRoutes.js";
 import sessionRoutes from "./routes/session.js";
 import { initSocket } from "./services/socketServer.js";
 
@@ -36,7 +38,7 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET as string,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }, // this cookie will expire in 7 days
+  cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 },
   store: MongoStore.create({
     mongoUrl: process.env.MONGODB_URI as string,
     collectionName: "sessions",
@@ -59,10 +61,28 @@ app.use(passport.session());
 
 app.use(express.json());
 
+app.use((req, _res, next) => {
+  console.log("➡️ Incoming request:", req.method, req.originalUrl);
+  next();
+});
+
 app.get("/", (req: Request, res: Response) => {
   res.send("Server is Live!");
 });
 
+// Reminder Agent routes
+app.use("/", reminderRoutes);
+
+app.get("/api/server-test", (req: Request, res: Response) => {
+  console.log("🔥 SERVER TEST ROUTE HIT");
+
+  res.json({
+    success: true,
+    message: "server.ts routes are working",
+  });
+});
+
+// Application routes
 app.use("/api/auth", AuthRouter);
 app.use("/api/user", userRoutes);
 app.use("/api/linkedin-posts", linkedinPostRoutes);
@@ -71,6 +91,7 @@ app.use("/api/quiz", quizRoutes);
 app.use("/api/teacher-auth", TeacherAuthRouter);
 app.use("/api/session", sessionRoutes);
 
+// Initialize Socket.IO
 initSocket(httpServer, sessionMiddleware);
 
 const port = process.env.PORT || 3000;
@@ -78,3 +99,4 @@ const port = process.env.PORT || 3000;
 httpServer.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
+
