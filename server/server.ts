@@ -1,94 +1,102 @@
-import dns from 'node:dns';
-dns.setServers(['8.8.8.8', '8.8.4.4']); 
 
-import express, { Request, Response } from 'express';
-import cors from 'cors'
-import 'dotenv/config'
-import connectDB from './configs/db.js';
-import session from 'express-session';
-import MongoStore from 'connect-mongo';
-import AuthRouter from './routes/AuthRoutes.js';
+import dns from "node:dns";
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
+import http from "http";
+import express, { Request, Response } from "express";
+import cors from "cors";
+import "dotenv/config";
+import connectDB from "./configs/db.js";
+import session from "express-session";
+import MongoStore from "connect-mongo";
+import AuthRouter from "./routes/AuthRoutes.js";
 import userRoutes from "./routes/UserRoutes.js";
-import AcademicEmailRoutes from"./routes/AcademicEmailRoutes.js";
+import AcademicEmailRoutes from "./routes/AcademicEmailRoutes.js";
 import quizRoutes from "./routes/quiz.js";
-import TeacherAuthRouter from './routes/TeacherAuthRoutes.js';
+import TeacherAuthRouter from "./routes/TeacherAuthRoutes.js";
 import reminderRoutes from "./routes/ReminderRoutes.js";
+import sessionRoutes from "./routes/session.js";
+import { initSocket } from "./services/socketServer.js";
 
 import passport from "./configs/passport.js";
 import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
 
-
-declare module 'express-session' {
-    interface SessionData {
-        isLoggedIn: boolean;
-        userId: string
-        teacherId: string
-    }
+declare module "express-session" {
+  interface SessionData {
+    isLoggedIn: boolean;
+    userId: string;
+    teacherId: string;
+  }
 }
 
 await connectDB();
 
 const app = express();
+const httpServer = http.createServer(app);
+
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET as string,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 },
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI as string,
+    collectionName: "sessions",
+  }),
+});
 
 // Middleware
-app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
-    credentials: true
-}))
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://localhost:3000"],
+    credentials: true,
+  }),
+);
 
-app.use(session({
-    secret: process.env.SESSION_SECRET as string,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }, // this cookie will expire in 7 days
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI as string,
-        collectionName: 'sessions'
-    })
-}))
+app.use(sessionMiddleware);
 
 // Initialize passport AFTER session
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(express.json())
+app.use(express.json());
+
 app.use((req, _res, next) => {
-    console.log("➡️ Incoming request:", req.method, req.originalUrl);
-    next();
-});
-app.use("/", reminderRoutes);
-
-app.get('/', (req: Request, res: Response) => {
-    res.send('Server is Live!');
+  console.log("➡️ Incoming request:", req.method, req.originalUrl);
+  next();
 });
 
+app.get("/", (req: Request, res: Response) => {
+  res.send("Server is Live!");
+});
+
+// Reminder Agent routes
 app.use("/", reminderRoutes);
 
 app.get("/api/server-test", (req: Request, res: Response) => {
-    console.log("🔥 SERVER TEST ROUTE HIT");
+  console.log("🔥 SERVER TEST ROUTE HIT");
 
-    res.json({
-        success: true,
-        message: "server.ts routes are working"
-    });
+  res.json({
+    success: true,
+    message: "server.ts routes are working",
+  });
 });
 
-app.use('/api/auth', AuthRouter);
+// Application routes
+app.use("/api/auth", AuthRouter);
 app.use("/api/user", userRoutes);
 app.use("/api/linkedin-posts", linkedinPostRoutes);
 app.use("/api/academic-email", AcademicEmailRoutes);
 app.use("/api/quiz", quizRoutes);
-app.use('/api/teacher-auth', TeacherAuthRouter);
-console.log(
-  "Mounted app routes:",
-  (app as any).router?.stack?.map((layer: any) => ({
-    path: layer.route?.path,
-    methods: layer.route?.methods,
-    name: layer.name,
-  }))
-);
+app.use("/api/teacher-auth", TeacherAuthRouter);
+app.use("/api/session", sessionRoutes);
+
+// Initialize Socket.IO
+initSocket(httpServer, sessionMiddleware);
+
 const port = process.env.PORT || 3000;
 
-app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+httpServer.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
 });
+

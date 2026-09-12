@@ -11,4 +11,23 @@
         @apply bg-[#0A1238] text-white text-sm antialiased;
         font-family: var(--font-sans);
     }
+
+    input,
+    textarea,
+    select {
+        color: #111827;
+        background-color: #ffffff;
+        caret-color: #111827;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: #6b7280;
+        opacity: 1;
+    }
+
+    button,
+    [role='button'] {
+        color: inherit;
+    }
 }
