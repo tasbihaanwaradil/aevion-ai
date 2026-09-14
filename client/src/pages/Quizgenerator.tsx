@@ -1,13 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import SideNavbar from "../components/SideNavbar";
+import React, { useCallback, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import TeacherSideNavbar from "../components/TeacherSideNavbar";
+import {
+  SparklesIcon,
+  Wand2Icon,
+  UploadCloudIcon,
+  FileTextIcon,
+  XIcon,
+  CheckIcon,
+  Layers3Icon,
+  ListChecksIcon,
+} from "lucide-react";
+
+// -----------------------------------------------------------------------
+// Load fonts. Move this <link> into your index.html for production —
+// it's inlined here so the component works as a drop-in preview.
+// -----------------------------------------------------------------------
+const FontLoader = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+  `}</style>
+);
 
 // ---------- Types ----------
 
 type QuestionType = "MCQ" | "TrueFalse" | "ShortAnswer";
 type Difficulty = "Easy" | "Medium" | "Hard";
+type InputMode = "topic" | "pdf";
+type Step = "form" | "loading-concepts" | "loading-questions" | "results";
 
 interface GeneratedQuestion {
   id: string;
@@ -19,30 +41,53 @@ interface GeneratedQuestion {
 }
 
 const API_BASE = "http://localhost:3000/api";
+const MAX_PDF_SIZE_MB = 15;
 
 const QUESTION_TYPE_OPTIONS: { label: string; value: QuestionType }[] = [
-  { label: "Multiple Choice", value: "MCQ" },
+  { label: "Multiple choice", value: "MCQ" },
   { label: "True / False", value: "TrueFalse" },
-  { label: "Short Answer", value: "ShortAnswer" },
+  { label: "Short answer", value: "ShortAnswer" },
 ];
 
-type Step = "form" | "loading-concepts" | "loading-questions" | "results";
+const TYPE_BADGE: Record<QuestionType, { label: string; className: string }> = {
+  MCQ: {
+    label: "Multiple choice",
+    className: "text-sky-300 bg-sky-400/10 border-sky-400/30",
+  },
+  TrueFalse: {
+    label: "True / False",
+    className: "text-violet-300 bg-violet-400/10 border-violet-400/30",
+  },
+  ShortAnswer: {
+    label: "Short answer",
+    className: "text-amber-300 bg-amber-400/10 border-amber-400/30",
+  },
+};
 
 const QuizGenerator: React.FC = () => {
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("tools");
+  const [isOpen, setIsOpen] = useState(true);
 
   const [step, setStep] = useState<Step>("form");
+  const [mode, setMode] = useState<InputMode>("topic");
 
+  // Topic mode
   const [topic, setTopic] = useState("");
+
+  // PDF mode
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfFocus, setPdfFocus] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Shared settings
   const [difficulty, setDifficulty] = useState<Difficulty>("Medium");
   const [questionCount, setQuestionCount] = useState<5 | 10 | 15>(10);
-  const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>([
-    "MCQ",
-    "TrueFalse",
-    "ShortAnswer",
-  ]);
+
+  // Question types: empty selection == "Mixed" (all types allowed).
+  // This replaces the old default of every chip pre-selected, which read
+  // as "everything is already chosen, go uncheck what you don't want."
+  const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>([]);
   const [generateExplanations, setGenerateExplanations] = useState(true);
 
   const [error, setError] = useState<string>("");
@@ -56,16 +101,82 @@ const QuizGenerator: React.FC = () => {
     );
   };
 
+  const switchMode = (next: InputMode) => {
+    setMode(next);
+    setError("");
+  };
+
+  // ---------- Reset (used by the sidebar's "New quiz" button) ----------
+
+  const resetToBlankForm = () => {
+    setStep("form");
+    setMode("topic");
+    setTopic("");
+    setPdfFile(null);
+    setPdfFocus("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setDifficulty("Medium");
+    setQuestionCount(10);
+    setSelectedTypes([]);
+    setGenerateExplanations(true);
+    setError("");
+    setQuestions([]);
+    setAddedIds(new Set());
+  };
+
+  // ---------- PDF handling ----------
+
+  const applyPdfFile = (file: File | null) => {
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      setError("Please upload a PDF file.");
+      return;
+    }
+    if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) {
+      setError(`PDF must be smaller than ${MAX_PDF_SIZE_MB}MB.`);
+      return;
+    }
+    setError("");
+    setPdfFile(file);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    applyPdfFile(e.target.files?.[0] ?? null);
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    applyPdfFile(e.dataTransfer.files?.[0] ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const removePdf = () => {
+    setPdfFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // ---------- Generation ----------
+
+  const canGenerate =
+    mode === "topic" ? topic.trim().length >= 5 : Boolean(pdfFile);
+
+  // Empty selection means "mixed" — send every type to the API.
+  const effectiveTypes: QuestionType[] =
+    selectedTypes.length > 0
+      ? selectedTypes
+      : QUESTION_TYPE_OPTIONS.map((o) => o.value);
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (topic.trim().length < 5) {
+    if (mode === "topic" && topic.trim().length < 5) {
       setError("Please enter a topic (at least 5 characters).");
       return;
     }
-    if (selectedTypes.length === 0) {
-      setError("Select at least one question type.");
+    if (mode === "pdf" && !pdfFile) {
+      setError("Please upload a PDF to generate questions from.");
       return;
     }
 
@@ -73,18 +184,36 @@ const QuizGenerator: React.FC = () => {
     const swapTimer = setTimeout(() => setStep("loading-questions"), 1400);
 
     try {
-      const response = await fetch(`${API_BASE}/quiz/generate-preview`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          topic,
-          difficulty,
-          questionCount,
-          questionTypes: selectedTypes,
-          generateExplanations,
-        }),
-      });
+      let response: Response;
+
+      if (mode === "pdf" && pdfFile) {
+        const formData = new FormData();
+        formData.append("pdf", pdfFile);
+        formData.append("difficulty", difficulty);
+        formData.append("questionCount", String(questionCount));
+        formData.append("questionTypes", JSON.stringify(effectiveTypes));
+        formData.append("generateExplanations", String(generateExplanations));
+        if (pdfFocus.trim()) formData.append("focus", pdfFocus.trim());
+
+        response = await fetch(`${API_BASE}/quiz/generate-preview-pdf`, {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+      } else {
+        response = await fetch(`${API_BASE}/quiz/generate-preview`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            topic,
+            difficulty,
+            questionCount,
+            questionTypes: effectiveTypes,
+            generateExplanations,
+          }),
+        });
+      }
 
       const data = await response.json();
 
@@ -131,7 +260,10 @@ const QuizGenerator: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          title: "Untitled Quiz",
+          title:
+            mode === "pdf"
+              ? pdfFile?.name.replace(/\.pdf$/i, "") || "Untitled Quiz"
+              : "Untitled Quiz",
           difficulty,
           questions: selected,
         }),
@@ -154,176 +286,356 @@ const QuizGenerator: React.FC = () => {
 
   const backToForm = () => setStep("form");
 
+  const loadingLabel =
+    step === "loading-concepts"
+      ? mode === "pdf"
+        ? "Reading your PDF and identifying key concepts..."
+        : "Identifying key concepts..."
+      : "Writing quiz questions...";
+
+  const isLoading = step === "loading-concepts" || step === "loading-questions";
+  const addedCount = addedIds.size;
+
   return (
-    <div className="min-h-screen bg-[#0A1238]">
-      <SideNavbar
+    <div className="min-h-screen bg-[#0A1238] relative overflow-hidden font-['Inter']">
+      <FontLoader />
+
+      {/* Ambient background glows */}
+      <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 right-0 w-[30rem] h-[26rem] rounded-full bg-teal-400/10 blur-[130px]" />
+
+      <TeacherSideNavbar
         isOpen={isOpen}
         setIsOpen={setIsOpen}
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-        title="AI Tools"
+        onNewQuiz={resetToBlankForm}
       />
 
       <div
-        className={`px-6 pt-28 pb-16 transition-all duration-300 ${
-          isOpen ? "ml-64" : "ml-0"
+        className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${
+          isOpen ? "ml-72" : "ml-16"
         }`}
       >
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white">Quiz Generator</h1>
-          <p className="text-gray-400 mt-2">
-            Turn any topic into a ready-to-take quiz
+        {/* Header — left aligned, no centering */}
+        <div className="mb-8 max-w-3xl">
+          <h1 className="flex items-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5 font-['Sora']">
+            <SparklesIcon
+              className="w-5 h-5 text-teal-300"
+              strokeWidth={1.75}
+            />
+            Quiz generator
+          </h1>
+          <p className="text-gray-400 text-sm">
+            Turn any topic or lesson PDF into a ready-to-take quiz.
           </p>
         </div>
 
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-2xl text-gray-800 overflow-hidden">
-            {step === "results" && (
-              <div className="px-10 pt-8 flex items-center gap-2">
+        {/* Two-column working area: config panel pinned left, output fills the rest */}
+        <div className="flex flex-col lg:flex-row items-start gap-6">
+          {/* ---------------- LEFT: configuration panel ---------------- */}
+          <div className="w-full lg:w-[420px] shrink-0 rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+            <form onSubmit={handleGenerate} className="p-5 md:p-6">
+              {/* Mode toggle */}
+              <div className="grid grid-cols-2 gap-2 mb-5 rounded-xl border border-white/10 bg-white/5 p-1">
                 <button
                   type="button"
-                  onClick={backToForm}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-semibold"
+                  onClick={() => switchMode("topic")}
+                  className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                    mode === "topic"
+                      ? "bg-teal-400 text-[#0A1238]"
+                      : "text-gray-300 hover:text-white"
+                  }`}
                 >
-                  ← Back
+                  From a topic
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchMode("pdf")}
+                  className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                    mode === "pdf"
+                      ? "bg-teal-400 text-[#0A1238]"
+                      : "text-gray-300 hover:text-white"
+                  }`}
+                >
+                  From a PDF
                 </button>
               </div>
-            )}
 
-            {step === "form" && (
-              <form onSubmit={handleGenerate} className="p-10">
-                <label className="block font-semibold mb-2">Topic</label>
+              {/* Topic mode */}
+              {mode === "topic" && (
                 <textarea
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  placeholder="E.g., Cellular respiration, React hooks, WWII causes..."
-                  className="w-full h-28 px-5 py-4 bg-gray-100 rounded-xl outline-none"
+                  placeholder="e.g. Cellular respiration, React hooks, WWII causes..."
+                  rows={4}
+                  className="w-full resize-none rounded-xl bg-white/5 border border-white/10 text-gray-100 placeholder:text-gray-500 p-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/60 mb-5"
                 />
+              )}
 
-                <label className="block font-semibold mt-6 mb-2">
-                  Difficulty
-                </label>
-                <select
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                  className="w-full h-14 px-5 bg-gray-100 rounded-xl"
-                >
-                  <option value="Easy">Easy</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Hard">Hard</option>
-                </select>
+              {/* PDF mode */}
+              {mode === "pdf" && (
+                <div className="mb-5">
+                  {!pdfFile ? (
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                      }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`relative rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
+                        isDragging
+                          ? "border-teal-400 bg-teal-400/10"
+                          : "border-white/15 bg-white/[0.03] hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <UploadCloudIcon
+                          className="w-6 h-6 text-teal-300"
+                          strokeWidth={1.5}
+                        />
+                        <span className="text-sm text-gray-300">
+                          Drop a lesson PDF, or{" "}
+                          <span className="text-teal-300 underline">
+                            browse
+                          </span>
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Up to {MAX_PDF_SIZE_MB}MB
+                        </span>
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleFileInputChange}
+                        className="hidden"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/10 px-3.5 py-3">
+                      <FileTextIcon className="w-5 h-5 text-teal-300 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-gray-100 font-medium truncate">
+                          {pdfFile.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {(pdfFile.size / (1024 * 1024)).toFixed(1)} MB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removePdf}
+                        className="shrink-0 text-gray-400 hover:text-white"
+                        aria-label="Remove PDF"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
 
-                <div className="flex items-center justify-between mt-6">
-                  <label className="font-semibold">Generate explanations</label>
+                  <input
+                    type="text"
+                    value={pdfFocus}
+                    onChange={(e) => setPdfFocus(e.target.value)}
+                    placeholder="Focus areas — optional (e.g. only chapters 3-4)"
+                    className="w-full mt-3 rounded-xl bg-white/5 border border-white/10 text-gray-100 placeholder:text-gray-500 px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/60"
+                  />
+                </div>
+              )}
+
+              <div className="h-px bg-white/10 mb-5" />
+
+              {/* Questions + Difficulty */}
+              <div className="space-y-4 mb-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-300">Questions</span>
+                  <div className="inline-flex rounded-lg border border-white/10 bg-white/5 p-1">
+                    {[5, 10, 15].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setQuestionCount(n as 5 | 10 | 15)}
+                        className={`w-8 h-7 rounded-md text-xs font-semibold transition-colors ${
+                          questionCount === n
+                            ? "bg-white/15 text-white"
+                            : "text-gray-400 hover:text-gray-200"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-300">Difficulty</span>
+                  <div className="inline-flex rounded-lg border border-white/10 bg-white/5 p-1">
+                    {(["Easy", "Medium", "Hard"] as Difficulty[]).map(
+                      (level) => (
+                        <button
+                          key={level}
+                          type="button"
+                          onClick={() => setDifficulty(level)}
+                          className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                            difficulty === level
+                              ? "bg-white/15 text-white"
+                              : "text-gray-400 hover:text-gray-200"
+                          }`}
+                        >
+                          {level}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-300">Explanations</span>
                   <button
                     type="button"
                     onClick={() => setGenerateExplanations((v) => !v)}
-                    className={`w-11 h-6 rounded-full transition relative ${
-                      generateExplanations ? "bg-[#2d5f6e]" : "bg-gray-300"
+                    className={`w-10 h-6 rounded-full transition relative ${
+                      generateExplanations ? "bg-teal-400" : "bg-white/15"
                     }`}
+                    aria-label="Toggle explanations"
                   >
                     <span
                       className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition ${
-                        generateExplanations ? "left-5" : "left-0.5"
+                        generateExplanations ? "left-[18px]" : "left-0.5"
                       }`}
                     />
                   </button>
                 </div>
+              </div>
 
-                <label className="block font-semibold mt-6 mb-2">
-                  Number of Questions
-                </label>
-                <div className="flex gap-2">
-                  {[5, 10, 15].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setQuestionCount(n as 5 | 10 | 15)}
-                      className={`w-14 h-11 rounded-xl text-sm font-semibold border-2 transition-colors ${
-                        questionCount === n
-                          ? "bg-[#2d5f6e] text-white border-[#2d5f6e]"
-                          : "bg-white text-gray-600 border-gray-200"
-                      }`}
-                    >
-                      {n}
-                    </button>
-                  ))}
+              {/* Question types — nothing pre-selected; empty = mixed */}
+              <div className="mb-5">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Layers3Icon className="w-3.5 h-3.5 text-gray-400" />
+                  <p className="text-sm text-gray-300">Question types</p>
                 </div>
-
-                <label className="block font-semibold mt-6 mb-2">
-                  Question Types
-                </label>
+                <p className="text-xs text-gray-500 mb-2.5">
+                  {selectedTypes.length === 0
+                    ? "Mixed by default — tap to narrow it down."
+                    : `Only ${selectedTypes.length} type${
+                        selectedTypes.length > 1 ? "s" : ""
+                      } selected.`}
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {QUESTION_TYPE_OPTIONS.map((opt) => (
+                  {QUESTION_TYPE_OPTIONS.map((opt) => {
+                    const active = selectedTypes.includes(opt.value);
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => toggleType(opt.value)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                          active
+                            ? "bg-teal-400/15 text-teal-300 border-teal-400/40"
+                            : "bg-transparent text-gray-400 border-white/15 hover:border-white/30 hover:text-gray-200"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                  {selectedTypes.length > 0 && (
                     <button
-                      key={opt.value}
                       type="button"
-                      onClick={() => toggleType(opt.value)}
-                      className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-colors ${
-                        selectedTypes.includes(opt.value)
-                          ? "bg-[#2d5f6e] text-white border-[#2d5f6e]"
-                          : "bg-white text-gray-600 border-gray-200"
-                      }`}
+                      onClick={() => setSelectedTypes([])}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-500 hover:text-gray-300 transition-colors"
                     >
-                      {opt.label}
+                      Reset to mixed
                     </button>
-                  ))}
+                  )}
                 </div>
+              </div>
 
-                {error && (
-                  <p className="mt-4 text-sm text-red-600 font-medium">
-                    {error}
-                  </p>
-                )}
+              {error && step === "form" && (
+                <p className="mb-4 text-sm text-red-400 font-medium">{error}</p>
+              )}
 
-                <button
-                  type="submit"
-                  className="mt-10 w-full h-14 rounded-2xl bg-[#2d5f6e] text-white font-bold text-lg"
-                >
-                  Generate Questions
-                </button>
-              </form>
-            )}
+              <button
+                type="submit"
+                disabled={!canGenerate || isLoading}
+                className="w-full h-11 rounded-full bg-teal-400 text-[#0A1238] font-semibold text-sm transition-colors hover:bg-teal-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-teal-400"
+              >
+                {isLoading ? "Generating..." : "Generate quiz"}
+              </button>
+            </form>
+          </div>
 
-            {(step === "loading-concepts" || step === "loading-questions") && (
-              <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <div className="w-10 h-10 rounded-full border-2 border-gray-200 border-t-[#2d5f6e] animate-spin" />
-                <p className="text-gray-600 text-sm">
-                  {step === "loading-concepts"
-                    ? "Identifying questions and key concepts..."
-                    : "Generating quiz questions..."}
+          {/* ---------------- RIGHT: preview / results pane ---------------- */}
+          <div className="w-full flex-1 rounded-2xl border border-teal-400/25 bg-gradient-to-b from-teal-400/[0.06] to-white/[0.02] min-h-[420px] overflow-hidden">
+            {step === "form" && (
+              <div className="h-full min-h-[420px] flex flex-col items-center justify-center text-center px-8 py-16">
+                <div className="w-12 h-12 rounded-full bg-teal-400/10 border border-teal-400/30 flex items-center justify-center mb-4">
+                  <ListChecksIcon
+                    className="w-5 h-5 text-teal-300"
+                    strokeWidth={1.75}
+                  />
+                </div>
+                <p className="text-gray-200 font-medium mb-1.5 font-['Sora']">
+                  Your questions will show up here
+                </p>
+                <p className="text-gray-500 text-sm max-w-xs">
+                  Set up your quiz on the left, then generate — you'll review
+                  every question before any of them are added.
                 </p>
               </div>
             )}
 
+            {isLoading && (
+              <div className="h-full min-h-[420px] flex flex-col items-center justify-center gap-4">
+                <div className="relative w-12 h-12">
+                  <div className="absolute inset-0 rounded-full border-2 border-white/10" />
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-teal-400 animate-spin" />
+                  <Wand2Icon
+                    className="absolute inset-0 m-auto w-5 h-5 text-teal-300"
+                    strokeWidth={1.75}
+                  />
+                </div>
+                <p className="text-gray-300 text-sm">{loadingLabel}</p>
+              </div>
+            )}
+
             {step === "results" && (
-              <>
-                <div className="px-10 pt-2 pb-4">
-                  <h2 className="text-xl font-bold">
-                    Add questions to your quiz
-                  </h2>
-                  <p className="text-gray-500 text-sm mt-1">
-                    Review each question, then add the ones you want.
-                  </p>
+              <div className="flex flex-col h-full">
+                <div className="px-6 pt-5 pb-3 flex items-start justify-between gap-4 border-b border-white/10">
+                  <div>
+                    <h2 className="text-base font-semibold text-white font-['Sora']">
+                      Review &amp; add questions
+                    </h2>
+                    <p className="text-gray-400 text-xs mt-0.5">
+                      {addedCount} of {questions.length} added
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={backToForm}
+                    className="shrink-0 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                  >
+                    ← Edit setup
+                  </button>
                 </div>
 
-                <div className="divide-y divide-gray-100 max-h-[420px] overflow-y-auto">
+                <div className="divide-y divide-white/5 max-h-[480px] overflow-y-auto">
                   {questions.map((q) => {
                     const isAdded = addedIds.has(q.id);
+                    const badge = TYPE_BADGE[q.type];
                     return (
                       <div
                         key={q.id}
-                        className="px-10 py-4 flex items-start justify-between gap-4"
+                        className="px-6 py-4 flex items-start justify-between gap-4"
                       >
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-gray-500">
-                            {q.type === "MCQ"
-                              ? "Multiple Choice"
-                              : q.type === "TrueFalse"
-                                ? "True / False"
-                                : "Short Answer"}
-                          </p>
-                          <p className="text-sm text-gray-800 mt-1">
+                          <span
+                            className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ${badge.className}`}
+                          >
+                            {badge.label}
+                          </span>
+                          <p className="text-sm text-gray-100 mt-2">
                             {q.question}
                           </p>
                         </div>
@@ -331,47 +643,50 @@ const QuizGenerator: React.FC = () => {
                           type="button"
                           disabled={isAdded}
                           onClick={() => addQuestion(q.id)}
-                          className={`shrink-0 h-9 px-4 rounded-lg text-sm font-semibold transition ${
+                          className={`shrink-0 h-9 px-4 rounded-full text-sm font-semibold transition flex items-center gap-1.5 ${
                             isAdded
-                              ? "bg-gray-100 text-gray-400 cursor-default"
-                              : "bg-[#2d5f6e] text-white hover:bg-[#234a56]"
+                              ? "bg-white/5 text-gray-500 cursor-default"
+                              : "bg-teal-400 text-[#0A1238] hover:bg-teal-300"
                           }`}
                         >
+                          {isAdded && <CheckIcon className="w-3.5 h-3.5" />}
                           {isAdded ? "Added" : "Add"}
                         </button>
                       </div>
                     );
                   })}
-                  <p className="px-10 py-3 text-xs text-gray-400">
+                  <p className="px-6 py-3 text-xs text-gray-500">
                     Generated questions can make mistakes. Consider checking
                     question accuracy.
                   </p>
                 </div>
 
                 {error && (
-                  <p className="px-10 pb-2 text-sm text-red-600 font-medium">
+                  <p className="px-6 pb-2 text-sm text-red-400 font-medium">
                     {error}
                   </p>
                 )}
 
-                <div className="px-10 py-5 border-t border-gray-100 flex items-center justify-between">
+                <div className="mt-auto px-6 py-4 border-t border-white/10 flex items-center justify-between">
                   <button
                     type="button"
                     onClick={addAll}
-                    className="text-sm font-semibold text-[#2d5f6e] hover:underline"
+                    className="text-sm font-semibold text-teal-300 hover:text-teal-200"
                   >
-                    Add All Questions
+                    Add all questions
                   </button>
                   <button
                     type="button"
-                    disabled={saving}
+                    disabled={saving || addedCount === 0}
                     onClick={handleDone}
-                    className="h-11 px-6 rounded-xl bg-[#2d5f6e] text-white font-bold disabled:opacity-50"
+                    className="h-10 px-6 rounded-full bg-teal-400 text-[#0A1238] font-semibold text-sm hover:bg-teal-300 disabled:opacity-40"
                   >
-                    {saving ? "Saving..." : "Done"}
+                    {saving
+                      ? "Saving..."
+                      : `Done${addedCount ? ` (${addedCount})` : ""}`}
                   </button>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
