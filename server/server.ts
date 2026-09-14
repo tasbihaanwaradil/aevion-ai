@@ -39,7 +39,7 @@ const sessionMiddleware = session({
   cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }, // this cookie will expire in 7 days
   store: MongoStore.create({
     mongoUrl: process.env.MONGODB_URI as string,
-    collectionName: "sessions",
+    collectionName: "express_sessions",
   }),
 });
 
