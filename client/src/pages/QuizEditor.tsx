@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import SideNavbar from "../components/SideNavbar";
+import TeacherSideNavbar from "../components/TeacherSideNavbar";
 import {
   PencilIcon,
   CheckIcon,
@@ -56,8 +56,7 @@ const TYPE_BADGE: Record<QuestionType, { label: string; className: string }> = {
 const QuizEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("tools");
+  const [isOpen, setIsOpen] = useState(true);
 
   const [title, setTitle] = useState("Untitled Quiz");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -147,17 +146,16 @@ const QuizEditor: React.FC = () => {
       <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-0 right-0 w-[30rem] h-[26rem] rounded-full bg-teal-400/10 blur-[130px]" />
 
-      <SideNavbar
+      <TeacherSideNavbar
         isOpen={isOpen}
         setIsOpen={setIsOpen}
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-        title="AI Tools"
+        onNewQuiz={() => navigate("/QuizGenerator")}
+        activeQuizId={id ?? null}
       />
 
       <div
-        className={`relative z-10 px-6 md:px-10 pt-24 pb-16 transition-all duration-300 ${
-          isOpen ? "ml-64" : "ml-0"
+        className={`relative z-10 px-6 md:px-10 pt-10 pb-16 transition-all duration-300 ${
+          isOpen ? "ml-72" : "ml-16"
         }`}
       >
         {loading ? (
