@@ -30,6 +30,7 @@ export interface ISession extends Document {
   quizId: mongoose.Types.ObjectId;
   title: string;
   roomCode: string;
+  mode: "quiz" | "space-race";
   status: "waiting" | "active" | "paused" | "finished";
   settings: ISessionSettings;
   questions: IQuizQuestion[];
@@ -82,6 +83,11 @@ const SessionSchema = new Schema<ISession>(
     quizId: { type: Schema.Types.ObjectId, ref: "Quiz", required: true },
     title: { type: String, required: true },
     roomCode: { type: String, required: true, unique: true, uppercase: true },
+    mode: {
+      type: String,
+      enum: ["quiz", "space-race"],
+      default: "quiz",
+    },
     status: {
       type: String,
       enum: ["waiting", "active", "paused", "finished"],
