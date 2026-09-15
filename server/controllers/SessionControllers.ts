@@ -19,7 +19,7 @@ const generateRoomCode = async (): Promise<string> => {
 // Teacher picks a quiz + delivery settings and creates a launchable session.
 export const createSession = async (req: Request, res: Response) => {
   const { teacherId } = req.session;
-  const { quizId, settings } = req.body;
+  const { quizId, mode, settings } = req.body;
 
   if (!teacherId) {
     return res.status(401).json({ message: "Please log in to continue." });
@@ -46,6 +46,7 @@ export const createSession = async (req: Request, res: Response) => {
       quizId: quiz._id,
       title: quiz.title,
       roomCode,
+      mode: mode === "space-race" ? "space-race" : "quiz",
       status: "waiting",
       settings: {
         requireNames: settings?.requireNames ?? true,

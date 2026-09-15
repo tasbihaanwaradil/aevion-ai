@@ -33,7 +33,9 @@ const TeacherNavbar = () => {
   // swap `teacher?.roomCode` for whatever field actually holds this once
   // rooms are modeled on the backend.
   const roomName =
-    (teacher as { roomCode?: string })?.roomCode || teacher?.name || "Your Room";
+    (teacher as { roomCode?: string })?.roomCode ||
+    teacher?.name ||
+    "Your Room";
 
   const handleLogout = async () => {
     setAccountMenuOpen(false);

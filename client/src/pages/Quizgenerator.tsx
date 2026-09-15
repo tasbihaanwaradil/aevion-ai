@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import TeacherSideNavbar from "../components/TeacherSideNavbar";
 import {
   SparklesIcon,
@@ -14,21 +14,15 @@ import {
   ListChecksIcon,
 } from "lucide-react";
 
-// -----------------------------------------------------------------------
-// Load fonts. Move this <link> into your index.html for production —
-// it's inlined here so the component works as a drop-in preview.
-// -----------------------------------------------------------------------
 const FontLoader = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
   `}</style>
 );
 
-// ---------- Types ----------
-
 type QuestionType = "MCQ" | "TrueFalse" | "ShortAnswer";
 type Difficulty = "Easy" | "Medium" | "Hard";
-type InputMode = "topic" | "pdf";
+type InputMode = "topic" | "document";
 type Step = "form" | "loading-concepts" | "loading-questions" | "results";
 
 interface GeneratedQuestion {
@@ -41,7 +35,8 @@ interface GeneratedQuestion {
 }
 
 const API_BASE = "http://localhost:3000/api";
-const MAX_PDF_SIZE_MB = 15;
+const MAX_DOC_SIZE_MB = 20;
+const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx", ".ppt", ".pptx"];
 
 const QUESTION_TYPE_OPTIONS: { label: string; value: QuestionType }[] = [
   { label: "Multiple choice", value: "MCQ" },
@@ -64,6 +59,11 @@ const TYPE_BADGE: Record<QuestionType, { label: string; className: string }> = {
   },
 };
 
+const getExtension = (filename: string) => {
+  const idx = filename.lastIndexOf(".");
+  return idx === -1 ? "" : filename.slice(idx).toLowerCase();
+};
+
 const QuizGenerator: React.FC = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
@@ -71,22 +71,15 @@ const QuizGenerator: React.FC = () => {
   const [step, setStep] = useState<Step>("form");
   const [mode, setMode] = useState<InputMode>("topic");
 
-  // Topic mode
   const [topic, setTopic] = useState("");
 
-  // PDF mode
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [pdfFocus, setPdfFocus] = useState("");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docFocus, setDocFocus] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Shared settings
   const [difficulty, setDifficulty] = useState<Difficulty>("Medium");
   const [questionCount, setQuestionCount] = useState<5 | 10 | 15>(10);
-
-  // Question types: empty selection == "Mixed" (all types allowed).
-  // This replaces the old default of every chip pre-selected, which read
-  // as "everything is already chosen, go uncheck what you don't want."
   const [selectedTypes, setSelectedTypes] = useState<QuestionType[]>([]);
   const [generateExplanations, setGenerateExplanations] = useState(true);
 
@@ -106,14 +99,12 @@ const QuizGenerator: React.FC = () => {
     setError("");
   };
 
-  // ---------- Reset (used by the sidebar's "New quiz" button) ----------
-
   const resetToBlankForm = () => {
     setStep("form");
     setMode("topic");
     setTopic("");
-    setPdfFile(null);
-    setPdfFocus("");
+    setDocFile(null);
+    setDocFocus("");
     if (fileInputRef.current) fileInputRef.current.value = "";
     setDifficulty("Medium");
     setQuestionCount(10);
@@ -124,44 +115,40 @@ const QuizGenerator: React.FC = () => {
     setAddedIds(new Set());
   };
 
-  // ---------- PDF handling ----------
-
-  const applyPdfFile = (file: File | null) => {
+  const applyDocFile = (file: File | null) => {
     if (!file) return;
-    if (file.type !== "application/pdf") {
-      setError("Please upload a PDF file.");
+    const ext = getExtension(file.name);
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      setError("Please upload a PDF, DOC, DOCX, PPT, or PPTX file.");
       return;
     }
-    if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) {
-      setError(`PDF must be smaller than ${MAX_PDF_SIZE_MB}MB.`);
+    if (file.size > MAX_DOC_SIZE_MB * 1024 * 1024) {
+      setError(`File must be smaller than ${MAX_DOC_SIZE_MB}MB.`);
       return;
     }
     setError("");
-    setPdfFile(file);
+    setDocFile(file);
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    applyPdfFile(e.target.files?.[0] ?? null);
+    applyDocFile(e.target.files?.[0] ?? null);
   };
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    applyPdfFile(e.dataTransfer.files?.[0] ?? null);
+    applyDocFile(e.dataTransfer.files?.[0] ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const removePdf = () => {
-    setPdfFile(null);
+  const removeDoc = () => {
+    setDocFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // ---------- Generation ----------
-
   const canGenerate =
-    mode === "topic" ? topic.trim().length >= 5 : Boolean(pdfFile);
+    mode === "topic" ? topic.trim().length >= 5 : Boolean(docFile);
 
-  // Empty selection means "mixed" — send every type to the API.
   const effectiveTypes: QuestionType[] =
     selectedTypes.length > 0
       ? selectedTypes
@@ -175,8 +162,8 @@ const QuizGenerator: React.FC = () => {
       setError("Please enter a topic (at least 5 characters).");
       return;
     }
-    if (mode === "pdf" && !pdfFile) {
-      setError("Please upload a PDF to generate questions from.");
+    if (mode === "document" && !docFile) {
+      setError("Please upload a document to generate questions from.");
       return;
     }
 
@@ -186,16 +173,16 @@ const QuizGenerator: React.FC = () => {
     try {
       let response: Response;
 
-      if (mode === "pdf" && pdfFile) {
+      if (mode === "document" && docFile) {
         const formData = new FormData();
-        formData.append("pdf", pdfFile);
+        formData.append("document", docFile);
         formData.append("difficulty", difficulty);
         formData.append("questionCount", String(questionCount));
         formData.append("questionTypes", JSON.stringify(effectiveTypes));
         formData.append("generateExplanations", String(generateExplanations));
-        if (pdfFocus.trim()) formData.append("focus", pdfFocus.trim());
+        if (docFocus.trim()) formData.append("focus", docFocus.trim());
 
-        response = await fetch(`${API_BASE}/quiz/generate-preview-pdf`, {
+        response = await fetch(`${API_BASE}/quiz/generate-preview-document`, {
           method: "POST",
           credentials: "include",
           body: formData,
@@ -236,13 +223,9 @@ const QuizGenerator: React.FC = () => {
     }
   };
 
-  const addQuestion = (id: string) => {
+  const addQuestion = (id: string) =>
     setAddedIds((prev) => new Set(prev).add(id));
-  };
-
-  const addAll = () => {
-    setAddedIds(new Set(questions.map((q) => q.id)));
-  };
+  const addAll = () => setAddedIds(new Set(questions.map((q) => q.id)));
 
   const handleDone = async () => {
     const selected = questions.filter((q) => addedIds.has(q.id));
@@ -261,8 +244,8 @@ const QuizGenerator: React.FC = () => {
         credentials: "include",
         body: JSON.stringify({
           title:
-            mode === "pdf"
-              ? pdfFile?.name.replace(/\.pdf$/i, "") || "Untitled Quiz"
+            mode === "document"
+              ? docFile?.name.replace(/\.[^.]+$/i, "") || "Untitled Quiz"
               : "Untitled Quiz",
           difficulty,
           questions: selected,
@@ -288,8 +271,8 @@ const QuizGenerator: React.FC = () => {
 
   const loadingLabel =
     step === "loading-concepts"
-      ? mode === "pdf"
-        ? "Reading your PDF and identifying key concepts..."
+      ? mode === "document"
+        ? "Reading your document and identifying key concepts..."
         : "Identifying key concepts..."
       : "Writing quiz questions...";
 
@@ -300,7 +283,6 @@ const QuizGenerator: React.FC = () => {
     <div className="min-h-screen bg-[#0A1238] relative overflow-hidden font-['Inter']">
       <FontLoader />
 
-      {/* Ambient background glows */}
       <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-0 right-0 w-[30rem] h-[26rem] rounded-full bg-teal-400/10 blur-[130px]" />
 
@@ -311,11 +293,8 @@ const QuizGenerator: React.FC = () => {
       />
 
       <div
-        className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${
-          isOpen ? "ml-72" : "ml-16"
-        }`}
+        className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${isOpen ? "ml-72" : "ml-16"}`}
       >
-        {/* Header — left aligned, no centering */}
         <div className="mb-8 max-w-3xl">
           <h1 className="flex items-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5 font-['Sora']">
             <SparklesIcon
@@ -325,16 +304,13 @@ const QuizGenerator: React.FC = () => {
             Quiz generator
           </h1>
           <p className="text-gray-400 text-sm">
-            Turn any topic or lesson PDF into a ready-to-take quiz.
+            Turn any topic or lesson document into a ready-to-take quiz.
           </p>
         </div>
 
-        {/* Two-column working area: config panel pinned left, output fills the rest */}
         <div className="flex flex-col lg:flex-row items-start gap-6">
-          {/* ---------------- LEFT: configuration panel ---------------- */}
           <div className="w-full lg:w-[420px] shrink-0 rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
             <form onSubmit={handleGenerate} className="p-5 md:p-6">
-              {/* Mode toggle */}
               <div className="grid grid-cols-2 gap-2 mb-5 rounded-xl border border-white/10 bg-white/5 p-1">
                 <button
                   type="button"
@@ -349,18 +325,17 @@ const QuizGenerator: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => switchMode("pdf")}
+                  onClick={() => switchMode("document")}
                   className={`py-2 rounded-lg text-sm font-medium transition-colors ${
-                    mode === "pdf"
+                    mode === "document"
                       ? "bg-teal-400 text-[#0A1238]"
                       : "text-gray-300 hover:text-white"
                   }`}
                 >
-                  From a PDF
+                  From a document
                 </button>
               </div>
 
-              {/* Topic mode */}
               {mode === "topic" && (
                 <textarea
                   value={topic}
@@ -371,10 +346,9 @@ const QuizGenerator: React.FC = () => {
                 />
               )}
 
-              {/* PDF mode */}
-              {mode === "pdf" && (
+              {mode === "document" && (
                 <div className="mb-5">
-                  {!pdfFile ? (
+                  {!docFile ? (
                     <div
                       onDragOver={(e) => {
                         e.preventDefault();
@@ -395,19 +369,19 @@ const QuizGenerator: React.FC = () => {
                           strokeWidth={1.5}
                         />
                         <span className="text-sm text-gray-300">
-                          Drop a lesson PDF, or{" "}
+                          Drop a PDF, Word, or PowerPoint file, or{" "}
                           <span className="text-teal-300 underline">
                             browse
                           </span>
                         </span>
                         <span className="text-xs text-gray-500">
-                          Up to {MAX_PDF_SIZE_MB}MB
+                          PDF, DOC, DOCX, PPT, PPTX — up to {MAX_DOC_SIZE_MB}MB
                         </span>
                       </div>
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept="application/pdf"
+                        accept=".pdf,.doc,.docx,.ppt,.pptx"
                         onChange={handleFileInputChange}
                         className="hidden"
                       />
@@ -417,17 +391,17 @@ const QuizGenerator: React.FC = () => {
                       <FileTextIcon className="w-5 h-5 text-teal-300 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm text-gray-100 font-medium truncate">
-                          {pdfFile.name}
+                          {docFile.name}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {(pdfFile.size / (1024 * 1024)).toFixed(1)} MB
+                          {(docFile.size / (1024 * 1024)).toFixed(1)} MB
                         </p>
                       </div>
                       <button
                         type="button"
-                        onClick={removePdf}
+                        onClick={removeDoc}
                         className="shrink-0 text-gray-400 hover:text-white"
-                        aria-label="Remove PDF"
+                        aria-label="Remove file"
                       >
                         <XIcon className="w-4 h-4" />
                       </button>
@@ -436,8 +410,8 @@ const QuizGenerator: React.FC = () => {
 
                   <input
                     type="text"
-                    value={pdfFocus}
-                    onChange={(e) => setPdfFocus(e.target.value)}
+                    value={docFocus}
+                    onChange={(e) => setDocFocus(e.target.value)}
                     placeholder="Focus areas — optional (e.g. only chapters 3-4)"
                     className="w-full mt-3 rounded-xl bg-white/5 border border-white/10 text-gray-100 placeholder:text-gray-500 px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/60"
                   />
@@ -446,7 +420,6 @@ const QuizGenerator: React.FC = () => {
 
               <div className="h-px bg-white/10 mb-5" />
 
-              {/* Questions + Difficulty */}
               <div className="space-y-4 mb-5">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-300">Questions</span>
@@ -495,9 +468,7 @@ const QuizGenerator: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setGenerateExplanations((v) => !v)}
-                    className={`w-10 h-6 rounded-full transition relative ${
-                      generateExplanations ? "bg-teal-400" : "bg-white/15"
-                    }`}
+                    className={`w-10 h-6 rounded-full transition relative ${generateExplanations ? "bg-teal-400" : "bg-white/15"}`}
                     aria-label="Toggle explanations"
                   >
                     <span
@@ -509,7 +480,6 @@ const QuizGenerator: React.FC = () => {
                 </div>
               </div>
 
-              {/* Question types — nothing pre-selected; empty = mixed */}
               <div className="mb-5">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Layers3Icon className="w-3.5 h-3.5 text-gray-400" />
@@ -518,9 +488,7 @@ const QuizGenerator: React.FC = () => {
                 <p className="text-xs text-gray-500 mb-2.5">
                   {selectedTypes.length === 0
                     ? "Mixed by default — tap to narrow it down."
-                    : `Only ${selectedTypes.length} type${
-                        selectedTypes.length > 1 ? "s" : ""
-                      } selected.`}
+                    : `Only ${selectedTypes.length} type${selectedTypes.length > 1 ? "s" : ""} selected.`}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {QUESTION_TYPE_OPTIONS.map((opt) => {
@@ -566,7 +534,6 @@ const QuizGenerator: React.FC = () => {
             </form>
           </div>
 
-          {/* ---------------- RIGHT: preview / results pane ---------------- */}
           <div className="w-full flex-1 rounded-2xl border border-teal-400/25 bg-gradient-to-b from-teal-400/[0.06] to-white/[0.02] min-h-[420px] overflow-hidden">
             {step === "form" && (
               <div className="h-full min-h-[420px] flex flex-col items-center justify-center text-center px-8 py-16">
