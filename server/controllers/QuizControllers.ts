@@ -3,6 +3,8 @@ import { Request, Response } from "express";
 import Quiz, { IQuizQuestion } from "../models/Quiz.js";
 import { generateQuizAgent } from "../services/QuizAgent.js";
 import { generateQuizPdf } from "../services/QuizPdfExporter.js";
+import { extractTextFromDocument } from "../services/DocumentTextExtractor.js";
+import { generateQuizFromDocumentAgent } from "../services/QuizAgent.js";
 
 // STEP 1: generate a preview of questions — does NOT touch the database.
 export const generateQuizPreview = async (req: Request, res: Response) => {
@@ -274,5 +276,61 @@ export const exportQuizPdf = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ message: "Failed to export quiz PDF" });
+  }
+};
+
+// STEP 1 (document variant): extract text from an uploaded doc/pdf/ppt,
+// generate a preview of questions — does NOT touch the database.
+export const generateQuizPreviewFromDocument = async (
+  req: Request,
+  res: Response,
+) => {
+  const file = req.file;
+  const {
+    difficulty = "Medium",
+    questionCount = 10,
+    questionTypes,
+    generateExplanations = "true",
+    focus,
+  } = req.body;
+
+  if (!file) {
+    return res.status(400).json({ message: "Please upload a document." });
+  }
+
+  let parsedTypes: string[];
+  try {
+    parsedTypes = questionTypes
+      ? JSON.parse(questionTypes)
+      : ["MCQ", "TrueFalse", "ShortAnswer"];
+  } catch {
+    parsedTypes = ["MCQ", "TrueFalse", "ShortAnswer"];
+  }
+
+  try {
+    const documentText = await extractTextFromDocument(file.buffer);
+
+    const result = await generateQuizFromDocumentAgent({
+      documentText,
+      focus: focus?.trim() || undefined,
+      difficulty,
+      questionCount: Number(questionCount),
+      questionTypes: parsedTypes,
+      generateExplanations:
+        generateExplanations === "true" || generateExplanations === true,
+    });
+
+    res.json({
+      success: true,
+      suggestedTitle: result.title,
+      questions: result.questions,
+    });
+  } catch (error: any) {
+    console.error(error);
+    res
+      .status(500)
+      .json({
+        message: error.message || "Failed to generate quiz from document",
+      });
   }
 };
