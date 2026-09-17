@@ -47,15 +47,15 @@ const QUESTION_TYPE_OPTIONS: { label: string; value: QuestionType }[] = [
 const TYPE_BADGE: Record<QuestionType, { label: string; className: string }> = {
   MCQ: {
     label: "Multiple choice",
-    className: "text-sky-300 bg-sky-400/10 border-sky-400/30",
+    className: "text-blue-600 bg-blue-50 border-blue-200",
   },
   TrueFalse: {
     label: "True / False",
-    className: "text-violet-300 bg-violet-400/10 border-violet-400/30",
+    className: "text-violet-600 bg-violet-50 border-violet-200",
   },
   ShortAnswer: {
     label: "Short answer",
-    className: "text-amber-300 bg-amber-400/10 border-amber-400/30",
+    className: "text-amber-600 bg-amber-50 border-amber-200",
   },
 };
 
@@ -309,16 +309,16 @@ const QuizGenerator: React.FC = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row items-start gap-6">
-          <div className="w-full lg:w-[420px] shrink-0 rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden">
+          <div className="w-full lg:w-[420px] shrink-0 rounded-2xl bg-white shadow-2xl overflow-hidden">
             <form onSubmit={handleGenerate} className="p-5 md:p-6">
-              <div className="grid grid-cols-2 gap-2 mb-5 rounded-xl border border-white/10 bg-white/5 p-1">
+              <div className="grid grid-cols-2 gap-2 mb-5 rounded-xl border border-gray-200 bg-gray-50 p-1">
                 <button
                   type="button"
                   onClick={() => switchMode("topic")}
                   className={`py-2 rounded-lg text-sm font-medium transition-colors ${
                     mode === "topic"
-                      ? "bg-teal-400 text-[#0A1238]"
-                      : "text-gray-300 hover:text-white"
+                      ? "bg-[#0A1238] text-white"
+                      : "text-gray-500 hover:text-gray-800"
                   }`}
                 >
                   From a topic
@@ -328,8 +328,8 @@ const QuizGenerator: React.FC = () => {
                   onClick={() => switchMode("document")}
                   className={`py-2 rounded-lg text-sm font-medium transition-colors ${
                     mode === "document"
-                      ? "bg-teal-400 text-[#0A1238]"
-                      : "text-gray-300 hover:text-white"
+                      ? "bg-[#0A1238] text-white"
+                      : "text-gray-500 hover:text-gray-800"
                   }`}
                 >
                   From a document
@@ -342,7 +342,7 @@ const QuizGenerator: React.FC = () => {
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="e.g. Cellular respiration, React hooks, WWII causes..."
                   rows={4}
-                  className="w-full resize-none rounded-xl bg-white/5 border border-white/10 text-gray-100 placeholder:text-gray-500 p-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/60 mb-5"
+                  className="w-full resize-none rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder:text-gray-400 p-3.5 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors mb-5"
                 />
               )}
 
@@ -359,22 +359,22 @@ const QuizGenerator: React.FC = () => {
                       onClick={() => fileInputRef.current?.click()}
                       className={`relative rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
                         isDragging
-                          ? "border-teal-400 bg-teal-400/10"
-                          : "border-white/15 bg-white/[0.03] hover:bg-white/[0.05]"
+                          ? "border-blue-400 bg-blue-50"
+                          : "border-gray-300 bg-gray-50 hover:bg-gray-100"
                       }`}
                     >
                       <div className="flex flex-col items-center gap-2">
                         <UploadCloudIcon
-                          className="w-6 h-6 text-teal-300"
+                          className="w-6 h-6 text-blue-500"
                           strokeWidth={1.5}
                         />
-                        <span className="text-sm text-gray-300">
+                        <span className="text-sm text-gray-600">
                           Drop a PDF, Word, or PowerPoint file, or{" "}
-                          <span className="text-teal-300 underline">
+                          <span className="text-blue-600 underline">
                             browse
                           </span>
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-400">
                           PDF, DOC, DOCX, PPT, PPTX — up to {MAX_DOC_SIZE_MB}MB
                         </span>
                       </div>
@@ -387,20 +387,20 @@ const QuizGenerator: React.FC = () => {
                       />
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/10 px-3.5 py-3">
-                      <FileTextIcon className="w-5 h-5 text-teal-300 shrink-0" />
+                    <div className="flex items-center gap-3 rounded-xl bg-gray-50 border border-gray-200 px-3.5 py-3">
+                      <FileTextIcon className="w-5 h-5 text-blue-500 shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm text-gray-100 font-medium truncate">
+                        <p className="text-sm text-gray-800 font-medium truncate">
                           {docFile.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-400">
                           {(docFile.size / (1024 * 1024)).toFixed(1)} MB
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={removeDoc}
-                        className="shrink-0 text-gray-400 hover:text-white"
+                        className="shrink-0 text-gray-400 hover:text-gray-700"
                         aria-label="Remove file"
                       >
                         <XIcon className="w-4 h-4" />
@@ -413,17 +413,17 @@ const QuizGenerator: React.FC = () => {
                     value={docFocus}
                     onChange={(e) => setDocFocus(e.target.value)}
                     placeholder="Focus areas — optional (e.g. only chapters 3-4)"
-                    className="w-full mt-3 rounded-xl bg-white/5 border border-white/10 text-gray-100 placeholder:text-gray-500 px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/60"
+                    className="w-full mt-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder:text-gray-400 px-3.5 py-3 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
                   />
                 </div>
               )}
 
-              <div className="h-px bg-white/10 mb-5" />
+              <div className="h-px bg-gray-100 mb-5" />
 
               <div className="space-y-4 mb-5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-300">Questions</span>
-                  <div className="inline-flex rounded-lg border border-white/10 bg-white/5 p-1">
+                  <span className="text-sm text-gray-700">Questions</span>
+                  <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
                     {[5, 10, 15].map((n) => (
                       <button
                         key={n}
@@ -431,8 +431,8 @@ const QuizGenerator: React.FC = () => {
                         onClick={() => setQuestionCount(n as 5 | 10 | 15)}
                         className={`w-8 h-7 rounded-md text-xs font-semibold transition-colors ${
                           questionCount === n
-                            ? "bg-white/15 text-white"
-                            : "text-gray-400 hover:text-gray-200"
+                            ? "bg-[#0A1238] text-white"
+                            : "text-gray-500 hover:text-gray-800"
                         }`}
                       >
                         {n}
@@ -442,8 +442,8 @@ const QuizGenerator: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-300">Difficulty</span>
-                  <div className="inline-flex rounded-lg border border-white/10 bg-white/5 p-1">
+                  <span className="text-sm text-gray-700">Difficulty</span>
+                  <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
                     {(["Easy", "Medium", "Hard"] as Difficulty[]).map(
                       (level) => (
                         <button
@@ -452,8 +452,8 @@ const QuizGenerator: React.FC = () => {
                           onClick={() => setDifficulty(level)}
                           className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                             difficulty === level
-                              ? "bg-white/15 text-white"
-                              : "text-gray-400 hover:text-gray-200"
+                              ? "bg-[#0A1238] text-white"
+                              : "text-gray-500 hover:text-gray-800"
                           }`}
                         >
                           {level}
@@ -464,11 +464,11 @@ const QuizGenerator: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-300">Explanations</span>
+                  <span className="text-sm text-gray-700">Explanations</span>
                   <button
                     type="button"
                     onClick={() => setGenerateExplanations((v) => !v)}
-                    className={`w-10 h-6 rounded-full transition relative ${generateExplanations ? "bg-teal-400" : "bg-white/15"}`}
+                    className={`w-10 h-6 rounded-full transition relative ${generateExplanations ? "bg-blue-500" : "bg-gray-200"}`}
                     aria-label="Toggle explanations"
                   >
                     <span
@@ -483,9 +483,9 @@ const QuizGenerator: React.FC = () => {
               <div className="mb-5">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Layers3Icon className="w-3.5 h-3.5 text-gray-400" />
-                  <p className="text-sm text-gray-300">Question types</p>
+                  <p className="text-sm text-gray-700">Question types</p>
                 </div>
-                <p className="text-xs text-gray-500 mb-2.5">
+                <p className="text-xs text-gray-400 mb-2.5">
                   {selectedTypes.length === 0
                     ? "Mixed by default — tap to narrow it down."
                     : `Only ${selectedTypes.length} type${selectedTypes.length > 1 ? "s" : ""} selected.`}
@@ -500,8 +500,8 @@ const QuizGenerator: React.FC = () => {
                         onClick={() => toggleType(opt.value)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                           active
-                            ? "bg-teal-400/15 text-teal-300 border-teal-400/40"
-                            : "bg-transparent text-gray-400 border-white/15 hover:border-white/30 hover:text-gray-200"
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : "bg-transparent text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700"
                         }`}
                       >
                         {opt.label}
@@ -512,7 +512,7 @@ const QuizGenerator: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedTypes([])}
-                      className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-500 hover:text-gray-300 transition-colors"
+                      className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       Reset to mixed
                     </button>
@@ -521,32 +521,32 @@ const QuizGenerator: React.FC = () => {
               </div>
 
               {error && step === "form" && (
-                <p className="mb-4 text-sm text-red-400 font-medium">{error}</p>
+                <p className="mb-4 text-sm text-red-600 font-medium">{error}</p>
               )}
 
               <button
                 type="submit"
                 disabled={!canGenerate || isLoading}
-                className="w-full h-11 rounded-full bg-teal-400 text-[#0A1238] font-semibold text-sm transition-colors hover:bg-teal-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-teal-400"
+                className="w-full h-11 rounded-full bg-[#0A1238] text-white font-semibold text-sm transition-colors hover:bg-[#1a2348] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0A1238]"
               >
                 {isLoading ? "Generating..." : "Generate quiz"}
               </button>
             </form>
           </div>
 
-          <div className="w-full flex-1 rounded-2xl border border-teal-400/25 bg-gradient-to-b from-teal-400/[0.06] to-white/[0.02] min-h-[420px] overflow-hidden">
+          <div className="w-full flex-1 rounded-2xl bg-white shadow-2xl min-h-[420px] overflow-hidden">
             {step === "form" && (
               <div className="h-full min-h-[420px] flex flex-col items-center justify-center text-center px-8 py-16">
-                <div className="w-12 h-12 rounded-full bg-teal-400/10 border border-teal-400/30 flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center mb-4">
                   <ListChecksIcon
-                    className="w-5 h-5 text-teal-300"
+                    className="w-5 h-5 text-blue-500"
                     strokeWidth={1.75}
                   />
                 </div>
-                <p className="text-gray-200 font-medium mb-1.5 font-['Sora']">
+                <p className="text-gray-800 font-medium mb-1.5 font-['Sora']">
                   Your questions will show up here
                 </p>
-                <p className="text-gray-500 text-sm max-w-xs">
+                <p className="text-gray-400 text-sm max-w-xs">
                   Set up your quiz on the left, then generate — you'll review
                   every question before any of them are added.
                 </p>
@@ -556,22 +556,22 @@ const QuizGenerator: React.FC = () => {
             {isLoading && (
               <div className="h-full min-h-[420px] flex flex-col items-center justify-center gap-4">
                 <div className="relative w-12 h-12">
-                  <div className="absolute inset-0 rounded-full border-2 border-white/10" />
-                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-teal-400 animate-spin" />
+                  <div className="absolute inset-0 rounded-full border-2 border-gray-200" />
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin" />
                   <Wand2Icon
-                    className="absolute inset-0 m-auto w-5 h-5 text-teal-300"
+                    className="absolute inset-0 m-auto w-5 h-5 text-blue-500"
                     strokeWidth={1.75}
                   />
                 </div>
-                <p className="text-gray-300 text-sm">{loadingLabel}</p>
+                <p className="text-gray-600 text-sm">{loadingLabel}</p>
               </div>
             )}
 
             {step === "results" && (
               <div className="flex flex-col h-full">
-                <div className="px-6 pt-5 pb-3 flex items-start justify-between gap-4 border-b border-white/10">
+                <div className="px-6 pt-5 pb-3 flex items-start justify-between gap-4 border-b border-gray-100">
                   <div>
-                    <h2 className="text-base font-semibold text-white font-['Sora']">
+                    <h2 className="text-base font-semibold text-gray-800 font-['Sora']">
                       Review &amp; add questions
                     </h2>
                     <p className="text-gray-400 text-xs mt-0.5">
@@ -581,13 +581,13 @@ const QuizGenerator: React.FC = () => {
                   <button
                     type="button"
                     onClick={backToForm}
-                    className="shrink-0 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                    className="shrink-0 text-xs font-medium text-gray-400 hover:text-gray-700 transition-colors"
                   >
                     ← Edit setup
                   </button>
                 </div>
 
-                <div className="divide-y divide-white/5 max-h-[480px] overflow-y-auto">
+                <div className="divide-y divide-gray-100 max-h-[480px] overflow-y-auto">
                   {questions.map((q) => {
                     const isAdded = addedIds.has(q.id);
                     const badge = TYPE_BADGE[q.type];
@@ -602,7 +602,7 @@ const QuizGenerator: React.FC = () => {
                           >
                             {badge.label}
                           </span>
-                          <p className="text-sm text-gray-100 mt-2">
+                          <p className="text-sm text-gray-800 mt-2">
                             {q.question}
                           </p>
                         </div>
@@ -612,8 +612,8 @@ const QuizGenerator: React.FC = () => {
                           onClick={() => addQuestion(q.id)}
                           className={`shrink-0 h-9 px-4 rounded-full text-sm font-semibold transition flex items-center gap-1.5 ${
                             isAdded
-                              ? "bg-white/5 text-gray-500 cursor-default"
-                              : "bg-teal-400 text-[#0A1238] hover:bg-teal-300"
+                              ? "bg-gray-100 text-gray-400 cursor-default"
+                              : "bg-[#0A1238] text-white hover:bg-[#1a2348]"
                           }`}
                         >
                           {isAdded && <CheckIcon className="w-3.5 h-3.5" />}
@@ -622,23 +622,23 @@ const QuizGenerator: React.FC = () => {
                       </div>
                     );
                   })}
-                  <p className="px-6 py-3 text-xs text-gray-500">
+                  <p className="px-6 py-3 text-xs text-gray-400">
                     Generated questions can make mistakes. Consider checking
                     question accuracy.
                   </p>
                 </div>
 
                 {error && (
-                  <p className="px-6 pb-2 text-sm text-red-400 font-medium">
+                  <p className="px-6 pb-2 text-sm text-red-600 font-medium">
                     {error}
                   </p>
                 )}
 
-                <div className="mt-auto px-6 py-4 border-t border-white/10 flex items-center justify-between">
+                <div className="mt-auto px-6 py-4 border-t border-gray-100 flex items-center justify-between">
                   <button
                     type="button"
                     onClick={addAll}
-                    className="text-sm font-semibold text-teal-300 hover:text-teal-200"
+                    className="text-sm font-semibold text-blue-600 hover:text-blue-800"
                   >
                     Add all questions
                   </button>
@@ -646,7 +646,7 @@ const QuizGenerator: React.FC = () => {
                     type="button"
                     disabled={saving || addedCount === 0}
                     onClick={handleDone}
-                    className="h-10 px-6 rounded-full bg-teal-400 text-[#0A1238] font-semibold text-sm hover:bg-teal-300 disabled:opacity-40"
+                    className="h-10 px-6 rounded-full bg-[#0A1238] text-white font-semibold text-sm hover:bg-[#1a2348] disabled:opacity-50"
                   >
                     {saving
                       ? "Saving..."
