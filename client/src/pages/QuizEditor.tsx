@@ -41,15 +41,15 @@ const LETTERS = ["A", "B", "C", "D"];
 const TYPE_BADGE: Record<QuestionType, { label: string; className: string }> = {
   MCQ: {
     label: "Multiple choice",
-    className: "text-sky-300 bg-sky-400/10 border-sky-400/30",
+    className: "text-blue-600 bg-blue-50 border-blue-200",
   },
   TrueFalse: {
     label: "True / False",
-    className: "text-violet-300 bg-violet-400/10 border-violet-400/30",
+    className: "text-violet-600 bg-violet-50 border-violet-200",
   },
   ShortAnswer: {
     label: "Short answer",
-    className: "text-amber-300 bg-amber-400/10 border-amber-400/30",
+    className: "text-amber-600 bg-amber-50 border-amber-200",
   },
 };
 
@@ -162,7 +162,7 @@ const QuizEditor: React.FC = () => {
           <div className="flex flex-col items-center justify-center gap-4 py-32">
             <div className="relative w-12 h-12">
               <div className="absolute inset-0 rounded-full border-2 border-white/10" />
-              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-teal-400 animate-spin" />
+              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin" />
             </div>
             <p className="text-gray-400 text-sm">Loading quiz...</p>
           </div>
@@ -182,13 +182,13 @@ const QuizEditor: React.FC = () => {
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="min-w-0 flex-1 text-2xl md:text-3xl font-semibold text-white bg-transparent border-b border-transparent hover:border-white/15 focus:border-teal-400/60 outline-none transition-colors font-['Sora'] pb-1"
+                className="min-w-0 flex-1 text-2xl md:text-3xl font-semibold text-white bg-transparent border-b border-transparent hover:border-white/15 focus:border-blue-400/60 outline-none transition-colors font-['Sora'] pb-1"
               />
               <button
                 type="button"
                 disabled={saving}
                 onClick={handleSave}
-                className="shrink-0 h-11 px-6 rounded-full bg-teal-400 text-[#0A1238] font-semibold text-sm hover:bg-teal-300 disabled:opacity-40 transition-colors"
+                className="shrink-0 h-11 px-6 rounded-full bg-blue-500 text-white font-semibold text-sm hover:bg-blue-400 disabled:opacity-40 transition-colors"
               >
                 {saving ? "Saving..." : "Save and exit"}
               </button>
@@ -209,10 +209,10 @@ const QuizEditor: React.FC = () => {
                 return (
                   <div
                     key={q.id}
-                    className={`rounded-2xl border bg-white/[0.03] transition-colors ${
+                    className={`rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow border ${
                       isEditing
-                        ? "border-teal-400/40"
-                        : "border-white/10 hover:border-white/20"
+                        ? "border-blue-300"
+                        : "border-gray-100"
                     }`}
                   >
                     <div className="p-5 flex items-start gap-4">
@@ -222,17 +222,17 @@ const QuizEditor: React.FC = () => {
                           type="button"
                           onClick={() => moveQuestion(index, -1)}
                           disabled={index === 0}
-                          className="w-6 h-6 rounded-md flex items-center justify-center text-gray-500 hover:text-gray-200 hover:bg-white/5 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
                           aria-label="Move up"
                         >
                           <ChevronUpIcon className="w-4 h-4" />
                         </button>
-                        <GripVerticalIcon className="w-3.5 h-3.5 text-gray-700" />
+                        <GripVerticalIcon className="w-3.5 h-3.5 text-gray-300" />
                         <button
                           type="button"
                           onClick={() => moveQuestion(index, 1)}
                           disabled={index === questions.length - 1}
-                          className="w-6 h-6 rounded-md flex items-center justify-center text-gray-500 hover:text-gray-200 hover:bg-white/5 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
+                          className="w-6 h-6 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
                           aria-label="Move down"
                         >
                           <ChevronDownIcon className="w-4 h-4" />
@@ -242,7 +242,7 @@ const QuizEditor: React.FC = () => {
                       {/* Main content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-semibold text-gray-500 tabular-nums">
+                          <span className="text-xs font-semibold text-gray-400 tabular-nums">
                             {index + 1}
                           </span>
                           <span
@@ -260,10 +260,10 @@ const QuizEditor: React.FC = () => {
                                 question: e.target.value,
                               })
                             }
-                            className="w-full text-sm font-medium text-gray-100 bg-white/5 border border-white/10 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-teal-400/60 mb-3"
+                            className="w-full text-sm font-medium text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400/60 mb-3"
                           />
                         ) : (
-                          <p className="text-sm font-medium text-gray-100 mb-3">
+                          <p className="text-sm font-medium text-gray-800 mb-3">
                             {q.question}
                           </p>
                         )}
@@ -281,8 +281,8 @@ const QuizEditor: React.FC = () => {
                                   <span
                                     className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold ${
                                       isCorrect
-                                        ? "bg-emerald-400 text-[#0A1238]"
-                                        : "bg-white/10 text-gray-400"
+                                        ? "bg-emerald-500 text-white"
+                                        : "bg-gray-100 text-gray-400"
                                     }`}
                                   >
                                     {letter}
@@ -302,14 +302,14 @@ const QuizEditor: React.FC = () => {
                                             : q.correctAnswer,
                                         });
                                       }}
-                                      className="flex-1 text-sm text-gray-200 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-teal-400/60"
+                                      className="flex-1 text-sm text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-blue-400/60"
                                     />
                                   ) : (
                                     <span
                                       className={`text-sm ${
                                         isCorrect
-                                          ? "text-gray-100"
-                                          : "text-gray-400"
+                                          ? "text-gray-800"
+                                          : "text-gray-500"
                                       }`}
                                     >
                                       {opt}
@@ -323,7 +323,7 @@ const QuizEditor: React.FC = () => {
                                           correctAnswer: opt,
                                         })
                                       }
-                                      className="shrink-0 text-xs font-medium text-teal-300 hover:text-teal-200"
+                                      className="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-800"
                                     >
                                       Mark correct
                                     </button>
@@ -335,8 +335,8 @@ const QuizEditor: React.FC = () => {
                         )}
 
                         {!q.options && (
-                          <div className="text-sm text-gray-400">
-                            <span className="text-gray-500">
+                          <div className="text-sm text-gray-500">
+                            <span className="text-gray-400">
                               Expected answer:{" "}
                             </span>
                             {isEditing ? (
@@ -347,10 +347,10 @@ const QuizEditor: React.FC = () => {
                                     correctAnswer: e.target.value,
                                   })
                                 }
-                                className="mt-1 w-full text-sm text-gray-100 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-teal-400/60"
+                                className="mt-1 w-full text-sm text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-blue-400/60"
                               />
                             ) : (
-                              <span className="text-gray-200 font-medium">
+                              <span className="text-gray-800 font-medium">
                                 {q.correctAnswer}
                               </span>
                             )}
@@ -358,7 +358,7 @@ const QuizEditor: React.FC = () => {
                         )}
 
                         {(q.explanation || isEditing) && (
-                          <div className="mt-3 pt-3 border-t border-white/5">
+                          <div className="mt-3 pt-3 border-t border-gray-100">
                             {isEditing ? (
                               <textarea
                                 value={q.explanation}
@@ -369,7 +369,7 @@ const QuizEditor: React.FC = () => {
                                 }
                                 placeholder="Explanation — optional"
                                 rows={2}
-                                className="w-full text-xs text-gray-300 bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 outline-none focus:ring-2 focus:ring-teal-400/60 resize-none placeholder:text-gray-600"
+                                className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-2 outline-none focus:ring-2 focus:ring-blue-400/60 resize-none placeholder:text-gray-400"
                               />
                             ) : (
                               <p className="text-xs text-gray-500">
@@ -387,8 +387,8 @@ const QuizEditor: React.FC = () => {
                           onClick={() => setEditingId(isEditing ? null : q.id)}
                           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                             isEditing
-                              ? "bg-teal-400 text-[#0A1238]"
-                              : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10"
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-100 text-gray-400 hover:text-gray-700 hover:bg-gray-200"
                           }`}
                           aria-label={
                             isEditing ? "Done editing" : "Edit question"
@@ -403,7 +403,7 @@ const QuizEditor: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => duplicateQuestion(q.id)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100 text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-colors"
                           aria-label="Duplicate question"
                         >
                           <CopyIcon className="w-3.5 h-3.5" />
@@ -411,7 +411,7 @@ const QuizEditor: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => deleteQuestion(q.id)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100 text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                           aria-label="Delete question"
                         >
                           <Trash2Icon className="w-3.5 h-3.5" />
@@ -423,7 +423,7 @@ const QuizEditor: React.FC = () => {
               })}
 
               {questions.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-white/15 py-14 text-center">
+                <div className="rounded-2xl border border-dashed border-gray-300 bg-white py-14 text-center">
                   <p className="text-gray-400 text-sm">
                     No questions left in this quiz.
                   </p>
