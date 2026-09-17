@@ -308,7 +308,10 @@ export const generateQuizPreviewFromDocument = async (
   }
 
   try {
-    const documentText = await extractTextFromDocument(file.buffer);
+    const documentText = await extractTextFromDocument(
+      file.buffer,
+      file.originalname,
+    );
 
     const result = await generateQuizFromDocumentAgent({
       documentText,
@@ -327,10 +330,8 @@ export const generateQuizPreviewFromDocument = async (
     });
   } catch (error: any) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        message: error.message || "Failed to generate quiz from document",
-      });
+    res.status(500).json({
+      message: error.message || "Failed to generate quiz from document",
+    });
   }
 };
