@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ClipboardListIcon,
   RocketIcon,
-  LogOutIcon,
+  Share2Icon,
   SparklesIcon,
 } from "lucide-react";
 import { useTeacherAuth } from "../context/TeacherAuthContext";
@@ -13,7 +13,7 @@ import TeacherNavbar from "../components/TeacherNavabar";
 
 const activityTypes = [
   {
-    title: "Generate Quiz",
+    title: "Quiz Studio",
     icon: ClipboardListIcon,
     route: "/QuizGenerator",
     border: "border-sky-400",
@@ -22,7 +22,7 @@ const activityTypes = [
     fill: "from-sky-400/20 to-sky-400/0",
   },
   {
-    title: "Space Race",
+    title: "Lauch Pad",
     icon: RocketIcon,
     route: "/LaunchSpace",
     border: "border-violet-400",
@@ -31,14 +31,14 @@ const activityTypes = [
     fill: "from-violet-400/20 to-violet-400/0",
   },
   {
-    title: "Exit Ticket",
-    icon: LogOutIcon,
-    route: "/ExitTicket",
-    border: "border-amber-400",
-    text: "text-amber-300",
-    glow: "group-hover:shadow-[0_0_35px_-5px_rgba(251,191,36,0.6)]",
-    fill: "from-amber-400/20 to-amber-400/0",
-  },
+  title: "Share Results",
+  icon: Share2Icon,
+  route: "/ExitTicket",
+  border: "border-amber-400",
+  text: "text-amber-300",
+  glow: "group-hover:shadow-[0_0_35px_-5px_rgba(251,191,36,0.6)]",
+  fill: "from-amber-400/20 to-amber-400/0",
+},
 ];
 
 const quickQuestionTypes = [

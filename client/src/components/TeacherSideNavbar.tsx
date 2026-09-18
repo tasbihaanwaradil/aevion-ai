@@ -92,10 +92,17 @@ const TeacherSideNavbar: React.FC<TeacherSideNavbarProps> = ({
     .join("")
     .toUpperCase();
 
+  const handleLogoClick = () => {
+    // Route the logo to the teacher's own dashboard, not the public "/"
+    // root — navigating to "/" was landing on a different app entry point
+    // that reset the teacher auth state, which looked like an unintended logout.
+    setIsOpen(false);
+  };
+
   const handleLogout = async () => {
     setShowProfileMenu(false);
     await logout();
-    navigate("/Teacherlogin");
+    navigate("/");
   };
 
   // ---------- Collapsed rail ----------
@@ -126,7 +133,7 @@ const TeacherSideNavbar: React.FC<TeacherSideNavbarProps> = ({
   return (
     <div className="fixed top-0 left-0 h-screen w-72 bg-sky-50 text-sky-900 border-r border-sky-200 flex flex-col z-40">
       <div className="flex items-center justify-between px-4 py-4">
-        <Link to="/" className="flex items-center">
+        <Link to="/Dashboard" onClick={handleLogoClick} className="flex items-center">
           <img
             src="/assets/logo.svg"
             alt="logo"

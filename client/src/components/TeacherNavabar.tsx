@@ -41,7 +41,7 @@ const TeacherNavbar = () => {
     setAccountMenuOpen(false);
     setIsOpen(false);
     await logout();
-    navigate("/Teacherlogin");
+    navigate("/");
   };
 
   return (
@@ -149,12 +149,9 @@ const TeacherNavbar = () => {
               {item.label}
             </button>
           ))}
-          <button
-            onClick={handleLogout}
-            className="text-lg font-medium text-sky-900 hover:text-sky-600 text-left"
-          >
-            Logout
-          </button>
+          <button onClick={async () => { await logout(); navigate('/'); }} className="bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition px-4 py-2 rounded">
+                    Logout
+                  </button>
         </div>
       </div>
     </>

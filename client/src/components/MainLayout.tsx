@@ -23,7 +23,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Main Content */}
       <div
         className={`transition-all duration-300 ${
-          isOpen ? "ml-64" : "ml-0"
+          isOpen ? "ml-72" : "ml-16"
         }`}
       >
         {children}
