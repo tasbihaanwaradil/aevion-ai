@@ -59,7 +59,7 @@ export default function Navbar() {
                 </div>
               </div>
             ) : (
-              <button onClick={() => navigate('/login')} className="hidden md:inline-flex px-6 py-2 rounded-full bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition">
+              <button onClick={() => navigate('/TeacherLogin')} className="hidden md:inline-flex px-6 py-2 rounded-full bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition">
                 Get Started
               </button>
 
@@ -108,9 +108,9 @@ export default function Navbar() {
           {
             isLoggedIn ?
               <button onClick={() => { setIsOpen(false); logout(); }}>Logout</button>
-              : <Link onClick={() => setIsOpen(false)} to='/login' >Login</Link>
+              : <Link onClick={() => setIsOpen(false)} to='/TeacherLogin' >Login</Link>
           }
-          <Link to='/login' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Login</Link>
+          <Link to='/TeacherLogin' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Login</Link>
         </div>
       </div >
     </>

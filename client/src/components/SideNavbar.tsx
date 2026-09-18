@@ -1,7 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import {
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  LayoutDashboardIcon,
+  LinkedinIcon,
+  MailIcon,
+  SettingsIcon,
+  LogOutIcon,
+} from "lucide-react";
 import { useTeacherAuth } from "../context/TeacherAuthContext";
 
 type Props = {
@@ -9,7 +18,7 @@ type Props = {
   setIsOpen: (value: boolean) => void;
   activeSection: string;
   setActiveSection: (value: string) => void;
-  title: string; // dynamic title
+  title: string;
 };
 
 const SideNavbar = ({
@@ -20,94 +29,228 @@ const SideNavbar = ({
   title,
 }: Props) => {
   const navigate = useNavigate();
-  const { logout } = useTeacherAuth();
+  const { teacher, logout } = useTeacherAuth();
+
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const menuItems = [
-    { name: "Dashboard", key: "dashboard", route: "/Dashboard" },
-    { name: "AI Tools", key: "tools", route: "/Dashboard" },
-    { name: "LinkedIn History", key: "linkedin-history", route: "/LinkedInHistory" },
-    { name: "Email History", key: "email-history", route: "/AcademicEmailHistory" },
-    { name: "Settings", key: "settings", route: "/Settings" },
+    {
+      name: "Dashboard",
+      key: "dashboard",
+      route: "/Dashboard",
+      icon: LayoutDashboardIcon,
+    },
+    {
+      name: "LinkedIn History",
+      key: "linkedin-history",
+      route: "/LinkedInHistory",
+      icon: LinkedinIcon,
+    },
+    {
+      name: "Email History",
+      key: "email-history",
+      route: "/AcademicEmailHistory",
+      icon: MailIcon,
+    },
   ];
 
-  return (
-    <>
-      {/* Sidebar*/}
-      <div
-        className={`fixed top-0 left-0 h-full bg-sky-50 text-sky-900 transition-all duration-300 z-50 ${
-          isOpen ? "w-64" : "w-0"
-        } overflow-hidden`}
-      >
-        {/* Close Button */}
+  const initials = (teacher?.name || "T")
+    .split(" ")
+    .map((word: string) => word[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  const handleNavigation = (key: string, route: string) => {
+    setActiveSection(key);
+    setIsOpen(false);
+    navigate(route);
+  };
+
+  const handleLogoClick = () => {
+    // Route the logo to the teacher's own dashboard, not the public "/"
+    // root — navigating to "/" was landing on a different app entry point
+    // that reset the teacher auth state, which looked like an unintended logout.
+    setActiveSection("dashboard");
+    setIsOpen(false);
+  };
+
+  const handleLogout = async () => {
+    setShowProfileMenu(false);
+    setIsOpen(false);
+
+    await logout();
+    navigate("/");
+  };
+
+  // --------------------------------------------------
+  // COLLAPSED SIDEBAR
+  // --------------------------------------------------
+
+  if (!isOpen) {
+    return (
+      <div className="fixed top-0 left-0 h-screen w-16 bg-sky-50 text-sky-900 border-r border-sky-200 flex flex-col items-center py-4 z-50">
+        {/* Expand Button */}
         <button
-          onClick={() => setIsOpen(false)}
-          className="absolute top-4 right-4 text-3xl"
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="hover:bg-[#151d4b] hover:text-white rounded-lg p-1.5 mb-6 transition-colors"
+          aria-label="Expand sidebar"
         >
-          ×
+          <PanelLeftOpenIcon className="w-5 h-5" />
         </button>
 
-        {/* Logo */}
-        <div className="mt-12 px-6 mb-8">
-          <Link to="/">
-            <img
-              src="/assets/logo.svg"
-              alt="logo"
-              className="h-12 w-auto cursor-pointer"
-            />
-          </Link>
-        </div>
+        {/* Mini Navigation */}
+        <div className="flex flex-col items-center gap-3">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
 
-        {/* Menu */}
-        <nav className="flex flex-col gap-4 px-6 text-sm">
-          {menuItems.map((item) => (
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => {
+                  setActiveSection(item.key);
+                  navigate(item.route);
+                }}
+                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                  activeSection === item.key
+                    ? "bg-[#151d4b] text-white"
+                    : "hover:bg-[#151d4b] hover:text-white"
+                }`}
+                aria-label={item.name}
+                title={item.name}
+              >
+                <Icon className="w-4 h-4" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // --------------------------------------------------
+  // EXPANDED SIDEBAR
+  // --------------------------------------------------
+
+  return (
+    <div className="fixed top-0 left-0 h-screen w-72 bg-sky-50 text-sky-900 border-r border-sky-200 flex flex-col z-50">
+
+      {/* Header / Logo */}
+      <div className="flex items-center justify-between px-4 py-4">
+        <Link to="/Dashboard" onClick={handleLogoClick} className="flex items-center">
+          <img
+            src="/assets/logo.svg"
+            alt="logo"
+            className="h-8 w-auto cursor-pointer"
+          />
+        </Link>
+
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          className="hover:bg-[#151d4b] hover:text-white rounded-lg p-1.5 transition-colors"
+          aria-label="Collapse sidebar"
+        >
+          <PanelLeftCloseIcon className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Current Page */}
+      <div className="px-4 mb-5">
+        <div className="px-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+            {title}
+          </p>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="px-3 flex flex-col gap-1">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+
+          return (
             <button
               key={item.key}
-              onClick={() => {
-                setActiveSection(item.key);
-                setIsOpen(false);
-                navigate(item.route);
-              }}
-              className={`text-left px-3 py-2 rounded-lg transition ${
+              type="button"
+              onClick={() =>
+                handleNavigation(item.key, item.route)
+              }
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-left transition-colors ${
                 activeSection === item.key
                   ? "bg-[#151d4b] text-white"
-                  : "hover:bg-[#111a4d] hover:text-white"
+                  : "hover:bg-[#151d4b] hover:text-white"
               }`}
             >
-              {item.name}
+              <Icon className="w-4 h-4 shrink-0" />
+
+              <span>{item.name}</span>
             </button>
-          ))}
+          );
+        })}
+      </nav>
 
-          {/* Sign Out */}
-          <button
-            className="text-left text-red-600 mt-6 hover:text-red-800"
-            onClick={async () => {
-              setIsOpen(false);
-              await logout();
-              navigate("/");
-            }}
-          >
-            Sign Out
-          </button>
-        </nav>
-      </div>
+      {/* Spacer */}
+      <div className="flex-1" />
 
-      {/* Topbar */}
-      <div
-        className={`p-4 flex items-center gap-3 bg-sky-50 shadow-sm text-sky-900 transition-all duration-300 ${
-          isOpen ? "ml-64" : "ml-0"
-        }`}
-      >
-        <span
-          className="text-3xl cursor-pointer font-bold"
-          onClick={() => setIsOpen(true)}
+      {/* Profile Section */}
+      <div className="relative border-t border-sky-200 p-3">
+
+        <button
+          type="button"
+          onClick={() => setShowProfileMenu((value) => !value)}
+          className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-[#151d4b] hover:text-white transition-colors text-left group"
         >
-          ☰
-        </span>
+          {/* Avatar */}
+          <span className="w-8 h-8 rounded-full bg-[#151d4b]/10 text-xs font-bold flex items-center justify-center shrink-0 group-hover:bg-white/20 group-hover:text-white">
+            {initials}
+          </span>
 
-        {/*Dynamic Title */}
-        <h1 className="text-2xl font-bold">{title}</h1>
+          {/* Teacher Information */}
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm truncate group-hover:text-white">
+              {teacher?.name || "Teacher"}
+            </span>
+
+            <span className="block text-xs truncate text-sky-700 group-hover:text-white/70">
+              {teacher?.email || ""}
+            </span>
+          </span>
+        </button>
+
+        {/* Profile Menu */}
+        {showProfileMenu && (
+          <div className="absolute bottom-full left-3 right-3 mb-2 z-50 bg-white border border-sky-200 rounded-lg shadow-2xl py-1 text-sky-900">
+
+            {/* Settings */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowProfileMenu(false);
+                setActiveSection("settings");
+                navigate("/Settings");
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#151d4b] hover:text-white text-left transition-colors"
+            >
+              <SettingsIcon className="w-4 h-4" />
+              <span>Settings</span>
+            </button>
+
+            {/* Logout */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-[#151d4b] hover:text-white text-left transition-colors"
+            >
+              <LogOutIcon className="w-4 h-4" />
+              <span>Log out</span>
+            </button>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

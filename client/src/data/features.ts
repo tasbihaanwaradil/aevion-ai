@@ -12,7 +12,7 @@ import type { IFeature } from "../../types";
 
 export const Features: IFeature[] = [
   {
-    title: "LinkedIn Post Generator",
+    title: "LinkedIn Post Studio",
     description:
       "Generates professional LinkedIn posts for teachers related to achievements, research, or academic events.",
     icon: LinkedinIcon,
@@ -20,7 +20,7 @@ export const Features: IFeature[] = [
     iconBg: "bg-orange-500",
   },
   {
-    title: "Academic Email Writer",
+    title: "Academic Email Assistant",
     description:
       "Drafts formal emails for class announcements, deadlines, feedback, and administrative communication.",
     icon: MailIcon,
@@ -28,7 +28,7 @@ export const Features: IFeature[] = [
     iconBg: "bg-green-500",
   },
   {
-    title: "Quiz Generator",
+    title: "Quiz Studio ",
     description:
       "Automatically creates quizzes from lecture slides, PDFs, or topic inputs with adjustable difficulty levels.",
     icon: FileQuestionIcon,
@@ -36,7 +36,7 @@ export const Features: IFeature[] = [
     iconBg: "bg-indigo-500",
   },
   {
-    title: "Auto-Create Presentation Slides",
+    title: "Lesson Slide Studio",
     description:
       "Generates structured lecture slides from a topic, lesson outline, or uploaded material.",
     icon: PresentationIcon,
@@ -44,7 +44,7 @@ export const Features: IFeature[] = [
     iconBg: "bg-pink-500",
   },
   {
-    title: "PDF-to-Slide Generator",
+    title: "PDF Lession Studio",
     description:
       "Converts PDFs (lecture notes, research papers, etc.) into concise, presentation-ready slides.",
     icon: FileTextIcon,
@@ -52,7 +52,7 @@ export const Features: IFeature[] = [
     iconBg: "bg-lime-500",
   },
   {
-    title: "Reminder",
+    title: "Smart Teaching Reminders ",
     description:
       "Tracks class schedules, assignment deadlines, and academic events with automated reminders.",
     icon: CalendarClockIcon,

@@ -295,18 +295,22 @@ const QuizGenerator: React.FC = () => {
       <div
         className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${isOpen ? "ml-72" : "ml-16"}`}
       >
-        <div className="mb-8 max-w-3xl">
-          <h1 className="flex items-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5 font-['Sora']">
-            <SparklesIcon
-              className="w-5 h-5 text-teal-300"
-              strokeWidth={1.75}
-            />
-            Quiz generator
-          </h1>
-          <p className="text-gray-400 text-sm">
-            Turn any topic or lesson document into a ready-to-take quiz.
-          </p>
-        </div>
+        
+<div className="mb-8 max-w-3xl mx-auto text-center">
+  <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5 font-['Sora']">
+    <SparklesIcon
+      className="w-6 h-6 text-teal-300"
+      strokeWidth={1.75}
+    />
+    Quiz Studio
+  </h1>
+
+  <p className="text-gray-400 text-sm md:text-base">
+    Turn any topic or lesson document into a ready-to-take quiz.
+  </p>
+</div>
+
+
 
         <div className="flex flex-col lg:flex-row items-start gap-6">
           <div className="w-full lg:w-[420px] shrink-0 rounded-2xl bg-white shadow-2xl overflow-hidden">

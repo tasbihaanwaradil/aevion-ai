@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import SideNavbar from "../components/SideNavbar";
+import { MailIcon } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -295,7 +296,7 @@ const ToastStack: React.FC<{ toasts: Toast[]; onDismiss: (id: number) => void }>
 // ─────────────────────────────────────────────────────────────
 
 const AcademicEmailGenerator: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [activeSection, setActiveSection] = useState("tools");
 
   // Form state
@@ -828,7 +829,12 @@ const AcademicEmailGenerator: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#0A1238]">
+    <div className="min-h-screen bg-[#0A1238] relative overflow-hidden">
+
+      {/* Background decoration — matches LinkedIn Post Generator */}
+      <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 right-0 w-[30rem] h-[26rem] rounded-full bg-teal-400/10 blur-[130px]" />
+
       <SideNavbar
         isOpen={isOpen}
         setIsOpen={setIsOpen}
@@ -840,16 +846,18 @@ const AcademicEmailGenerator: React.FC = () => {
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
 
       <div
-        className={`px-6 pt-20 pb-16 transition-all duration-300 ${
-          isOpen ? "ml-64" : "ml-0"
+        className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${
+          isOpen ? "ml-72" : "ml-16"
         }`}
       >
         {/* Header */}
-        <div className="text-center mb-8 flex flex-col items-center gap-3">
-          <h1 className="text-4xl font-bold text-white">
+        <div className="mb-8 max-w-3xl mx-auto text-center flex flex-col items-center gap-3">
+          <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-2 font-['Sora']">
+            <MailIcon className="w-6 h-6 text-sky-300" strokeWidth={1.75} />
             Academic Email Generator
           </h1>
-          <p className="text-gray-400 mt-1">
+
+          <p className="text-gray-400 text-sm md:text-base">
             Generate, edit, schedule, and send professional academic emails —
             single or broadcast
           </p>
@@ -857,7 +865,7 @@ const AcademicEmailGenerator: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowScheduledPanel((v) => !v)}
-            className="mt-1 text-xs px-4 py-2 rounded-full bg-white/10 text-gray-200 border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
+            className="text-xs px-4 py-2 rounded-full bg-white/10 text-gray-200 border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
           >
             {showScheduledPanel ? "Hide" : "View"} Scheduled Emails
           </button>
