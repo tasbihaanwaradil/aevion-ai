@@ -3,20 +3,16 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../components/MainLayout";
-import { useAuth } from "../context/AuthContext";
+import { useTeacherAuth } from "../context/TeacherAuthContext";
 import {
   LinkedinIcon,
   MailIcon,
   FileQuestionIcon,
-  PresentationIcon,
-  FileTextIcon,
-  CalendarClockIcon,
 } from "lucide-react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  {/* Get user from context */}
-  const { user } = useAuth();
+  const { teacher } = useTeacherAuth();
 
   const [activeSection, setActiveSection] = useState("dashboard");
 
@@ -46,31 +42,7 @@ const Dashboard = () => {
       icon: FileQuestionIcon,
       cardBg: "bg-indigo-100",
       iconBg: "bg-indigo-500",
-      route: "/Quizgenerator",
-    },
-    {
-      title: "Auto Slides",
-      description: "Generate slides from topics.",
-      icon: PresentationIcon,
-      cardBg: "bg-pink-100",
-      iconBg: "bg-pink-500",
-      route: "/AutoCreatePresentationSlides",
-    },
-    {
-      title: "PDF to Slides",
-      description: "Convert PDFs to slides.",
-      icon: FileTextIcon,
-      cardBg: "bg-lime-100",
-      iconBg: "bg-lime-500",
-      route: "/Pdf-to-SlideConverter",
-    },
-    {
-      title: "Reminder",
-      description: "Track schedules and deadlines.",
-      icon: CalendarClockIcon,
-      cardBg: "bg-gray-100",
-      iconBg: "bg-orange-500",
-      route: "/Reminder",
+      route: "/TeacherDashboard",
     },
   ];
 
@@ -80,9 +52,8 @@ const Dashboard = () => {
         <div className="max-w-6xl mx-auto">
 
            <h1 className="text-3xl font-bold text-white">
-             {/* Welcome message with username */}
-            Welcome back, {user?.name || "User"}!
-          </h1> 
+            Welcome back, {teacher?.name || "Teacher"}!
+          </h1>
 
           <p className="text-gray-300 mt-1 mb-8">
             Unlock smarter workflows with AI tools

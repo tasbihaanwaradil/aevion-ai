@@ -3,7 +3,7 @@
 import mongoose, { Document } from "mongoose";
 
 export interface IAcademicEmail extends Document {
-  userId: string;
+  teacherId: string;
   senderName: string;
   recipient: string;
   recipientEmail: string;
@@ -18,7 +18,7 @@ export interface IAcademicEmail extends Document {
 
 const AcademicEmailSchema = new mongoose.Schema<IAcademicEmail>(
   {
-    userId:         { type: String, ref: "User", required: true },
+    teacherId:      { type: String, ref: "Teacher", required: true },
     senderName:     { type: String, default: "" },
     recipient:      { type: String, required: true, trim: true },
     recipientEmail: { type: String, default: "" },

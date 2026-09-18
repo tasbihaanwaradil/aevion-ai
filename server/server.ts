@@ -8,8 +8,8 @@ import "dotenv/config";
 import connectDB from "./configs/db.js";
 import session from "express-session";
 import MongoStore from "connect-mongo";
-import AuthRouter from "./routes/AuthRoutes.js";
-import userRoutes from "./routes/UserRoutes.js";
+// import AuthRouter from "./routes/AuthRoutes.js";
+// import userRoutes from "./routes/UserRoutes.js";
 import AcademicEmailRoutes from "./routes/AcademicEmailRoutes.js";
 import quizRoutes from "./routes/quiz.js";
 import TeacherAuthRouter from "./routes/TeacherAuthRoutes.js";
@@ -63,8 +63,8 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Server is Live!");
 });
 
-app.use("/api/auth", AuthRouter);
-app.use("/api/user", userRoutes);
+// app.use("/api/auth", AuthRouter);
+// app.use("/api/user", userRoutes);
 app.use("/api/linkedin-posts", linkedinPostRoutes);
 app.use("/api/academic-email", AcademicEmailRoutes);
 app.use("/api/quiz", quizRoutes);

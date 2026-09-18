@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-const protect = async (req: Request, res: Response, next: NextFunction) => {
-    const { isLoggedIn, userId } = req.session;
 
-    if (!isLoggedIn || !userId) {
+export const protectTeacher = async (req: Request, res: Response, next: NextFunction) => {
+    const { isLoggedIn, teacherId } = req.session;
+
+    if (!isLoggedIn || !teacherId) {
         return res.status(401).json({ message: 'You are not logged in' });
     }
 
-    next()
-}
+    next();
+};
 
-export default protect
+export default protectTeacher;

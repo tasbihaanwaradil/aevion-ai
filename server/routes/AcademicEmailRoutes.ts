@@ -5,18 +5,19 @@ import {
   sendGeneratedEmail,
   getEmailHistory,
 } from "../controllers/AcademicEmailController.js";
+import { protectTeacher } from "../middlewares/auth.js";
 
 import scheduleRouter from "./academic-email-schedule.routes.js";
 import bulkRouter from "./academicEmailBulkRoute.js";
 
 const router = Router();
 
-router.post("/generate", generateEmail);
-router.post("/suggest", suggestContent);
-router.post("/send", sendGeneratedEmail);
-router.get("/history", getEmailHistory);
+router.post("/generate", protectTeacher, generateEmail);
+router.post("/suggest", protectTeacher, suggestContent);
+router.post("/send", protectTeacher, sendGeneratedEmail);
+router.get("/history", protectTeacher, getEmailHistory);
 
-router.use(scheduleRouter);
-router.use(bulkRouter);
+router.use(protectTeacher, scheduleRouter);
+router.use(protectTeacher, bulkRouter);
 
 export default router;

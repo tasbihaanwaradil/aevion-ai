@@ -9,7 +9,15 @@ import AcademicEmail from "../models/AcademicEmail.js";
 
 export const generateEmail = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.session;
+    const { teacherId } = req.session as any;
+
+    if (!teacherId) {
+      return res.status(401).json({
+        success: false,
+        message: "Please log in to generate an email.",
+      });
+    }
+
     const { purpose, recipient, recipientEmail, tone, senderName } = req.body;
 
     if (!purpose || !purpose.trim()) {
@@ -38,7 +46,7 @@ export const generateEmail = async (req: Request, res: Response) => {
 
     // Save to DB
     const saved = await AcademicEmail.create({
-      userId: userId ?? "guest",
+      teacherId,
       senderName: senderName ?? "",
       recipient,
       recipientEmail: recipientEmail ?? "",
@@ -92,6 +100,15 @@ export const suggestContent = async (req: Request, res: Response) => {
 
 export const sendGeneratedEmail = async (req: Request, res: Response) => {
   try {
+    const { teacherId } = req.session as any;
+
+    if (!teacherId) {
+      return res.status(401).json({
+        success: false,
+        message: "Please log in to send an email.",
+      });
+    }
+
     const { recipientEmail, subject, body, senderName, emailId } = req.body;
 
     if (!recipientEmail || !recipientEmail.trim()) {
@@ -118,7 +135,8 @@ export const sendGeneratedEmail = async (req: Request, res: Response) => {
     const result = await sendEmail({ to: recipientEmail, subject, body, fromName: senderName });
 
     if (emailId) {
-      await AcademicEmail.findByIdAndUpdate(emailId, { sent: true });
+      // Scope by teacherId so one teacher can't mark another's email as sent.
+      await AcademicEmail.findOneAndUpdate({ _id: emailId, teacherId }, { sent: true });
     }
 
     res.json({ success: true, messageId: result.messageId, accepted: result.accepted });
@@ -136,16 +154,16 @@ export const sendGeneratedEmail = async (req: Request, res: Response) => {
 
 export const getEmailHistory = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.session;
+    const { teacherId } = req.session as any;
 
-    if (!userId) {
+    if (!teacherId) {
       return res.status(401).json({
         success: false,
         message: "Please log in to view your email history.",
       });
     }
 
-    const emails = await AcademicEmail.find({ userId }).sort({ createdAt: -1 });
+    const emails = await AcademicEmail.find({ teacherId }).sort({ createdAt: -1 });
     res.json({ success: true, emails });
 
   } catch (error: any) {
