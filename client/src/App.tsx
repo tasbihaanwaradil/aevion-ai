@@ -33,6 +33,8 @@ import { TeacherAuthProvider } from "./context/TeacherAuthContext";
 import ResetPassword from "./pages/ResetPassword";
 import QuizEditor from "./pages/QuizEditor";
 import StudentJoin from "./pages/StudentJoin";
+import LinkedInHistory from "./pages/LinkedInHistory";
+import AcademicEmailHistory from "./pages/AcademicEmailHistory";
 
 export default function App() {
   return (
@@ -53,7 +55,7 @@ export default function App() {
             path="/AcademicEmailGenerator"
             element={<AcademicEmailGenerator />}
           />
-          <Route path="/Quizgenerator" element={<QuizGenerator />} />
+          <Route path="/QuizGenerator" element={<QuizGenerator />} />
           <Route
             path="/AutoCreatePresentationSlides"
             element={<AutoCreatePresentationSlides />}
@@ -64,8 +66,7 @@ export default function App() {
           />
           <Route path="/Reminder" element={<TimetableReminder />} />
           <Route path="/Dashboard" element={<Dashboard />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/Settings" element={<Settings />} />
           <Route path="/NewTeacherAccount" element={<NewTearcherAccount />} />
           <Route path="/Demographics" element={<Demographics />} />
           <Route path="/Aboutyou" element={<Aboutyou />} />
@@ -83,6 +84,9 @@ export default function App() {
           <Route path="/Quiz/Edit/:id" element={<QuizEditor />} />
           <Route path="/LiveResults/:id" element={<LiveResults />} />
           <Route path="/join" element={<StudentJoin />} />
+          <Route path="/LinkedInHistory" element={<LinkedInHistory />} />
+          <Route path="/AcademicEmailHistory" element={<AcademicEmailHistory />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
         {/* <Footer /> */}
       </TeacherAuthProvider>

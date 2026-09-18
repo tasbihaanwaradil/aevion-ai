@@ -8,11 +8,10 @@ import "dotenv/config";
 import connectDB from "./configs/db.js";
 import session from "express-session";
 import MongoStore from "connect-mongo";
-// import AuthRouter from "./routes/AuthRoutes.js";
-// import userRoutes from "./routes/UserRoutes.js";
 import AcademicEmailRoutes from "./routes/AcademicEmailRoutes.js";
 import quizRoutes from "./routes/quiz.js";
 import TeacherAuthRouter from "./routes/TeacherAuthRoutes.js";
+import TeacherRouter from "./routes/TeacherRoutes.js";
 import sessionRoutes from "./routes/session.js";
 import { initSocket } from "./services/socketServer.js";
 
@@ -22,7 +21,6 @@ import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
 declare module "express-session" {
   interface SessionData {
     isLoggedIn: boolean;
-    userId: string;
     teacherId: string;
   }
 }
@@ -63,12 +61,11 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Server is Live!");
 });
 
-// app.use("/api/auth", AuthRouter);
-// app.use("/api/user", userRoutes);
 app.use("/api/linkedin-posts", linkedinPostRoutes);
 app.use("/api/academic-email", AcademicEmailRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/teacher-auth", TeacherAuthRouter);
+app.use("/api/teacher", TeacherRouter);
 app.use("/api/session", sessionRoutes);
 
 initSocket(httpServer, sessionMiddleware);
