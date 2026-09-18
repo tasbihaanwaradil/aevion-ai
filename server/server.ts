@@ -17,6 +17,8 @@ import { initSocket } from "./services/socketServer.js";
 
 import passport from "./configs/passport.js";
 import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
+import reminderRoutes from "./routes/Reminderroutes.js";
+import { rehydrateReminderTimers } from "./utils/Reminderscheduler.js";
 
 declare module "express-session" {
   interface SessionData {
@@ -26,6 +28,11 @@ declare module "express-session" {
 }
 
 await connectDB();
+
+// In-memory reminder-checkpoint timers don't survive a restart — rebuild
+// them from whatever's still pending in the database now that the
+// connection is open.
+await rehydrateReminderTimers();
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -67,6 +74,7 @@ app.use("/api/quiz", quizRoutes);
 app.use("/api/teacher-auth", TeacherAuthRouter);
 app.use("/api/teacher", TeacherRouter);
 app.use("/api/session", sessionRoutes);
+app.use("/api/reminders", reminderRoutes);
 
 initSocket(httpServer, sessionMiddleware);
 

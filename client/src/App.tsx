@@ -35,6 +35,7 @@ import QuizEditor from "./pages/QuizEditor";
 import StudentJoin from "./pages/StudentJoin";
 import LinkedInHistory from "./pages/LinkedInHistory";
 import AcademicEmailHistory from "./pages/AcademicEmailHistory";
+import ReminderAgent from "./pages/ReminderAgent";
 
 export default function App() {
   return (
@@ -87,6 +88,7 @@ export default function App() {
           <Route path="/LinkedInHistory" element={<LinkedInHistory />} />
           <Route path="/AcademicEmailHistory" element={<AcademicEmailHistory />} />
           <Route path="*" element={<NotFound />} />
+         <Route path="/ReminderAgent" element={<ReminderAgent />} />
         </Routes>
         {/* <Footer /> */}
       </TeacherAuthProvider>
