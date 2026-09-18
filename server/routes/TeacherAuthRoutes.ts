@@ -60,7 +60,7 @@ TeacherAuthRouter.get('/google/callback', (req, res, next) => {
                 req.session.isLoggedIn = true;
                 req.session.teacherId = teacher._id;
 
-                return res.redirect(`${FRONTEND_URL}/TeacherDashboard`);
+                return res.redirect(`${FRONTEND_URL}/Dashboard`);
             });
         }
     )(req, res, next);

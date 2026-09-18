@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useTeacherAuth } from "../context/TeacherAuthContext";
 
 type Props = {
   isOpen: boolean;
@@ -20,13 +20,14 @@ const SideNavbar = ({
   title,
 }: Props) => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout } = useTeacherAuth();
 
   const menuItems = [
-    { name: "Dashboard", key: "dashboard" },
-    { name: "AI Tools", key: "tools" },
-    { name: "History", key: "history" },
-    { name: "Settings", key: "settings" },
+    { name: "Dashboard", key: "dashboard", route: "/Dashboard" },
+    { name: "AI Tools", key: "tools", route: "/Dashboard" },
+    { name: "LinkedIn History", key: "linkedin-history", route: "/LinkedInHistory" },
+    { name: "Email History", key: "email-history", route: "/AcademicEmailHistory" },
+    { name: "Settings", key: "settings", route: "/Settings" },
   ];
 
   return (
@@ -60,15 +61,11 @@ const SideNavbar = ({
         <nav className="flex flex-col gap-4 px-6 text-sm">
           {menuItems.map((item) => (
             <button
-              key={item.name}
+              key={item.key}
               onClick={() => {
                 setActiveSection(item.key);
                 setIsOpen(false);
-
-                if (item.key === "dashboard") navigate("/dashboard");
-                if (item.key === "tools") navigate("/dashboard");
-                if (item.key === "history") navigate("/history");
-                if (item.key === "settings") navigate("/settings");
+                navigate(item.route);
               }}
               className={`text-left px-3 py-2 rounded-lg transition ${
                 activeSection === item.key

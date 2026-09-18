@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useTeacherAuth } from "../context/TeacherAuthContext";
 import api from "../configs/api";
 import toast from "react-hot-toast";
 import SideNavbar from "../components/SideNavbar";
 
 const Settings: React.FC = () => {
-  const { user, setUser } = useAuth();
+  const { teacher, setTeacher } = useTeacherAuth();
 
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,19 +17,19 @@ const Settings: React.FC = () => {
   const [activeSection, setActiveSection] = useState("settings");
 
   useEffect(() => {
-    if (user) {
-      setName(user.name || "");
+    if (teacher) {
+      setName(teacher.name || "");
     }
-  }, [user]);
+  }, [teacher]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data } = await api.put("/api/user/update", { name });
+      const { data } = await api.put("/api/teacher/update", { name });
 
-      setUser(data.user);
+      setTeacher(data.teacher);
       toast.success(data.message || "Profile updated successfully");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Update failed");
@@ -77,16 +77,16 @@ const Settings: React.FC = () => {
               </label>
               <input
                 type="email"
-                value={user?.email || ""}
+                value={teacher?.email || ""}
                 disabled
                 className="w-full px-4 py-3 rounded-xl bg-gray-100 border border-[#2d5f6e] text-gray-500 cursor-not-allowed"
               />
             </div>
 
-            {/* Username */}
+            {/* Name */}
             <div>
               <label className="block font-semibold mb-2 text-gray-700">
-                Username
+                Name
               </label>
               <input
                 type="text"
@@ -115,5 +115,3 @@ const Settings: React.FC = () => {
 };
 
 export default Settings;
-
-
