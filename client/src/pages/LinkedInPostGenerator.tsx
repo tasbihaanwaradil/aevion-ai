@@ -296,7 +296,7 @@ export default function LinkedInPostGenerator() {
           <div className="mb-8 max-w-3xl mx-auto text-center">
   <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-2 font-['Sora']">
     <LinkedinIcon className="w-6 h-6 text-sky-300" strokeWidth={1.75} />
-    LinkedIn Post Generator
+    LinkedIn Post Studio
   </h1>
 
   <p className="text-gray-400 text-sm md:text-base">
@@ -527,7 +527,7 @@ export default function LinkedInPostGenerator() {
       >
         {/* Header */}
         <div className="mb-8 max-w-3xl">
-          <h1 className="flex items-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5">
+          <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5">
             <LinkedinIcon
               className="w-5 h-5 text-blue-300"
               strokeWidth={1.75}
@@ -536,7 +536,7 @@ export default function LinkedInPostGenerator() {
             Review your post
           </h1>
 
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-400  text-sm md:text-base">
             Edit the content below, then publish it to LinkedIn.
           </p>
         </div>

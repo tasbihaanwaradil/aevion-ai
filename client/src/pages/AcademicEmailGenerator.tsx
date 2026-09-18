@@ -854,7 +854,7 @@ const AcademicEmailGenerator: React.FC = () => {
         <div className="mb-8 max-w-3xl mx-auto text-center flex flex-col items-center gap-3">
           <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-2 font-['Sora']">
             <MailIcon className="w-6 h-6 text-sky-300" strokeWidth={1.75} />
-            Academic Email Generator
+           Academic Email Assistant
           </h1>
 
           <p className="text-gray-400 text-sm md:text-base">

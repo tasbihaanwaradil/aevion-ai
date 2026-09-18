@@ -25,7 +25,7 @@ const Dashboard = () => {
 
   const tools = [
     {
-      title: "LinkedIn Post Generator",
+      title: "LinkedIn Post Studio",
       description:
         "Generates professional LinkedIn posts for teachers related to achievements, research, or academic events.",
       icon: LinkedinIcon,
@@ -34,7 +34,7 @@ const Dashboard = () => {
       route: "/LinkedInPostGenerator",
     },
     {
-      title: "Academic Email Writer",
+      title: "Academic Email Assistant",
       description:
         "Drafts formal emails for class announcements, deadlines, feedback, and administrative communication.",
       icon: MailIcon,
@@ -43,7 +43,7 @@ const Dashboard = () => {
       route: "/AcademicEmailGenerator",
     },
     {
-      title: "Quiz Generator",
+      title: "Quiz Studio",
       description:
         "Automatically creates quizzes from lecture slides, PDFs, or topic inputs.",
       icon: FileQuestionIcon,
@@ -52,7 +52,7 @@ const Dashboard = () => {
       route: "/TeacherDashboard",
     },
     {
-      title: "Slide Generator",
+      title: "Lesson Slide Studio",
       description:
         "Turns a topic or a rough outline into a ready-to-present slide deck in minutes.",
       icon: PresentationIcon,
@@ -61,7 +61,7 @@ const Dashboard = () => {
       route: "/SlideGenerator",
     },
     {
-      title: "PDF to Slide Generator",
+      title: "PDF Lesson Studio",
       description:
         "Converts lecture notes or research PDFs directly into a structured, presentable slide deck.",
       icon: FileUpIcon,
