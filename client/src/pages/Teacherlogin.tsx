@@ -13,6 +13,11 @@ const TeacherLogin = () => {
     password: "",
   });
 
+  // Only true once the user has actually submitted this form — this is
+  // what distinguishes "just logged in, please redirect" from "a stale
+  // session cookie from days ago happened to still be valid on mount".
+  const [attemptingLogin, setAttemptingLogin] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -20,11 +25,10 @@ const TeacherLogin = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setAttemptingLogin(true);
     login(formData);
   };
 
-  // Google redirects back here with a status flag instead of a session
-  // when the teacher isn't eligible to log in yet.
   useEffect(() => {
     const status = searchParams.get("authStatus");
     const email = searchParams.get("email");
@@ -40,20 +44,22 @@ const TeacherLogin = () => {
     }
   }, [searchParams, navigate]);
 
+  // Redirect only after a login attempt made on THIS page just succeeded —
+  // visiting /Teacherlogin directly always shows the form, even if a
+  // previous session is still technically valid, so the teacher can
+  // choose which account to sign in with.
   useEffect(() => {
-    if (teacher) {
-      navigate("/TeacherDashboard");
+    if (teacher && attemptingLogin) {
+      navigate("/Dashboard");
     }
-  }, [teacher, navigate]);
+  }, [teacher, attemptingLogin, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#0A1238] px-4 pt-16 pb-12">
-      {/* Tagline */}
       <p className="text-gray-300 text-sm text-center max-w-md mb-8">
         Make learning measurable with interactive assessments, instant grading, and live progress visualization.
       </p>
 
-      {/* Login card */}
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md bg-white rounded-2xl px-10 py-12 shadow-2xl relative z-10"
@@ -103,7 +109,6 @@ const TeacherLogin = () => {
           Reset password
         </Link>
 
-        {/* Submit Button */}
         <button
           type="submit"
           className="mt-8 w-full h-14 rounded-2xl bg-[#2d5f6e] text-white font-bold text-lg hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)]"
@@ -113,7 +118,6 @@ const TeacherLogin = () => {
 
         <p className="text-center text-sm text-gray-400 my-4">Or</p>
 
-        {/* Google Button */}
         <button
           type="button"
           onClick={() => {
@@ -130,7 +134,6 @@ const TeacherLogin = () => {
         </button>
       </form>
 
-      {/* Create account card */}
       <div className="w-full max-w-md bg-white rounded-2xl px-10 py-8 shadow-2xl relative z-10 mt-6">
         <h2 className="text-2xl text-[#2d5f6e] font-bold text-center mb-4">New here?</h2>
         <button

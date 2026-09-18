@@ -1,8 +1,8 @@
-import express from "express";
-import { updateUser } from "../controllers/UserControllers.js";
+// import express from "express";
+// import { updateUser } from "../controllers/UserControllers.js";
 
-const router = express.Router();
+// const router = express.Router();
 
-router.put("/update", updateUser);
+// router.put("/update", updateUser);
 
-export default router;
+// export default router;

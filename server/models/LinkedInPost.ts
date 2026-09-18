@@ -13,7 +13,7 @@ export type PostTone = "Reflective" | "Informative" | "Celebratory" | "Inspirati
 export type PostStatus = "draft" | "approved" | "posted";
 
 export interface ILinkedInPost extends Document {
-  userId: string;
+  teacherId: string;
   topic: string;
   postType: PostType;
   tone: PostTone;
@@ -26,7 +26,7 @@ export interface ILinkedInPost extends Document {
 
 const LinkedInPostSchema = new mongoose.Schema<ILinkedInPost>(
   {
-    userId: { type: String, ref: "User", required: true },
+    teacherId: { type: String, ref: "Teacher", required: true },
     topic: { type: String, required: true, trim: true },
     postType: {
       type: String,

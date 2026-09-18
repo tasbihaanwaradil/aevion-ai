@@ -6,11 +6,12 @@ import {
   approvePost,
   getPostHistory,
 } from "../controllers/LinkedInPostControllers.js";
+import { protectTeacher } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.post("/generate", generateLinkedInPost);
-router.patch("/:id/approve", approvePost);
-router.get("/history", getPostHistory);
+router.post("/generate", protectTeacher, generateLinkedInPost);
+router.patch("/:id/approve", protectTeacher, approvePost);
+router.get("/history", protectTeacher, getPostHistory);
 
 export default router;

@@ -7,7 +7,12 @@ import { generateLinkedInPostAgent } from "../services/LinkedinAgent.js";
 // POST /api/linkedin-posts/generate
 export const generateLinkedInPost = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.session as any;
+    const { teacherId } = req.session as any;
+
+    if (!teacherId) {
+      return res.status(401).json({ success: false, message: "You are not logged in." });
+    }
+
     const { topic, postType, tone } = req.body;
 
     if (!topic?.trim() || !postType || !tone) {
@@ -26,7 +31,7 @@ export const generateLinkedInPost = async (req: Request, res: Response) => {
 
     // Save as draft
     const postDoc = await LinkedInPost.create({
-      userId,
+      teacherId,
       topic,
       postType,
       tone,
@@ -45,11 +50,19 @@ export const generateLinkedInPost = async (req: Request, res: Response) => {
 // PATCH /api/linkedin-posts/:id/approve
 export const approvePost = async (req: Request, res: Response) => {
   try {
+    const { teacherId } = req.session as any;
+
+    if (!teacherId) {
+      return res.status(401).json({ success: false, message: "You are not logged in." });
+    }
+
     const { id } = req.params;
     const { content } = req.body; // professor may have edited content
 
-    const post = await LinkedInPost.findByIdAndUpdate(
-      id,
+    // Scope by teacherId too, so one teacher can't edit another's draft
+    // by guessing an id.
+    const post = await LinkedInPost.findOneAndUpdate(
+      { _id: id, teacherId },
       { content, status: "approved" },
       { new: true }
     );
@@ -65,8 +78,13 @@ export const approvePost = async (req: Request, res: Response) => {
 // GET /api/linkedin-posts/history
 export const getPostHistory = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.session as any;
-    const posts = await LinkedInPost.find({ userId }).sort({ createdAt: -1 }).limit(20);
+    const { teacherId } = req.session as any;
+
+    if (!teacherId) {
+      return res.status(401).json({ success: false, message: "You are not logged in." });
+    }
+
+    const posts = await LinkedInPost.find({ teacherId }).sort({ createdAt: -1 }).limit(20);
     return res.json({ success: true, posts });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
