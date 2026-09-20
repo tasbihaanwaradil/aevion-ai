@@ -8,3 +8,6 @@ client/node_modules
 # General
 .env
 .DS_Store
+
+#Deployment 
+/server/dist/
