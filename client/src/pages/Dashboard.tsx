@@ -67,7 +67,7 @@ const Dashboard = () => {
       icon: FileUpIcon,
       cardBg: "bg-cyan-100",
       iconBg: "bg-cyan-500",
-      route: "/PdfToSlideGenerator",
+      route: "/Pdftoslidegenerator",
     },
     {
       title: "Reminder",

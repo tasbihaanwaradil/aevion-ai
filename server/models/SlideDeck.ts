@@ -12,6 +12,7 @@ export interface ISlide {
 
 export type SlideDeckStatus = "draft" | "downloaded";
 export type SlideTone = "Conversational" | "Formal" | "Academic" | "Simple";
+export type SlideDeckSource = "topic" | "pdf";
 
 export interface ISlideDeck extends Document {
   teacher: Types.ObjectId;
@@ -21,6 +22,8 @@ export interface ISlideDeck extends Document {
   deckTitle: string;
   slides: ISlide[];
   status: SlideDeckStatus;
+  sourceType: SlideDeckSource;
+  sourceFileName?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,6 +59,8 @@ const SlideDeckSchema = new Schema<ISlideDeck>(
     deckTitle: { type: String, required: true },
     slides: { type: [SlideSchema], default: [] },
     status: { type: String, enum: ["draft", "downloaded"], default: "draft" },
+    sourceType: { type: String, enum: ["topic", "pdf"], default: "topic" },
+    sourceFileName: { type: String },
   },
   { timestamps: true }
 );

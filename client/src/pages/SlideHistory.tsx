@@ -5,6 +5,7 @@ import SideNavbar from "../components/SideNavbar";
 import { formatDateTime } from "../utils/historyClamp";
 import {
   Presentation,
+  FileText,
   Calendar,
   Clock,
   Download,
@@ -18,6 +19,7 @@ import toast from "react-hot-toast";
 
 type SlideTone = "Conversational" | "Formal" | "Academic" | "Simple";
 type SlideDeckStatus = "draft" | "downloaded";
+type SlideDeckSource = "topic" | "pdf";
 
 interface SlideDeckRecord {
   _id: string;
@@ -25,6 +27,8 @@ interface SlideDeckRecord {
   topic: string;
   tone: SlideTone;
   status: SlideDeckStatus;
+  sourceType: SlideDeckSource;
+  sourceFileName?: string;
   slideCount: number;
   slideTitles: string[];
   createdAt: string;
@@ -131,7 +135,7 @@ export default function SlideHistory() {
             Slide Deck History
           </h1>
           <p className="text-gray-400 mt-2 text-sm">
-            Every deck you've generated, with date and status
+            Every deck you've generated — from a topic or a PDF — with date and status
           </p>
         </div>
 
@@ -153,7 +157,7 @@ export default function SlideHistory() {
             <Inbox className="w-10 h-10 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-300 font-medium">No slide decks yet</p>
             <p className="text-gray-500 text-sm mt-1">
-              Decks you generate will show up here.
+              Decks you generate — from a topic or a PDF — will show up here.
             </p>
           </div>
         )}
@@ -166,11 +170,29 @@ export default function SlideHistory() {
               const titlesToShow = expanded
                 ? deck.slideTitles
                 : deck.slideTitles.slice(0, 3);
+              const isPdf = deck.sourceType === "pdf";
 
               return (
                 <div key={deck._id} className="bg-white rounded-2xl shadow-xl p-6">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="text-xs font-semibold bg-rose-50 text-rose-600 rounded-full px-3 py-1">
+                    <span
+                      className={`text-xs font-semibold rounded-full px-3 py-1 flex items-center gap-1 ${
+                        isPdf
+                          ? "bg-cyan-50 text-cyan-600"
+                          : "bg-rose-50 text-rose-600"
+                      }`}
+                    >
+                      {isPdf ? (
+                        <>
+                          <FileText className="w-3 h-3" /> From PDF
+                        </>
+                      ) : (
+                        <>
+                          <Presentation className="w-3 h-3" /> From topic
+                        </>
+                      )}
+                    </span>
+                    <span className="text-xs font-semibold bg-gray-50 text-gray-600 rounded-full px-3 py-1">
                       {deck.tone}
                     </span>
                     <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-3 py-1">
@@ -188,7 +210,9 @@ export default function SlideHistory() {
                   </div>
 
                   <h3 className="font-semibold text-gray-800 truncate">{deck.deckTitle}</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">{deck.topic}</p>
+                  <p className="text-sm text-gray-500 mt-0.5 truncate">
+                    {isPdf && deck.sourceFileName ? deck.sourceFileName : deck.topic}
+                  </p>
 
                   <ul className="text-sm text-gray-600 mt-3 space-y-1 list-disc list-inside">
                     {titlesToShow.map((title, i) => (

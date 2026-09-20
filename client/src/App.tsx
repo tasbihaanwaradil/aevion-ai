@@ -38,6 +38,7 @@ import AcademicEmailHistory from "./pages/AcademicEmailHistory";
 import ReminderAgent from "./pages/ReminderAgent";
 import SlideGenerator from "./pages/Slidegenerator";
 import SlideHistory from "./pages/SlideHistory";
+import PdfToSlideGenerator from "./pages/Pdftoslidegenerator";
 
 export default function App() {
   return (
@@ -92,6 +93,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
          <Route path="/ReminderAgent" element={<ReminderAgent />} />
           <Route path="/SlideHistory" element={<SlideHistory />} />
+          <Route path="/Pdftoslidegenerator" element={<PdfToSlideGenerator/>}/>
         </Routes>
         {/* <Footer /> */}
       </TeacherAuthProvider>
