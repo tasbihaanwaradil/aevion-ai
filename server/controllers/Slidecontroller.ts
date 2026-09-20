@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Groq from "groq-sdk";
 import { buildPptxBuffer, SlideInput } from "../utils/Buildpptx.js";
+import { extractPdfText } from "../utils/extractPdfText.js";
 import SlideDeck from "../models/SlideDeck.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -15,13 +16,24 @@ interface GeneratedSlide {
   bullets: GeneratedBullet[];
 }
 
-function extractJson(raw: string): { deckTitle?: string; slides?: GeneratedSlide[] } {
+interface ParsedDeck {
+  deckTitle?: string;
+  slides?: GeneratedSlide[];
+}
+
+function extractJson(raw: string): ParsedDeck {
   const cleaned = raw
     .trim()
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")
     .replace(/```$/i, "")
     .trim();
+  if (!cleaned) {
+    // Groq occasionally rejects generation server-side and returns an
+    // empty completion rather than throwing — treat that the same as a
+    // parse failure so it goes through the same retry path.
+    throw new Error("Empty generation from model.");
+  }
   return JSON.parse(cleaned);
 }
 
@@ -29,6 +41,64 @@ function extractJson(raw: string): { deckTitle?: string; slides?: GeneratedSlide
 // (req.session.teacherId), rather than an attached req.teacher object.
 function getTeacherId(req: Request): string | undefined {
   return req.session?.teacherId;
+}
+
+/**
+ * Runs one deck-generation attempt (API call + JSON parse) and retries
+ * once with `strict=true` if EITHER step fails — a malformed/empty
+ * completion, or Groq's own server-side JSON validation rejecting the
+ * request outright (BadRequestError / json_validate_failed), which
+ * throws from the API call itself rather than surfacing as parseable
+ * (if broken) text.
+ */
+async function generateDeckJson(
+  buildPrompt: (strict: boolean) => string,
+  maxTokens: number,
+  logLabel: string
+): Promise<ParsedDeck> {
+  async function attempt(strict: boolean): Promise<ParsedDeck> {
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-20b",
+      messages: [{ role: "user", content: buildPrompt(strict) }],
+      temperature: 0.6,
+      max_tokens: maxTokens,
+      response_format: { type: "json_object" },
+    });
+    const raw = completion.choices?.[0]?.message?.content ?? "";
+    return extractJson(raw);
+  }
+
+  try {
+    return await attempt(false);
+  } catch (err) {
+    console.warn(
+      `${logLabel}: first attempt failed, retrying once.`,
+      err instanceof Error ? err.message : err
+    );
+    try {
+      return await attempt(true);
+    } catch (err2) {
+      console.error(
+        `${logLabel}: second attempt also failed.`,
+        err2 instanceof Error ? err2.message : err2
+      );
+      throw new Error("GENERATION_FAILED");
+    }
+  }
+}
+
+function finalizeSlides(slides: GeneratedSlide[]): SlideInput[] {
+  return slides.map((s) => ({
+    title: s.title || "Untitled slide",
+    bullets: Array.isArray(s.bullets)
+      ? s.bullets
+          .filter((b) => b && (b.point || b.description))
+          .map((b) => ({
+            point: b.point || "",
+            description: b.description || "",
+          }))
+      : [],
+  }));
 }
 
 // ── GENERATE ────────────────────────────────────────────────────────────
@@ -72,37 +142,14 @@ Requirements:
 - The first slide introduces the topic; the last slide summarizes or concludes.
 ${strict ? "- Keep descriptions to a single concise sentence each — brevity matters more than depth here, since the full response must fit in one reply.\n" : ""}- Return ONLY the JSON object — no markdown fences, no commentary, no text before or after it.`;
 
-    async function requestDeck(strict: boolean) {
-      const completion = await groq.chat.completions.create({
-        model: "openai/gpt-oss-20b",
-        messages: [{ role: "user", content: buildPrompt(strict) }],
-        temperature: 0.6,
-        max_tokens: maxTokens,
-        response_format: { type: "json_object" },
-      });
-      return completion.choices?.[0]?.message?.content ?? "";
-    }
-
-    let raw = await requestDeck(false);
-    let parsed: { deckTitle?: string; slides?: GeneratedSlide[] } | undefined;
-
+    let parsed: ParsedDeck;
     try {
-      parsed = extractJson(raw);
+      parsed = await generateDeckJson(buildPrompt, maxTokens, "Slide generation");
     } catch {
-      // Most likely cause: the response got cut off before finishing.
-      // Retry once with an explicit brevity instruction rather than
-      // failing outright on the first hiccup.
-      console.warn("Slide generation JSON parse failed, retrying once. Raw length:", raw.length);
-      raw = await requestDeck(true);
-      try {
-        parsed = extractJson(raw);
-      } catch {
-        console.error("Slide generation returned unparseable output twice:", raw);
-        return res.status(502).json({
-          success: false,
-          message: "The AI response couldn't be parsed. Try again, or request fewer slides.",
-        });
-      }
+      return res.status(502).json({
+        success: false,
+        message: "The AI couldn't generate a valid deck. Try again, or request fewer slides.",
+      });
     }
 
     if (!parsed || !Array.isArray(parsed.slides) || parsed.slides.length === 0) {
@@ -111,17 +158,7 @@ ${strict ? "- Keep descriptions to a single concise sentence each — brevity ma
         .json({ success: false, message: "No slides were generated. Please try again." });
     }
 
-    const finalSlides = parsed.slides.map((s) => ({
-      title: s.title || "Untitled slide",
-      bullets: Array.isArray(s.bullets)
-        ? s.bullets
-            .filter((b) => b && (b.point || b.description))
-            .map((b) => ({
-              point: b.point || "",
-              description: b.description || "",
-            }))
-        : [],
-    }));
+    const finalSlides = finalizeSlides(parsed.slides);
     const finalDeckTitle = parsed.deckTitle || String(topic);
 
     // Persist as history — non-fatal if it fails, the user still gets their deck.
@@ -137,6 +174,7 @@ ${strict ? "- Keep descriptions to a single concise sentence each — brevity ma
           deckTitle: finalDeckTitle,
           slides: finalSlides,
           status: "draft",
+          sourceType: "topic",
         });
         deckId = doc._id.toString();
       } catch (saveErr) {
@@ -156,6 +194,142 @@ ${strict ? "- Keep descriptions to a single concise sentence each — brevity ma
   }
 }
 
+// ── GENERATE FROM PDF ──────────────────────────────────────────────────
+export async function generateSlidesFromPdf(req: Request, res: Response) {
+  try {
+    const teacherId = getTeacherId(req);
+    if (!teacherId) {
+      return res.status(401).json({ success: false, message: "Not authenticated." });
+    }
+
+    const file = (req as Request & { file?: Express.Multer.File }).file;
+    if (!file) {
+      return res.status(400).json({ success: false, message: "A PDF file is required." });
+    }
+    if (file.mimetype !== "application/pdf") {
+      return res.status(400).json({ success: false, message: "Only PDF files are supported." });
+    }
+
+    const { slideCount, tone } = req.body;
+    const count = Math.min(Math.max(Number(slideCount) || 8, 3), 20);
+    const chosenTone = tone || "Conversational";
+
+    let extractedText: string;
+    try {
+      extractedText = await extractPdfText(file.buffer);
+    } catch (err) {
+      console.error("PDF text extraction failed:", err);
+      return res.status(422).json({
+        success: false,
+        message: "Couldn't read that PDF — it may be corrupted or password-protected.",
+      });
+    }
+
+    if (!extractedText || extractedText.length < 40) {
+      return res.status(422).json({
+        success: false,
+        message:
+          "No readable text found in that PDF. Scanned documents without a text layer aren't supported yet.",
+      });
+    }
+
+    const fileTitle = file.originalname.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ").trim();
+    const maxTokens = Math.min(8000, 900 + count * 260);
+
+    // On the strict retry, the source material is trimmed further on top
+    // of the brevity instruction — a common cause of Groq's own
+    // json_validate_failed rejection is an overloaded prompt combined
+    // with strict JSON-object mode, so shrinking both at once gives the
+    // retry a meaningfully better chance rather than repeating the same
+    // failure with only a wording tweak.
+    const buildReferenceMaterial = (strict: boolean) => {
+      const limit = strict ? 8000 : 15000;
+      const truncated = extractedText.length > limit;
+      return (
+        extractedText.slice(0, limit) +
+        (truncated ? "\n\n[Document truncated for length.]" : "")
+      );
+    };
+
+    const buildPrompt = (strict: boolean) => `You create presentation slide decks for teachers.
+
+TOPIC / SOURCE TITLE: ${fileTitle || "Uploaded document"}
+SOURCE MATERIAL TO BASE THE DECK ON (extracted text from a PDF — condense and structure it, don't just repeat it verbatim):
+${buildReferenceMaterial(strict)}
+
+Return a single JSON object with this exact shape and nothing else:
+{
+  "deckTitle": string,
+  "slides": [
+    {
+      "title": string,
+      "bullets": [
+        { "point": string, "description": string }
+      ]
+    }
+  ]
+}
+
+Requirements:
+- Exactly ${count} slides in the "slides" array.
+- Tone: ${chosenTone}.
+- Each slide has between 2 and 4 bullets.
+- "point" is a short heading phrase for the bullet (roughly 3-8 words).
+- "description" is one or two full sentences explaining or elaborating on that point, drawn from the source material.
+- Base the deck's structure and content on the source material, condensing and organizing it into a logical slide flow rather than repeating chunks of it verbatim.
+- The first slide introduces the topic; the last slide summarizes or concludes.
+${strict ? "- Keep descriptions to a single concise sentence each — brevity matters more than depth here, since the full response must fit in one reply.\n" : ""}- Return ONLY the JSON object — no markdown fences, no commentary, no text before or after it.`;
+
+    let parsed: ParsedDeck;
+    try {
+      parsed = await generateDeckJson(buildPrompt, maxTokens, "PDF slide generation");
+    } catch {
+      return res.status(502).json({
+        success: false,
+        message:
+          "The AI couldn't generate a valid deck from this PDF. Try again, request fewer slides, or use a shorter document.",
+      });
+    }
+
+    if (!parsed || !Array.isArray(parsed.slides) || parsed.slides.length === 0) {
+      return res
+        .status(502)
+        .json({ success: false, message: "No slides were generated. Please try again." });
+    }
+
+    const finalSlides = finalizeSlides(parsed.slides);
+    const finalDeckTitle = parsed.deckTitle || fileTitle || file.originalname;
+
+    let deckId: string | undefined;
+    try {
+      const doc = await SlideDeck.create({
+        teacher: teacherId,
+        topic: fileTitle || file.originalname,
+        outline: "",
+        tone: chosenTone,
+        deckTitle: finalDeckTitle,
+        slides: finalSlides,
+        status: "draft",
+        sourceType: "pdf",
+        sourceFileName: file.originalname,
+      });
+      deckId = doc._id.toString();
+    } catch (saveErr) {
+      console.error("Failed to save PDF slide deck history:", saveErr);
+    }
+
+    return res.json({
+      success: true,
+      deckId,
+      deckTitle: finalDeckTitle,
+      slides: finalSlides,
+    });
+  } catch (err) {
+    console.error("generateSlidesFromPdf error:", err);
+    return res.status(500).json({ success: false, message: "Failed to generate slides from the PDF." });
+  }
+}
+
 // ── DOWNLOAD ────────────────────────────────────────────────────────────
 export async function downloadDeck(req: Request, res: Response) {
   try {
@@ -168,7 +342,6 @@ export async function downloadDeck(req: Request, res: Response) {
     let finalTitle = deckTitle || "Presentation";
     let finalSlides: SlideInput[] | undefined = slides;
 
-    // Downloading from history: load the saved deck, mark it downloaded.
     if (deckId) {
       const deck = await SlideDeck.findById(deckId);
       if (!deck) {
@@ -224,7 +397,7 @@ export async function getSlideHistory(req: Request, res: Response) {
 
     const decks = await SlideDeck.find({ teacher: teacherId })
       .sort({ createdAt: -1 })
-      .select("deckTitle topic tone status slides createdAt")
+      .select("deckTitle topic tone status sourceType sourceFileName slides createdAt")
       .lean();
 
     return res.json({
@@ -235,6 +408,8 @@ export async function getSlideHistory(req: Request, res: Response) {
         topic: d.topic,
         tone: d.tone,
         status: d.status,
+        sourceType: d.sourceType,
+        sourceFileName: d.sourceFileName,
         slideCount: d.slides?.length ?? 0,
         slideTitles: (d.slides ?? []).map((s: any) => s.title),
         createdAt: d.createdAt,
