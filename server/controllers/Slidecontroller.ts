@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Groq from "groq-sdk";
 import { buildPptxBuffer, SlideInput } from "../utils/Buildpptx.js";
-import { extractPdfText } from "../utils/extractPdfText.js";
+import { extractPdfText } from "../utils/Extractpdftext.js";
 import SlideDeck from "../models/SlideDeck.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -54,7 +54,7 @@ function getTeacherId(req: Request): string | undefined {
 async function generateDeckJson(
   buildPrompt: (strict: boolean) => string,
   maxTokens: number,
-  logLabel: string
+  logLabel: string,
 ): Promise<ParsedDeck> {
   async function attempt(strict: boolean): Promise<ParsedDeck> {
     const completion = await groq.chat.completions.create({
@@ -73,14 +73,14 @@ async function generateDeckJson(
   } catch (err) {
     console.warn(
       `${logLabel}: first attempt failed, retrying once.`,
-      err instanceof Error ? err.message : err
+      err instanceof Error ? err.message : err,
     );
     try {
       return await attempt(true);
     } catch (err2) {
       console.error(
         `${logLabel}: second attempt also failed.`,
-        err2 instanceof Error ? err2.message : err2
+        err2 instanceof Error ? err2.message : err2,
       );
       throw new Error("GENERATION_FAILED");
     }
@@ -107,7 +107,9 @@ export async function generateSlides(req: Request, res: Response) {
     const { topic, outline, slideCount, tone } = req.body;
 
     if (!topic || !String(topic).trim()) {
-      return res.status(400).json({ success: false, message: "A topic is required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "A topic is required." });
     }
 
     const count = Math.min(Math.max(Number(slideCount) || 8, 3), 20);
@@ -115,7 +117,9 @@ export async function generateSlides(req: Request, res: Response) {
 
     const maxTokens = Math.min(8000, 900 + count * 260);
 
-    const buildPrompt = (strict: boolean) => `You create presentation slide decks for teachers.
+    const buildPrompt = (
+      strict: boolean,
+    ) => `You create presentation slide decks for teachers.
 
 TOPIC: ${topic}
 ${outline ? `ROUGH OUTLINE PROVIDED BY THE USER:\n${outline}\n` : ""}
@@ -144,18 +148,30 @@ ${strict ? "- Keep descriptions to a single concise sentence each — brevity ma
 
     let parsed: ParsedDeck;
     try {
-      parsed = await generateDeckJson(buildPrompt, maxTokens, "Slide generation");
+      parsed = await generateDeckJson(
+        buildPrompt,
+        maxTokens,
+        "Slide generation",
+      );
     } catch {
       return res.status(502).json({
         success: false,
-        message: "The AI couldn't generate a valid deck. Try again, or request fewer slides.",
+        message:
+          "The AI couldn't generate a valid deck. Try again, or request fewer slides.",
       });
     }
 
-    if (!parsed || !Array.isArray(parsed.slides) || parsed.slides.length === 0) {
+    if (
+      !parsed ||
+      !Array.isArray(parsed.slides) ||
+      parsed.slides.length === 0
+    ) {
       return res
         .status(502)
-        .json({ success: false, message: "No slides were generated. Please try again." });
+        .json({
+          success: false,
+          message: "No slides were generated. Please try again.",
+        });
     }
 
     const finalSlides = finalizeSlides(parsed.slides);
@@ -190,7 +206,9 @@ ${strict ? "- Keep descriptions to a single concise sentence each — brevity ma
     });
   } catch (err) {
     console.error("generateSlides error:", err);
-    return res.status(500).json({ success: false, message: "Failed to generate slides." });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to generate slides." });
   }
 }
 
@@ -199,15 +217,21 @@ export async function generateSlidesFromPdf(req: Request, res: Response) {
   try {
     const teacherId = getTeacherId(req);
     if (!teacherId) {
-      return res.status(401).json({ success: false, message: "Not authenticated." });
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authenticated." });
     }
 
     const file = (req as Request & { file?: Express.Multer.File }).file;
     if (!file) {
-      return res.status(400).json({ success: false, message: "A PDF file is required." });
+      return res
+        .status(400)
+        .json({ success: false, message: "A PDF file is required." });
     }
     if (file.mimetype !== "application/pdf") {
-      return res.status(400).json({ success: false, message: "Only PDF files are supported." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Only PDF files are supported." });
     }
 
     const { slideCount, tone } = req.body;
@@ -221,7 +245,8 @@ export async function generateSlidesFromPdf(req: Request, res: Response) {
       console.error("PDF text extraction failed:", err);
       return res.status(422).json({
         success: false,
-        message: "Couldn't read that PDF — it may be corrupted or password-protected.",
+        message:
+          "Couldn't read that PDF — it may be corrupted or password-protected.",
       });
     }
 
@@ -233,7 +258,10 @@ export async function generateSlidesFromPdf(req: Request, res: Response) {
       });
     }
 
-    const fileTitle = file.originalname.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ").trim();
+    const fileTitle = file.originalname
+      .replace(/\.pdf$/i, "")
+      .replace(/[_-]+/g, " ")
+      .trim();
     const maxTokens = Math.min(8000, 900 + count * 260);
 
     // On the strict retry, the source material is trimmed further on top
@@ -251,7 +279,9 @@ export async function generateSlidesFromPdf(req: Request, res: Response) {
       );
     };
 
-    const buildPrompt = (strict: boolean) => `You create presentation slide decks for teachers.
+    const buildPrompt = (
+      strict: boolean,
+    ) => `You create presentation slide decks for teachers.
 
 TOPIC / SOURCE TITLE: ${fileTitle || "Uploaded document"}
 SOURCE MATERIAL TO BASE THE DECK ON (extracted text from a PDF — condense and structure it, don't just repeat it verbatim):
@@ -282,7 +312,11 @@ ${strict ? "- Keep descriptions to a single concise sentence each — brevity ma
 
     let parsed: ParsedDeck;
     try {
-      parsed = await generateDeckJson(buildPrompt, maxTokens, "PDF slide generation");
+      parsed = await generateDeckJson(
+        buildPrompt,
+        maxTokens,
+        "PDF slide generation",
+      );
     } catch {
       return res.status(502).json({
         success: false,
@@ -291,10 +325,17 @@ ${strict ? "- Keep descriptions to a single concise sentence each — brevity ma
       });
     }
 
-    if (!parsed || !Array.isArray(parsed.slides) || parsed.slides.length === 0) {
+    if (
+      !parsed ||
+      !Array.isArray(parsed.slides) ||
+      parsed.slides.length === 0
+    ) {
       return res
         .status(502)
-        .json({ success: false, message: "No slides were generated. Please try again." });
+        .json({
+          success: false,
+          message: "No slides were generated. Please try again.",
+        });
     }
 
     const finalSlides = finalizeSlides(parsed.slides);
@@ -326,7 +367,12 @@ ${strict ? "- Keep descriptions to a single concise sentence each — brevity ma
     });
   } catch (err) {
     console.error("generateSlidesFromPdf error:", err);
-    return res.status(500).json({ success: false, message: "Failed to generate slides from the PDF." });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to generate slides from the PDF.",
+      });
   }
 }
 
@@ -345,16 +391,23 @@ export async function downloadDeck(req: Request, res: Response) {
     if (deckId) {
       const deck = await SlideDeck.findById(deckId);
       if (!deck) {
-        return res.status(404).json({ success: false, message: "Deck not found." });
+        return res
+          .status(404)
+          .json({ success: false, message: "Deck not found." });
       }
 
       const teacherId = getTeacherId(req);
       if (!teacherId || deck.teacher.toString() !== teacherId) {
-        return res.status(403).json({ success: false, message: "Not authorized for this deck." });
+        return res
+          .status(403)
+          .json({ success: false, message: "Not authorized for this deck." });
       }
 
       finalTitle = deckTitle || deck.deckTitle;
-      finalSlides = slides && slides.length > 0 ? slides : (deck.slides as unknown as SlideInput[]);
+      finalSlides =
+        slides && slides.length > 0
+          ? slides
+          : (deck.slides as unknown as SlideInput[]);
       if (deckTitle) deck.deckTitle = deckTitle;
       if (slides && slides.length > 0) deck.slides = slides as any;
       deck.status = "downloaded";
@@ -362,28 +415,44 @@ export async function downloadDeck(req: Request, res: Response) {
     }
 
     if (!Array.isArray(finalSlides) || finalSlides.length === 0) {
-      return res.status(400).json({ success: false, message: "No slides to export." });
+      return res
+        .status(400)
+        .json({ success: false, message: "No slides to export." });
     }
 
     const badSlide = finalSlides.find((s) => !s.title || !s.title.trim());
     if (badSlide) {
       return res
         .status(400)
-        .json({ success: false, message: "Every slide needs a title before exporting." });
+        .json({
+          success: false,
+          message: "Every slide needs a title before exporting.",
+        });
     }
 
     const buffer = await buildPptxBuffer(finalTitle, finalSlides);
-    const safeName = (finalTitle || "presentation").replace(/[^a-z0-9\-_ ]/gi, "_");
+    const safeName = (finalTitle || "presentation").replace(
+      /[^a-z0-9\-_ ]/gi,
+      "_",
+    );
 
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     );
-    res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pptx"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${safeName}.pptx"`,
+    );
     return res.send(buffer);
   } catch (err) {
     console.error("downloadDeck error:", err);
-    return res.status(500).json({ success: false, message: "Failed to build the presentation file." });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to build the presentation file.",
+      });
   }
 }
 
@@ -392,12 +461,16 @@ export async function getSlideHistory(req: Request, res: Response) {
   try {
     const teacherId = getTeacherId(req);
     if (!teacherId) {
-      return res.status(401).json({ success: false, message: "Not authenticated." });
+      return res
+        .status(401)
+        .json({ success: false, message: "Not authenticated." });
     }
 
     const decks = await SlideDeck.find({ teacher: teacherId })
       .sort({ createdAt: -1 })
-      .select("deckTitle topic tone status sourceType sourceFileName slides createdAt")
+      .select(
+        "deckTitle topic tone status sourceType sourceFileName slides createdAt",
+      )
       .lean();
 
     return res.json({
@@ -417,6 +490,8 @@ export async function getSlideHistory(req: Request, res: Response) {
     });
   } catch (err) {
     console.error("getSlideHistory error:", err);
-    return res.status(500).json({ success: false, message: "Failed to load slide history." });
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to load slide history." });
   }
 }
