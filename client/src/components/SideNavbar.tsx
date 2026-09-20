@@ -8,6 +8,7 @@ import {
   LayoutDashboardIcon,
   LinkedinIcon,
   MailIcon,
+  PresentationIcon,
   SettingsIcon,
   LogOutIcon,
 } from "lucide-react";
@@ -51,6 +52,12 @@ const SideNavbar = ({
       key: "email-history",
       route: "/AcademicEmailHistory",
       icon: MailIcon,
+    },
+    {
+      name: "Slide History",
+      key: "slide-history",
+      route: "/SlideHistory",
+      icon: PresentationIcon,
     },
   ];
 

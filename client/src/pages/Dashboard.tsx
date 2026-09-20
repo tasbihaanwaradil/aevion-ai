@@ -58,7 +58,7 @@ const Dashboard = () => {
       icon: PresentationIcon,
       cardBg: "bg-rose-100",
       iconBg: "bg-rose-500",
-      route: "/SlideGenerator",
+      route: "/Slidegenerator",
     },
     {
       title: "PDF Lesson Studio",
