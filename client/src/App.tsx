@@ -36,6 +36,8 @@ import StudentJoin from "./pages/StudentJoin";
 import LinkedInHistory from "./pages/LinkedInHistory";
 import AcademicEmailHistory from "./pages/AcademicEmailHistory";
 import ReminderAgent from "./pages/ReminderAgent";
+import SlideGenerator from "./pages/Slidegenerator";
+import SlideHistory from "./pages/SlideHistory";
 
 export default function App() {
   return (
@@ -58,8 +60,8 @@ export default function App() {
           />
           <Route path="/QuizGenerator" element={<QuizGenerator />} />
           <Route
-            path="/AutoCreatePresentationSlides"
-            element={<AutoCreatePresentationSlides />}
+            path="/Slidegenerator"
+            element={<SlideGenerator />}
           />
           <Route
             path="/Pdf-to-SlideConverter"
@@ -89,6 +91,7 @@ export default function App() {
           <Route path="/AcademicEmailHistory" element={<AcademicEmailHistory />} />
           <Route path="*" element={<NotFound />} />
          <Route path="/ReminderAgent" element={<ReminderAgent />} />
+          <Route path="/SlideHistory" element={<SlideHistory />} />
         </Routes>
         {/* <Footer /> */}
       </TeacherAuthProvider>
