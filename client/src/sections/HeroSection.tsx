@@ -24,7 +24,7 @@ export default function HeroSection() {
         tl.fromTo(
           badgeRef.current,
           { opacity: 0, y: -14, scale: 0.9 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.5 }
+          { opacity: 1, y: 0, scale: 1, duration: 0.5 },
         );
       }
 
@@ -34,7 +34,7 @@ export default function HeroSection() {
           lines,
           { opacity: 0, y: 40 },
           { opacity: 1, y: 0, duration: 0.7, stagger: 0.12 },
-          "-=0.15"
+          "-=0.15",
         );
       }
 
@@ -43,7 +43,7 @@ export default function HeroSection() {
           descRef.current,
           { opacity: 0, y: 24 },
           { opacity: 1, y: 0, duration: 0.6 },
-          "-=0.35"
+          "-=0.35",
         );
       }
 
@@ -52,7 +52,7 @@ export default function HeroSection() {
           ctaRef.current.children,
           { opacity: 0, y: 20, scale: 0.95 },
           { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.1 },
-          "-=0.3"
+          "-=0.3",
         );
       }
 
@@ -87,7 +87,7 @@ export default function HeroSection() {
             repeat: -1,
             yoyo: true,
             ease: "sine.inOut",
-          }
+          },
         );
       }
     });
@@ -97,7 +97,7 @@ export default function HeroSection() {
 
   const handleCtaHover = (
     e: React.MouseEvent<HTMLButtonElement>,
-    entering: boolean
+    entering: boolean,
   ) => {
     gsap.to(e.currentTarget, {
       scale: entering ? 1.04 : 1,
@@ -187,9 +187,7 @@ export default function HeroSection() {
               drop-shadow-2xl
             "
           >
-            <span className="hero-line block">
-              Empower Educators with AI
-            </span>
+            <span className="hero-line block">Empower Educators with AI</span>
             <span className="hero-line block">
               <span className="text-sky-300">Automate</span>,{" "}
               <span className="text-sky-300">Create</span> &{" "}
@@ -211,10 +209,9 @@ export default function HeroSection() {
             leading-relaxed
           "
         >
-          Meet the teaching assistant that never sleeps. Aevion.AI drafts your
-          announcements, builds your quizzes, grades the busywork, and never
-          lets a deadline slip — so your time goes back to where it belongs:
-          your students.
+          Create teaching materials, generate quizzes, and track student
+          progress—all in one place. Simplify everyday tasks so you can spend
+          more time teaching and supporting your students.
         </p>
 
         {/* CTA Buttons */}
