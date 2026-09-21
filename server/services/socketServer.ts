@@ -48,9 +48,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
   });
 
   if (sessionMiddleware) {
-    io.use((socket, next) => {
-      sessionMiddleware(socket.request, {}, next);
-    });
+    io.engine.use(sessionMiddleware);
   }
 
   const broadcastParticipants = (
