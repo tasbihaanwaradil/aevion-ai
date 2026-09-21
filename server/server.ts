@@ -30,19 +30,29 @@ declare module "express-session" {
 
 await connectDB();
 
-// In-memory reminder-checkpoint timers don't survive a restart — rebuild
-// them from whatever's still pending in the database now that the
-// connection is open.
+// Rebuild pending reminder timers after a server restart.
 await rehydrateReminderTimers();
 
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
+
+// Allow Express to recognize HTTPS through Render's proxy.
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
+
 const httpServer = http.createServer(app);
 
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET as string,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }, // this cookie will expire in 7 days
+  cookie: {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+  },
   store: MongoStore.create({
     mongoUrl: process.env.MONGODB_URI as string,
     collectionName: "express_sessions",
@@ -52,14 +62,14 @@ const sessionMiddleware = session({
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   }),
 );
 
 app.use(sessionMiddleware);
 
-// Initialize passport AFTER session
+// Initialize Passport after the session middleware.
 app.use(passport.initialize());
 app.use(passport.session());
 
