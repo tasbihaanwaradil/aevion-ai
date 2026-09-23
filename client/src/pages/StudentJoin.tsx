@@ -22,7 +22,7 @@ const StudentJoin = () => {
 
   const [sessionId, setSessionId] = useState("");
   const [participantId, setParticipantId] = useState("");
-  const [title, setTitle] = useState("");
+  const [, setTitle] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -91,14 +91,11 @@ const StudentJoin = () => {
       },
     );
 
-    socket.on(
-      "student:answer-error",
-      ({ message }: { message: string }) => {
-        setSubmitting(false);
-        setError(message);
-        setFeedback(null);
-      },
-    );
+    socket.on("student:answer-error", ({ message }: { message: string }) => {
+      setSubmitting(false);
+      setError(message);
+      setFeedback(null);
+    });
 
     return () => {
       socket.off("student:join-error");

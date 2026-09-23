@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AnimatedContent from "../components/animated-content";
 import SectionTitle from "../components/section-title";
 import { Faqs } from "../data/faqs";

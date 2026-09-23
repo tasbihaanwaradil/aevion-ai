@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import MainLayout from "../components/MainLayout";
@@ -17,8 +17,6 @@ import {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { teacher } = useTeacherAuth();
-
-  const [activeSection, setActiveSection] = useState("dashboard");
 
   const headerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -88,7 +86,7 @@ const Dashboard = () => {
         tl.fromTo(
           headerRef.current.children,
           { opacity: 0, y: -18 },
-          { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 }
+          { opacity: 1, y: 0, duration: 0.6, stagger: 0.1 },
         );
       }
 
@@ -106,7 +104,7 @@ const Dashboard = () => {
             duration: 0.55,
             stagger: 0.08,
           },
-          "-=0.25"
+          "-=0.25",
         );
 
         tl.fromTo(
@@ -119,7 +117,7 @@ const Dashboard = () => {
             stagger: 0.08,
             ease: "back.out(1.7)",
           },
-          "-=0.5"
+          "-=0.5",
         );
       }
     });
@@ -129,7 +127,7 @@ const Dashboard = () => {
 
   const handleCardHover = (
     e: React.MouseEvent<HTMLDivElement>,
-    entering: boolean
+    entering: boolean,
   ) => {
     const card = e.currentTarget;
     const icon = card.querySelector(".tool-icon");
