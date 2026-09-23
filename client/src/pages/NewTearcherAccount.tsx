@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const TOTAL_STEPS = 3;
 
@@ -12,7 +12,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
 const NewTearcherAccount = () => {
-  const [step, setStep] = useState(1);
+  const [step] = useState(1);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -37,7 +37,10 @@ const NewTearcherAccount = () => {
 
     const fullName = `${formData.firstName} ${formData.lastName}`.trim();
 
-    if (!NAME_REGEX.test(formData.firstName) || !NAME_REGEX.test(formData.lastName)) {
+    if (
+      !NAME_REGEX.test(formData.firstName) ||
+      !NAME_REGEX.test(formData.lastName)
+    ) {
       setError("Names can only contain letters and spaces.");
       return;
     }
@@ -54,7 +57,7 @@ const NewTearcherAccount = () => {
 
     if (!PASSWORD_REGEX.test(formData.password)) {
       setError(
-        "Password must be at least 8 characters and include a letter and a number."
+        "Password must be at least 8 characters and include a letter and a number.",
       );
       return;
     }
@@ -92,10 +95,7 @@ const NewTearcherAccount = () => {
       {/* Student login note */}
       <p className="text-gray-300 text-sm text-center mb-8">
         Students do not need an account. Join a teacher's room here:{" "}
-        <a
-        href="#"
-          className="text-[#6fb3c9] hover:underline"
-        >
+        <a href="#" className="text-[#6fb3c9] hover:underline">
           Student Login
         </a>
       </p>
@@ -115,8 +115,8 @@ const NewTearcherAccount = () => {
                   num === step
                     ? "bg-[#2d5f6e] border-[#2d5f6e] text-white"
                     : num < step
-                    ? "bg-[#2d5f6e]/20 border-[#2d5f6e] text-[#2d5f6e]"
-                    : "bg-transparent border-gray-400 text-gray-400"
+                      ? "bg-[#2d5f6e]/20 border-[#2d5f6e] text-[#2d5f6e]"
+                      : "bg-transparent border-gray-400 text-gray-400"
                 }`}
               >
                 {num}
@@ -129,7 +129,7 @@ const NewTearcherAccount = () => {
                 />
               )}
             </React.Fragment>
-          )
+          ),
         )}
       </div>
 

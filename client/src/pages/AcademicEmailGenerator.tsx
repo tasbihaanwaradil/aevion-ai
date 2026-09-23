@@ -157,7 +157,7 @@ const extractEmailsFromLine = (line: string): Recipient[] => {
 };
 
 const parseRecipientList = (
-  raw: string
+  raw: string,
 ): { recipients: Recipient[]; error: string | null } => {
   const trimmed = raw.trim();
   if (!trimmed) return { recipients: [], error: null };
@@ -170,16 +170,12 @@ const parseRecipientList = (
         return { recipients: [], error: "Must be a JSON array." };
       const recipients: Recipient[] = parsed.flatMap((item: any) => {
         if (typeof item === "string") return extractEmailsFromLine(item);
-        if (
-          typeof item === "object" &&
-          item.email &&
-          isValidEmail(item.email)
-        )
+        if (typeof item === "object" && item.email && isValidEmail(item.email))
           return [{ email: item.email }];
         return [];
       });
       const deduped = Array.from(
-        new Map(recipients.map((r) => [r.email.toLowerCase(), r])).values()
+        new Map(recipients.map((r) => [r.email.toLowerCase(), r])).values(),
       );
       if (deduped.length === 0)
         return {
@@ -213,7 +209,7 @@ const parseRecipientList = (
   }
 
   const deduped = Array.from(
-    new Map(recipients.map((r) => [r.email.toLowerCase(), r])).values()
+    new Map(recipients.map((r) => [r.email.toLowerCase(), r])).values(),
   );
 
   if (deduped.length === 0) return { recipients: [], error: null };
@@ -259,10 +255,10 @@ const PURPOSE_MAX = 400;
 // Toast (replaces blocking alert() calls)
 // ─────────────────────────────────────────────────────────────
 
-const ToastStack: React.FC<{ toasts: Toast[]; onDismiss: (id: number) => void }> = ({
-  toasts,
-  onDismiss,
-}) => (
+const ToastStack: React.FC<{
+  toasts: Toast[];
+  onDismiss: (id: number) => void;
+}> = ({ toasts, onDismiss }) => (
   <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm">
     {toasts.map((t) => (
       <div
@@ -272,8 +268,8 @@ const ToastStack: React.FC<{ toasts: Toast[]; onDismiss: (id: number) => void }>
           t.kind === "success"
             ? "bg-emerald-50 text-emerald-800 border-emerald-200"
             : t.kind === "error"
-            ? "bg-red-50 text-red-700 border-red-200"
-            : "bg-white text-gray-700 border-gray-200"
+              ? "bg-red-50 text-red-700 border-red-200"
+              : "bg-white text-gray-700 border-gray-200"
         }`}
       >
         <span className="mt-0.5">
@@ -312,7 +308,8 @@ const AcademicEmailGenerator: React.FC = () => {
 
   // Bulk mode state
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("single");
-  const [pendingModeSwitch, setPendingModeSwitch] = useState<DeliveryMode | null>(null);
+  const [pendingModeSwitch, setPendingModeSwitch] =
+    useState<DeliveryMode | null>(null);
   const [recipientListRaw, setRecipientListRaw] = useState("");
   const [parsedRecipients, setParsedRecipients] = useState<Recipient[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -322,14 +319,20 @@ const AcademicEmailGenerator: React.FC = () => {
    * Send/schedule should validate against this — NOT the live `parsedRecipients`,
    * which can drift if the user edits the textarea after generating.
    */
-  const [committedRecipients, setCommittedRecipients] = useState<Recipient[]>([]);
+  const [committedRecipients, setCommittedRecipients] = useState<Recipient[]>(
+    [],
+  );
 
   // Email output state
-  const [generatedEmail, setGeneratedEmail] = useState<GeneratedEmail | null>(null);
-  const [editableEmail, setEditableEmail] = useState<GeneratedEmail | null>(null);
+  const [generatedEmail, setGeneratedEmail] = useState<GeneratedEmail | null>(
+    null,
+  );
+  const [editableEmail, setEditableEmail] = useState<GeneratedEmail | null>(
+    null,
+  );
   const [bulkMeta, setBulkMeta] = useState<BulkMeta | null>(null);
   const [agentSteps, setAgentSteps] = useState<string[]>([]);
-  const [showAgentSteps, setShowAgentSteps] = useState(false);
+  const [showAgentSteps] = useState(false);
   const [emailId, setEmailId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [hasEdited, setHasEdited] = useState(false);
@@ -339,7 +342,9 @@ const AcademicEmailGenerator: React.FC = () => {
   const [loadingGenerate, setLoadingGenerate] = useState(false);
   const [loadingSend, setLoadingSend] = useState(false);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
-  const [sendStatus, setSendStatus] = useState<"idle" | "success" | "error">("idle");
+  const [sendStatus, setSendStatus] = useState<"idle" | "success" | "error">(
+    "idle",
+  );
   const [sendErrorMsg, setSendErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
   const [showBccPreview, setShowBccPreview] = useState(false);
@@ -349,7 +354,9 @@ const AcademicEmailGenerator: React.FC = () => {
   const [sendTiming, setSendTiming] = useState<SendTiming>("now");
   const [scheduledForLocal, setScheduledForLocal] = useState<string>("");
   const [loadingSchedule, setLoadingSchedule] = useState(false);
-  const [scheduleStatus, setScheduleStatus] = useState<"idle" | "success" | "error">("idle");
+  const [scheduleStatus, setScheduleStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
   const [scheduleErrorMsg, setScheduleErrorMsg] = useState("");
   const [scheduledList, setScheduledList] = useState<ScheduledEmailEntry[]>([]);
   const [loadingScheduledList, setLoadingScheduledList] = useState(false);
@@ -381,9 +388,12 @@ const AcademicEmailGenerator: React.FC = () => {
   const showToast = useCallback((message: string, kind: ToastKind = "info") => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, kind, message }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, kind === "error" ? 6000 : 4000);
+    setTimeout(
+      () => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      },
+      kind === "error" ? 6000 : 4000,
+    );
   }, []);
   const dismissToast = (id: number) =>
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -409,19 +419,16 @@ const AcademicEmailGenerator: React.FC = () => {
     const fetchSuggestions = async () => {
       setLoadingSuggest(true);
       try {
-        const res = await fetch(
-          `${BASE_URL}/api/academic-email/suggest`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              purpose: debouncedPurpose,
-              recipient: formData.recipient,
-              tone: formData.tone,
-            }),
-            credentials: "include",
-          }
-        );
+        const res = await fetch(`${BASE_URL}/api/academic-email/suggest`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            purpose: debouncedPurpose,
+            recipient: formData.recipient,
+            tone: formData.tone,
+          }),
+          credentials: "include",
+        });
         const data: SuggestResponse = await res.json();
         if (data.success) setSuggestions(data.suggestions || []);
       } catch {
@@ -439,7 +446,7 @@ const AcademicEmailGenerator: React.FC = () => {
     try {
       const res = await fetch(
         `${BASE_URL}/api/academic-email/schedule?status=scheduled`,
-        { credentials: "include" }
+        { credentials: "include" },
       );
       const data: ScheduleListResponse = await res.json();
       if (data.success) setScheduledList(data.scheduled || []);
@@ -459,7 +466,7 @@ const AcademicEmailGenerator: React.FC = () => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     if (name === "purpose" && value.length > PURPOSE_MAX) return;
@@ -476,7 +483,10 @@ const AcademicEmailGenerator: React.FC = () => {
     setSuggestions([]);
   };
 
-  const hasUnsentContent = generatedEmail !== null && sendStatus !== "success" && scheduleStatus !== "success";
+  const hasUnsentContent =
+    generatedEmail !== null &&
+    sendStatus !== "success" &&
+    scheduleStatus !== "success";
 
   const requestModeSwitch = (mode: DeliveryMode) => {
     if (mode === deliveryMode) return;
@@ -528,15 +538,12 @@ const AcademicEmailGenerator: React.FC = () => {
         body.recipients = parsedRecipients;
       }
 
-      const res = await fetch(
-        `${BASE_URL}/api/academic-email/generate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${BASE_URL}/api/academic-email/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        credentials: "include",
+      });
       const data: GenerateResponse = await res.json();
 
       if (data.success && data.email) {
@@ -567,17 +574,25 @@ const AcademicEmailGenerator: React.FC = () => {
         if (data.agentSteps) setAgentSteps(data.agentSteps);
         showToast("Email drafted — review it before sending.", "success");
       } else {
-        showToast(data.message ?? "Couldn't generate the email. Try again.", "error");
+        showToast(
+          data.message ?? "Couldn't generate the email. Try again.",
+          "error",
+        );
       }
     } catch {
-      showToast("Couldn't reach the server. Check your connection and try again.", "error");
+      showToast(
+        "Couldn't reach the server. Check your connection and try again.",
+        "error",
+      );
     } finally {
       setLoadingGenerate(false);
     }
   };
 
   // Ctrl/Cmd+Enter from the purpose field submits the form
-  const handlePurposeKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handlePurposeKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+  ) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
       purposeRef.current?.closest("form")?.requestSubmit();
@@ -665,7 +680,9 @@ const AcademicEmailGenerator: React.FC = () => {
     setSendErrorMsg("");
     try {
       // Use broadcastEmail.bccList if server returned it, otherwise fall back to committed snapshot
-      const bccList = bulkMeta.broadcastEmail?.bccList ?? committedRecipients.map((r) => r.email);
+      const bccList =
+        bulkMeta.broadcastEmail?.bccList ??
+        committedRecipients.map((r) => r.email);
 
       const payload = {
         deliveryMode: bulkMeta.deliveryMode,
@@ -676,20 +693,20 @@ const AcademicEmailGenerator: React.FC = () => {
         bccList,
       };
 
-      const res = await fetch(
-        `${BASE_URL}/api/academic-email/send-bulk`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${BASE_URL}/api/academic-email/send-bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success) {
         setSendStatus("success");
         setIsEditing(false);
-        showToast(`Sent to ${bccList.length} recipient${bccList.length !== 1 ? "s" : ""}.`, "success");
+        showToast(
+          `Sent to ${bccList.length} recipient${bccList.length !== 1 ? "s" : ""}.`,
+          "success",
+        );
       } else {
         setSendStatus("error");
         setSendErrorMsg(data.message ?? "Bulk send failed.");
@@ -719,7 +736,10 @@ const AcademicEmailGenerator: React.FC = () => {
     }
 
     if (deliveryMode !== "single" && committedRecipients.length === 0) {
-      showToast("No recipients to schedule for — regenerate the email.", "error");
+      showToast(
+        "No recipients to schedule for — regenerate the email.",
+        "error",
+      );
       return;
     }
 
@@ -746,21 +766,21 @@ const AcademicEmailGenerator: React.FC = () => {
         payload.bccList = committedRecipients.map((r) => r.email);
       }
 
-      const res = await fetch(
-        `${BASE_URL}/api/academic-email/schedule`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${BASE_URL}/api/academic-email/schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      });
       const data: ScheduleResponse = await res.json();
 
       if (data.success) {
         setScheduleStatus("success");
         setIsEditing(false);
-        showToast(`Scheduled for ${formatScheduledFor(scheduledForISO)}.`, "success");
+        showToast(
+          `Scheduled for ${formatScheduledFor(scheduledForISO)}.`,
+          "success",
+        );
         if (showScheduledPanel) fetchScheduledList();
       } else {
         setScheduleStatus("error");
@@ -777,10 +797,10 @@ const AcademicEmailGenerator: React.FC = () => {
   const handleCancelScheduled = async (id: string) => {
     setCancellingId(id);
     try {
-      const res = await fetch(
-        `${BASE_URL}/api/academic-email/schedule/${id}`,
-        { method: "DELETE", credentials: "include" }
-      );
+      const res = await fetch(`${BASE_URL}/api/academic-email/schedule/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       const data = await res.json();
       if (data.success) {
         setScheduledList((prev) => prev.filter((e) => e.id !== id));
@@ -806,12 +826,14 @@ const AcademicEmailGenerator: React.FC = () => {
   const isBulkMode = deliveryMode !== "single";
 
   // After generation, use committed snapshot for counts; before generation, use live parsed list
-  const effectiveBulkRecipients = bulkMeta ? committedRecipients : parsedRecipients;
+  const effectiveBulkRecipients = bulkMeta
+    ? committedRecipients
+    : parsedRecipients;
   const recipientCount = isBulkMode
     ? effectiveBulkRecipients.length
     : formData.recipientEmail
-    ? 1
-    : 0;
+      ? 1
+      : 0;
 
   const recipientEmailInvalid =
     recipientEmailTouched &&
@@ -831,7 +853,6 @@ const AcademicEmailGenerator: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0A1238] relative overflow-hidden">
-
       {/* Background decoration — matches LinkedIn Post Generator */}
       <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-0 right-0 w-[30rem] h-[26rem] rounded-full bg-teal-400/10 blur-[130px]" />
@@ -855,7 +876,7 @@ const AcademicEmailGenerator: React.FC = () => {
         <div className="mb-8 max-w-3xl mx-auto text-center flex flex-col items-center gap-3">
           <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-2 font-['Sora']">
             <MailIcon className="w-6 h-6 text-sky-300" strokeWidth={1.75} />
-           Academic Email Assistant
+            Academic Email Assistant
           </h1>
 
           <p className="text-gray-400 text-sm md:text-base">
@@ -877,7 +898,7 @@ const AcademicEmailGenerator: React.FC = () => {
           <div className="max-w-6xl mx-auto mb-8 bg-white rounded-2xl shadow-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">
-                 Scheduled Emails
+                Scheduled Emails
               </h3>
               <button
                 type="button"
@@ -899,7 +920,8 @@ const AcademicEmailGenerator: React.FC = () => {
               </div>
             ) : scheduledList.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-6">
-                Nothing scheduled yet — emails you schedule for later will show up here.
+                Nothing scheduled yet — emails you schedule for later will show
+                up here.
               </p>
             ) : (
               <div className="flex flex-col gap-3 max-h-80 overflow-y-auto">
@@ -974,7 +996,8 @@ const AcademicEmailGenerator: React.FC = () => {
         {pendingModeSwitch && (
           <div className="max-w-6xl mx-auto mb-6 flex items-center justify-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-4 py-3">
             <span>
-              Switching modes will discard the drafted email above — it hasn't been sent yet.
+              Switching modes will discard the drafted email above — it hasn't
+              been sent yet.
             </span>
             <button
               onClick={() => switchMode(pendingModeSwitch)}
@@ -992,7 +1015,6 @@ const AcademicEmailGenerator: React.FC = () => {
         )}
 
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-start">
-
           {/* ── LEFT: Input ── */}
           <form
             onSubmit={handleGenerate}
@@ -1115,7 +1137,7 @@ const AcademicEmailGenerator: React.FC = () => {
                 {bulkMeta &&
                   committedRecipients.length !== parsedRecipients.length && (
                     <p className="text-xs text-amber-600">
-                       Recipient list changed since this email was generated (
+                      Recipient list changed since this email was generated (
                       {committedRecipients.length} committed vs{" "}
                       {parsedRecipients.length} now). Regenerate to update.
                     </p>
@@ -1168,7 +1190,7 @@ const AcademicEmailGenerator: React.FC = () => {
                       if (s.length > 120) {
                         const parts = s
                           .split(
-                            /(?<=[.!?])\s+(?=[A-Z])|(?<=\w)\s+(?=\d+[.)]\s)/
+                            /(?<=[.!?])\s+(?=[A-Z])|(?<=\w)\s+(?=\d+[.)]\s)/,
                           )
                           .map((p) => p.replace(/^\d+[.)]\s*/, "").trim())
                           .filter((p) => p.length > 10);
@@ -1238,14 +1260,13 @@ const AcademicEmailGenerator: React.FC = () => {
               {loadingGenerate
                 ? "Generating..."
                 : isBulkMode && parsedRecipients.length > 0
-                ? `Generate for ${parsedRecipients.length} Recipients`
-                : "Generate Email"}
+                  ? `Generate for ${parsedRecipients.length} Recipients`
+                  : "Generate Email"}
             </button>
           </form>
 
           {/* ── RIGHT: Preview ── */}
           <div className="bg-white rounded-2xl shadow-2xl p-8 flex flex-col">
-
             {/* Header row */}
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2.5">
@@ -1259,7 +1280,7 @@ const AcademicEmailGenerator: React.FC = () => {
                 )}
                 {bulkMeta && (
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                     BCC Broadcast
+                    BCC Broadcast
                   </span>
                 )}
               </div>
@@ -1279,14 +1300,14 @@ const AcademicEmailGenerator: React.FC = () => {
                       onClick={handleDoneEditing}
                       className="text-sm font-semibold text-white bg-[#2d5f6e] px-3 py-1.5 rounded-lg hover:bg-[#244d5a] transition-all"
                     >
-                       Done
+                      Done
                     </button>
                   ) : (
                     <button
                       onClick={() => setIsEditing(true)}
                       className="text-sm font-semibold text-[#2d5f6e] border border-[#2d5f6e] px-3 py-1.5 rounded-lg hover:bg-[#2d5f6e] hover:text-white transition-all"
                     >
-                       Edit
+                      Edit
                     </button>
                   )}
                   <button
@@ -1323,7 +1344,10 @@ const AcademicEmailGenerator: React.FC = () => {
             {showAgentSteps && agentSteps.length > 0 && (
               <div className="mb-3 bg-gray-900 rounded-xl p-3 max-h-32 overflow-y-auto">
                 {agentSteps.map((step, i) => (
-                  <p key={i} className="text-[11px] text-emerald-400 font-mono leading-relaxed">
+                  <p
+                    key={i}
+                    className="text-[11px] text-emerald-400 font-mono leading-relaxed"
+                  >
                     <span className="text-gray-500">[{i + 1}]</span> {step}
                   </p>
                 ))}
@@ -1348,7 +1372,9 @@ const AcademicEmailGenerator: React.FC = () => {
                       : ""}
                     ...
                   </p>
-                  <p className="text-gray-300 text-xs">This usually takes a few seconds</p>
+                  <p className="text-gray-300 text-xs">
+                    This usually takes a few seconds
+                  </p>
                 </div>
               ) : editableEmail ? (
                 <div className="flex flex-col gap-3 h-full">
@@ -1409,7 +1435,7 @@ const AcademicEmailGenerator: React.FC = () => {
               <div className="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-200">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold text-gray-700">
-                     Broadcast Details
+                    Broadcast Details
                   </p>
                   <span
                     className={`text-xs font-bold px-2 py-0.5 rounded-full ${
@@ -1437,7 +1463,7 @@ const AcademicEmailGenerator: React.FC = () => {
                   </div>
                   <div className="col-span-2">
                     <span className="font-medium text-gray-700">Privacy:</span>{" "}
-                    All addresses hidden via BCC 
+                    All addresses hidden via BCC
                   </div>
                 </div>
 
@@ -1476,7 +1502,6 @@ const AcademicEmailGenerator: React.FC = () => {
             {/* ── Send / Schedule section ── */}
             {editableEmail && (
               <div className="mt-5 pt-4 border-t border-gray-200">
-
                 {/* Timing toggle */}
                 {!isEditing && (
                   <div className="flex gap-2 mb-3">
@@ -1492,7 +1517,7 @@ const AcademicEmailGenerator: React.FC = () => {
                           : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
                       }`}
                     >
-                       Send Now
+                      Send Now
                     </button>
                     <button
                       type="button"
@@ -1558,7 +1583,7 @@ const AcademicEmailGenerator: React.FC = () => {
                 )}
                 {scheduleStatus === "error" && (
                   <p className="text-red-500 font-medium text-sm mb-3 text-center">
-                   {scheduleErrorMsg}
+                    {scheduleErrorMsg}
                   </p>
                 )}
 
@@ -1583,18 +1608,18 @@ const AcademicEmailGenerator: React.FC = () => {
                         ? "Scheduling..."
                         : "Sending..."
                       : deliveryMode === "single" && !formData.recipientEmail
-                      ? "Enter Recipient Email to Send"
-                      : isBulkMode &&
-                        bulkMeta != null &&
-                        committedRecipients.length === 0
-                      ? "No Recipients — Regenerate Email"
-                      : sendTiming === "schedule"
-                      ? scheduledForLocal
-                        ? `Schedule for ${formatScheduledFor(localToISOString(scheduledForLocal))}`
-                        : "Pick a Date & Time"
-                      : isBulkMode
-                      ? `Send to ${recipientCount} Recipients`
-                      : "Send Email"}
+                        ? "Enter Recipient Email to Send"
+                        : isBulkMode &&
+                            bulkMeta != null &&
+                            committedRecipients.length === 0
+                          ? "No Recipients — Regenerate Email"
+                          : sendTiming === "schedule"
+                            ? scheduledForLocal
+                              ? `Schedule for ${formatScheduledFor(localToISOString(scheduledForLocal))}`
+                              : "Pick a Date & Time"
+                            : isBulkMode
+                              ? `Send to ${recipientCount} Recipients`
+                              : "Send Email"}
                   </button>
                 )}
 

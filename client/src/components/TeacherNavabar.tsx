@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ChevronDownIcon, MenuIcon, XIcon } from "lucide-react";
 import { useTeacherAuth } from "../context/TeacherAuthContext";

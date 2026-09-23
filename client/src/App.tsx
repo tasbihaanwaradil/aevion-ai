@@ -7,7 +7,6 @@ import UseCases from "./pages/UseCases";
 import Login from "./components/Login";
 import LinkedInPostGenerator from "./pages/LinkedInPostGenerator";
 import AcademicEmailGenerator from "./pages/AcademicEmailGenerator";
-import AutoCreatePresentationSlides from "./pages/AutoCreatePresentationSlides";
 import TimetableReminder from "./pages/Reminder";
 import PdfToSlidesConverter from "./pages/Pdf-to-SlideConverter";
 import Dashboard from "./pages/Dashboard";

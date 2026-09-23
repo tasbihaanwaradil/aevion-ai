@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import SideNavbar from "../components/SideNavbar";
 import { clampStyle, formatDateTime } from "../utils/historyClamp";
 import { BASE_URL } from "../configs/Config";
