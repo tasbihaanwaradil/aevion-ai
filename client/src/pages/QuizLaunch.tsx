@@ -14,8 +14,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../configs/Config";
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = `${BASE_URL}/api`;
 
 type Quiz = { id: string; name: string; updatedAt: string };
 type DeliveryMethod = "instant" | "open" | "teacher-paced";

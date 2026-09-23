@@ -3,6 +3,7 @@ import { useTeacherAuth } from "../context/TeacherAuthContext";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import gsap from "gsap";
+import { BASE_URL } from "../configs/Config";
 
 const Icon = ({ children }: { children: React.ReactNode }) => (
   <svg
@@ -157,10 +158,14 @@ const TeacherLogin = () => {
       toast.error("Please verify your email before signing in.");
       navigate("/VerifyEmail", { state: { email } });
     } else if (status === "notfound") {
-      toast.error("No account found for that Google email. Please create one first.");
+      toast.error(
+        "No account found for that Google email. Please create one first.",
+      );
       navigate("/Newteacheraccount");
     } else if (status === "error") {
-      toast.error("Something went wrong signing in with Google. Please try again.");
+      toast.error(
+        "Something went wrong signing in with Google. Please try again.",
+      );
     }
   }, [searchParams, navigate]);
 
@@ -184,7 +189,7 @@ const TeacherLogin = () => {
         tl.fromTo(
           formPanelRef.current,
           { opacity: 0, y: 24 },
-          { opacity: 1, y: 0, duration: 0.6 }
+          { opacity: 1, y: 0, duration: 0.6 },
         );
       }
 
@@ -193,7 +198,7 @@ const TeacherLogin = () => {
           featuresRef.current.children,
           { opacity: 0, y: 20 },
           { opacity: 1, y: 0, duration: 0.45, stagger: 0.07 },
-          "-=0.4"
+          "-=0.4",
         );
       }
     });
@@ -203,7 +208,7 @@ const TeacherLogin = () => {
 
   const handleBtnHover = (
     ref: React.RefObject<HTMLButtonElement | null>,
-    entering: boolean
+    entering: boolean,
   ) => {
     if (!ref.current) return;
     gsap.to(ref.current, {
@@ -236,11 +241,18 @@ const TeacherLogin = () => {
           {/* wordmark */}
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 border border-white/25 backdrop-blur">
-              <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="currentColor" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5 text-white"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" />
               </svg>
             </span>
-            <span className="text-xl font-bold text-white tracking-tight">Aevion.AI</span>
+            <span className="text-xl font-bold text-white tracking-tight">
+              Aevion.AI
+            </span>
           </div>
 
           <h2 className="mt-8 text-[2.75rem] xl:text-5xl font-extrabold text-white leading-[1.08] tracking-tight">
@@ -263,7 +275,9 @@ const TeacherLogin = () => {
                 >
                   {f.icon}
                 </span>
-                <p className="mt-3 text-sm font-semibold text-white">{f.title}</p>
+                <p className="mt-3 text-sm font-semibold text-white">
+                  {f.title}
+                </p>
                 <p className="mt-1 text-xs leading-relaxed text-indigo-100/75">
                   {f.desc}
                 </p>
@@ -352,8 +366,7 @@ const TeacherLogin = () => {
               onMouseEnter={() => handleBtnHover(googleBtnRef, true)}
               onMouseLeave={() => handleBtnHover(googleBtnRef, false)}
               onClick={() => {
-                window.location.href =
-                  "http://localhost:3000/api/teacher-auth/google";
+                window.location.href = `${BASE_URL}/api/teacher-auth/google`;
               }}
               className="w-full h-12 px-5 rounded-md bg-gray-100 border border-gray-300 flex items-center gap-4 text-gray-900 font-medium hover:bg-gray-200 transition-colors"
             >

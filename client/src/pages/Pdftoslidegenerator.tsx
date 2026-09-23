@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import toast from "react-hot-toast";
 import MainLayout from "../components/MainLayout";
+import { BASE_URL } from "../configs/Config";
 import {
   FileUpIcon,
   SparklesIcon,
@@ -16,7 +17,7 @@ import {
   XIcon,
 } from "lucide-react";
 
-const API_BASE = "http://localhost:3000/api/slides";
+const API_BASE = `${BASE_URL}/api/slides`;
 const MAX_FILE_MB = 15;
 
 // ─────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ const PdfToSlideGenerator: React.FC = () => {
         tl.fromTo(
           headerRef.current.children,
           { opacity: 0, y: -16 },
-          { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 }
+          { opacity: 1, y: 0, duration: 0.5, stagger: 0.08 },
         );
       }
       if (formRef.current) {
@@ -83,7 +84,7 @@ const PdfToSlideGenerator: React.FC = () => {
           formRef.current,
           { opacity: 0, y: 24 },
           { opacity: 1, y: 0, duration: 0.5 },
-          "-=0.25"
+          "-=0.25",
         );
       }
     });
@@ -97,13 +98,23 @@ const PdfToSlideGenerator: React.FC = () => {
       gsap.fromTo(
         cards,
         { opacity: 0, y: 28, scale: 0.97 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.4, stagger: 0.07, ease: "power3.out" }
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.4,
+          stagger: 0.07,
+          ease: "power3.out",
+        },
       );
     });
     return () => ctx.revert();
   }, [slides.length > 0]);
 
-  const handleCardHover = (e: React.MouseEvent<HTMLDivElement>, entering: boolean) => {
+  const handleCardHover = (
+    e: React.MouseEvent<HTMLDivElement>,
+    entering: boolean,
+  ) => {
     gsap.to(e.currentTarget, {
       y: entering ? -3 : 0,
       boxShadow: entering
@@ -162,7 +173,9 @@ const PdfToSlideGenerator: React.FC = () => {
         setDeckId(data.deckId ?? null);
         setDeckTitle(data.deckTitle ?? file.name.replace(/\.pdf$/i, ""));
         setSlides(data.slides);
-        toast.success(`Drafted ${data.slides.length} slides from your PDF — review and edit below.`);
+        toast.success(
+          `Drafted ${data.slides.length} slides from your PDF — review and edit below.`,
+        );
       } else {
         toast.error(data.message ?? "Couldn't generate the deck. Try again.");
       }
@@ -186,7 +199,7 @@ const PdfToSlideGenerator: React.FC = () => {
     slideIndex: number,
     bulletIndex: number,
     field: keyof Bullet,
-    value: string
+    value: string,
   ) => {
     setSlides((prev) => {
       const next = [...prev];
@@ -263,7 +276,10 @@ const PdfToSlideGenerator: React.FC = () => {
         slides: slides.map((s) => ({
           title: s.title.trim(),
           bullets: s.bullets
-            .map((b) => ({ point: b.point.trim(), description: b.description.trim() }))
+            .map((b) => ({
+              point: b.point.trim(),
+              description: b.description.trim(),
+            }))
             .filter((b) => b.point || b.description),
         })),
       };
@@ -304,14 +320,17 @@ const PdfToSlideGenerator: React.FC = () => {
       <div className="p-8">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div ref={headerRef} className="flex flex-col items-center text-center gap-3 mb-8">
+          <div
+            ref={headerRef}
+            className="flex flex-col items-center text-center gap-3 mb-8"
+          >
             <h1 className="flex items-center justify-center gap-2.5 text-3xl font-bold text-white">
               <FileUpIcon className="w-7 h-7 text-cyan-300" />
               PDF Lesson Studio
             </h1>
             <p className="text-gray-300 max-w-xl">
-              Upload lecture notes or a research PDF and turn it directly
-              into a structured, editable slide deck.
+              Upload lecture notes or a research PDF and turn it directly into a
+              structured, editable slide deck.
             </p>
           </div>
 
@@ -344,7 +363,9 @@ const PdfToSlideGenerator: React.FC = () => {
                 type="file"
                 accept="application/pdf"
                 className="hidden"
-                onChange={(e) => validateAndSetFile(e.target.files?.[0] ?? null)}
+                onChange={(e) =>
+                  validateAndSetFile(e.target.files?.[0] ?? null)
+                }
               />
 
               {file ? (
@@ -375,11 +396,14 @@ const PdfToSlideGenerator: React.FC = () => {
                 <>
                   <FileUpIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600">
-                    <span className="font-semibold text-[#2d5f6e]">Click to upload</span>{" "}
+                    <span className="font-semibold text-[#2d5f6e]">
+                      Click to upload
+                    </span>{" "}
                     or drag and drop
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    PDF only, up to {MAX_FILE_MB}MB — must have selectable text (not a scanned image)
+                    PDF only, up to {MAX_FILE_MB}MB — must have selectable text
+                    (not a scanned image)
                   </p>
                 </>
               )}
@@ -396,7 +420,9 @@ const PdfToSlideGenerator: React.FC = () => {
                   max={20}
                   value={slideCount}
                   onChange={(e) =>
-                    setSlideCount(Math.min(20, Math.max(3, Number(e.target.value) || 3)))
+                    setSlideCount(
+                      Math.min(20, Math.max(3, Number(e.target.value) || 3)),
+                    )
                   }
                   className="w-full h-11 px-4 bg-gray-100 rounded-xl text-gray-700 outline-none focus:ring-2 focus:ring-[#2d5f6e] text-sm"
                 />
@@ -433,7 +459,9 @@ const PdfToSlideGenerator: React.FC = () => {
               ) : (
                 <>
                   <SparklesIcon className="w-4 h-4" />
-                  {slides.length > 0 ? "Regenerate deck" : "Generate deck from PDF"}
+                  {slides.length > 0
+                    ? "Regenerate deck"
+                    : "Generate deck from PDF"}
                 </>
               )}
             </button>
@@ -488,7 +516,9 @@ const PdfToSlideGenerator: React.FC = () => {
                         <input
                           type="text"
                           value={slide.title}
-                          onChange={(e) => updateSlideTitle(sIndex, e.target.value)}
+                          onChange={(e) =>
+                            updateSlideTitle(sIndex, e.target.value)
+                          }
                           placeholder="Slide title"
                           className="w-full text-lg font-semibold text-gray-900 outline-none border-b border-transparent focus:border-gray-200 pb-1"
                         />
@@ -505,7 +535,12 @@ const PdfToSlideGenerator: React.FC = () => {
                                   type="text"
                                   value={bullet.point}
                                   onChange={(e) =>
-                                    updateBullet(sIndex, bIndex, "point", e.target.value)
+                                    updateBullet(
+                                      sIndex,
+                                      bIndex,
+                                      "point",
+                                      e.target.value,
+                                    )
                                   }
                                   placeholder="Point (short heading)"
                                   className="w-full h-9 px-2 text-sm font-semibold text-gray-800 bg-white rounded-lg outline-none focus:ring-2 focus:ring-[#2d5f6e]"
@@ -513,7 +548,12 @@ const PdfToSlideGenerator: React.FC = () => {
                                 <textarea
                                   value={bullet.description}
                                   onChange={(e) =>
-                                    updateBullet(sIndex, bIndex, "description", e.target.value)
+                                    updateBullet(
+                                      sIndex,
+                                      bIndex,
+                                      "description",
+                                      e.target.value,
+                                    )
                                   }
                                   placeholder="Description — the fuller explanation for this point"
                                   rows={2}
