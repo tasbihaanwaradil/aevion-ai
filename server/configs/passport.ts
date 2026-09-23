@@ -1,5 +1,9 @@
 import passport from "passport";
-import { Strategy as GoogleStrategy, Profile, VerifyCallback } from "passport-google-oauth20";
+import {
+  Strategy as GoogleStrategy,
+  Profile,
+  VerifyCallback,
+} from "passport-google-oauth20";
 import Teacher from "../models/Teacher.js";
 
 // ======================
@@ -11,9 +15,16 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: "http://localhost:3000/api/teacher-auth/google/callback"
+      callbackURL:
+        process.env.GOOGLE_CALLBACK_URL ||
+        "http://localhost:3000/api/teacher-auth/google/callback",
     },
-    async (_accessToken, _refreshToken, profile: Profile, done: VerifyCallback) => {
+    async (
+      _accessToken,
+      _refreshToken,
+      profile: Profile,
+      done: VerifyCallback,
+    ) => {
       try {
         const email = profile.emails?.[0]?.value;
 
@@ -47,8 +58,8 @@ passport.use(
       } catch (error) {
         return done(error as Error, undefined);
       }
-    }
-  )
+    },
+  ),
 );
 
 // ======================
