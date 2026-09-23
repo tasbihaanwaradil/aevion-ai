@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
 import toast from "react-hot-toast";
 import MainLayout from "../components/MainLayout";
+import { BASE_URL } from "../configs/Config";
 import {
   AlarmClockIcon,
   PlusIcon,
@@ -19,7 +20,7 @@ import {
   CalendarIcon,
 } from "lucide-react";
 
-const API_BASE = "http://localhost:3000/api/reminders";
+const API_BASE = `${BASE_URL}/api/reminders`;
 
 // ─────────────────────────────────────────────────────────────
 // Types

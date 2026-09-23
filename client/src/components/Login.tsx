@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../configs/Config";
 
 const Login = () => {
   const [state, setState] = useState<"login" | "register">("login");
@@ -102,19 +103,19 @@ const Login = () => {
 
         {/* Google Button */}
         <button
-  type="button"
-  onClick={() => {
-    window.location.href = "http://localhost:3000/api/auth/google";
-  }}
-  className="w-full h-14 rounded-2xl border border-blue-200 flex items-center justify-center gap-3 mt-6 hover:bg-gray-100 transition text-gray-700 font-medium"
->
-  <img
-    src="https://www.svgrepo.com/show/475656/google-color.svg"
-    className="w-5 h-5"
-    alt="Google"
-  />
-  <span>Continue with Google</span>
-</button>
+          type="button"
+          onClick={() => {
+            window.location.href = `${BASE_URL}/api/auth/google`;
+          }}
+          className="w-full h-14 rounded-2xl border border-blue-200 flex items-center justify-center gap-3 mt-6 hover:bg-gray-100 transition text-gray-700 font-medium"
+        >
+          <img
+            src="https://www.svgrepo.com/show/475656/google-color.svg"
+            className="w-5 h-5"
+            alt="Google"
+          />
+          <span>Continue with Google</span>
+        </button>
 
         {/* Switch */}
         <p className="mt-10 text-center text-sm text-gray-500">

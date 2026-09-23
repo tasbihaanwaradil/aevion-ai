@@ -10,8 +10,9 @@ import {
   CheckIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../configs/Config";
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = `${BASE_URL}/api`;
 const BRAND = "#007a8c";
 const BRAND_DARK = "#005f6a";
 

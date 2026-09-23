@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import SideNavbar from "../components/SideNavbar";
 import { formatDateTime } from "../utils/historyClamp";
+import { BASE_URL } from "../configs/Config";
 import {
   Presentation,
   FileText,
@@ -34,7 +35,7 @@ interface SlideDeckRecord {
   createdAt: string;
 }
 
-const API_BASE = "http://localhost:3000/api/slides";
+const API_BASE = `${BASE_URL}/api/slides`;
 
 export default function SlideHistory() {
   const [isOpen, setIsOpen] = useState(false);

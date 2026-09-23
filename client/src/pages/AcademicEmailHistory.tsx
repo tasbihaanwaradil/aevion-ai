@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import SideNavbar from "../components/SideNavbar";
 import { clampStyle, formatDateTime } from "../utils/historyClamp";
+import { BASE_URL } from "../configs/Config";
 import {
   Mail,
   Calendar,
@@ -42,7 +43,7 @@ export default function AcademicEmailHistory() {
   const fetchEmails = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/academic-email/history", {
+      const res = await fetch(`${BASE_URL}/api/academic-email/history`, {
         credentials: "include",
       });
       const data = await res.json();

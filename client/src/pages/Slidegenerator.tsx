@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import toast from "react-hot-toast";
 import MainLayout from "../components/MainLayout";
+import { BASE_URL } from "../configs/Config";
 import {
   PresentationIcon,
   SparklesIcon,
@@ -14,7 +15,7 @@ import {
   DownloadIcon,
 } from "lucide-react";
 
-const API_BASE = "http://localhost:3000/api/slides";
+const API_BASE = `${BASE_URL}/api/slides`;
 
 // ─────────────────────────────────────────────────────────────
 // Types

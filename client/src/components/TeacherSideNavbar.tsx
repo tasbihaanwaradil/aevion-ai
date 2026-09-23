@@ -12,8 +12,9 @@ import {
   LogOutIcon,
 } from "lucide-react";
 import { useTeacherAuth } from "../context/TeacherAuthContext";
+import { BASE_URL } from "../configs/Config";
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = `${BASE_URL}/api`;
 
 type RecentQuiz = { id: string; title: string; updatedAt: string };
 

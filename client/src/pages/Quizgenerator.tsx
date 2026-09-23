@@ -3,6 +3,7 @@
 import React, { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TeacherSideNavbar from "../components/TeacherSideNavbar";
+import { BASE_URL } from "../configs/Config";
 import {
   SparklesIcon,
   Wand2Icon,
@@ -34,7 +35,7 @@ interface GeneratedQuestion {
   explanation: string;
 }
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = `${BASE_URL}/api`;
 const MAX_DOC_SIZE_MB = 20;
 const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx", ".ppt", ".pptx"];
 

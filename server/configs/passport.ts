@@ -6,6 +6,11 @@ import {
 } from "passport-google-oauth20";
 import Teacher from "../models/Teacher.js";
 
+// BACKEND_URL should be set in Render's environment tab to your deployed
+// backend URL (e.g. https://aevion-ai.onrender.com). Falls back to
+// localhost for local development.
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
+
 // ======================
 // TEACHER Google strategy
 // ======================
@@ -15,9 +20,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL:
-        process.env.GOOGLE_CALLBACK_URL ||
-        "http://localhost:3000/api/teacher-auth/google/callback",
+      callbackURL: `${BACKEND_URL}/api/teacher-auth/google/callback`
     },
     async (
       _accessToken,

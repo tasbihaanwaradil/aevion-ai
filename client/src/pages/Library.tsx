@@ -21,8 +21,9 @@ import {
   DownloadIcon,
 } from "lucide-react";
 import TeacherNavbar from "../components/TeacherNavabar";
+import { BASE_URL } from "../configs/Config";
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = `${BASE_URL}/api`;
 
 const addQuizOptions = {
   ai: [

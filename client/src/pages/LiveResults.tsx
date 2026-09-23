@@ -10,10 +10,13 @@ import {
   XIcon,
 } from "lucide-react";
 import TeacherNavbar from "../components/TeacherNavabar";
-import { getSocket } from "../lib/socket";
+import { getSocket } from "../lib/socket"; // NOTE: point this at wherever socket.ts actually lives in your project
+import { BASE_URL } from "../configs/Config";
 
-const API_BASE = "http://localhost:3000/api";
-const FRONTEND_URL = "http://localhost:5173";
+const API_BASE = `${BASE_URL}/api`;
+// Uses the deployed frontend's own origin instead of a hardcoded value,
+// so the invite link/QR code is always correct wherever this page runs.
+const FRONTEND_URL = window.location.origin;
 
 type Answer = { questionId: string; answer: string; isCorrect: boolean };
 type Participant = {
@@ -329,7 +332,7 @@ const LiveResults = () => {
               <p className="text-gray-700 mb-4">
                 Visit{" "}
                 <span className="font-bold">
-                  {FRONTEND_URL.replace("http://", "")}/join
+                  {FRONTEND_URL.replace(/^https?:\/\//, "")}/join
                 </span>{" "}
                 and enter room name{" "}
                 <span className="font-bold">{roomCode}</span>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import SideNavbar from "../components/SideNavbar";
 import { clampStyle, formatDateTime } from "../utils/historyClamp";
+import { BASE_URL } from "../configs/Config";
 import {
   Linkedin,
   Calendar,
@@ -57,7 +58,7 @@ export default function LinkedInHistory() {
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/linkedin-posts/history", {
+      const res = await fetch(`${BASE_URL}/api/linkedin-posts/history`, {
         credentials: "include",
       });
       const data = await res.json();

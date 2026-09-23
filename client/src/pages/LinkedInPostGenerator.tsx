@@ -1,8 +1,8 @@
-
 "use client";
 
 import React, { useState } from "react";
 import SideNavbar from "../components/SideNavbar";
+import { BASE_URL } from "../configs/Config";
 import {
   LinkedinIcon,
   SparklesIcon,
@@ -160,7 +160,7 @@ export default function LinkedInPostGenerator() {
       setLoading(true);
 
       const res = await fetch(
-        "http://localhost:3000/api/linkedin-posts/generate",
+        `${BASE_URL}/api/linkedin-posts/generate`,
         {
           method: "POST",
           headers: {
@@ -204,7 +204,7 @@ export default function LinkedInPostGenerator() {
 
     try {
       await fetch(
-        `http://localhost:3000/api/linkedin-posts/${postId}/approve`,
+        `${BASE_URL}/api/linkedin-posts/${postId}/approve`,
         {
           method: "PATCH",
           headers: {
@@ -714,4 +714,3 @@ export default function LinkedInPostGenerator() {
     </div>
   );
 }
-

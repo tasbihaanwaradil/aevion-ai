@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import SideNavbar from "../components/SideNavbar";
 import { MailIcon } from "lucide-react";
+import { BASE_URL } from "../configs/Config";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -409,7 +410,7 @@ const AcademicEmailGenerator: React.FC = () => {
       setLoadingSuggest(true);
       try {
         const res = await fetch(
-          "http://localhost:3000/api/academic-email/suggest",
+          `${BASE_URL}/api/academic-email/suggest`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -437,7 +438,7 @@ const AcademicEmailGenerator: React.FC = () => {
     setLoadingScheduledList(true);
     try {
       const res = await fetch(
-        "http://localhost:3000/api/academic-email/schedule?status=scheduled",
+        `${BASE_URL}/api/academic-email/schedule?status=scheduled`,
         { credentials: "include" }
       );
       const data: ScheduleListResponse = await res.json();
@@ -528,7 +529,7 @@ const AcademicEmailGenerator: React.FC = () => {
       }
 
       const res = await fetch(
-        "http://localhost:3000/api/academic-email/generate",
+        `${BASE_URL}/api/academic-email/generate`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -622,7 +623,7 @@ const AcademicEmailGenerator: React.FC = () => {
     setSendStatus("idle");
     setSendErrorMsg("");
     try {
-      const res = await fetch("http://localhost:3000/api/academic-email/send", {
+      const res = await fetch(`${BASE_URL}/api/academic-email/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -676,7 +677,7 @@ const AcademicEmailGenerator: React.FC = () => {
       };
 
       const res = await fetch(
-        "http://localhost:3000/api/academic-email/send-bulk",
+        `${BASE_URL}/api/academic-email/send-bulk`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -746,7 +747,7 @@ const AcademicEmailGenerator: React.FC = () => {
       }
 
       const res = await fetch(
-        "http://localhost:3000/api/academic-email/schedule",
+        `${BASE_URL}/api/academic-email/schedule`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -777,7 +778,7 @@ const AcademicEmailGenerator: React.FC = () => {
     setCancellingId(id);
     try {
       const res = await fetch(
-        `http://localhost:3000/api/academic-email/schedule/${id}`,
+        `${BASE_URL}/api/academic-email/schedule/${id}`,
         { method: "DELETE", credentials: "include" }
       );
       const data = await res.json();
@@ -1316,14 +1317,6 @@ const AcademicEmailGenerator: React.FC = () => {
                   {bulkMeta.status}
                 </span>
               )}
-              {/* {agentSteps.length > 0 && (
-                // <button
-                //   onClick={() => setShowAgentSteps((v) => !v)}
-                //   className="text-xs text-gray-500 hover:text-[#2d5f6e] underline"
-                // >
-                //   {showAgentSteps ? "Hide" : "Show"} how this was drafted ({agentSteps.length} steps)
-                // </button>
-              )} */}
             </div>
 
             {/* Agent thinking log — shows work the agent already does, previously hidden */}
@@ -1407,12 +1400,7 @@ const AcademicEmailGenerator: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
-                  {/* <span className="text-3xl">📝</span>
-                  <p className="text-gray-400 text-sm">
-                    Fill in the form and click Generate Email
-                  </p> */}
-                </div>
+                <div className="flex flex-col items-center justify-center h-full gap-2 text-center" />
               )}
             </div>
 
