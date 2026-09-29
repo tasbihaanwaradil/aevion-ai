@@ -13,10 +13,10 @@ import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import NewTearcherAccount from "./pages/NewTearcherAccount";
-import Aboutyou from "./pages/Aboutyou";
+// import Aboutyou from "./pages/Aboutyou";
 import TeacherLogin from "./pages/Teacherlogin";
 import VerifyEmail from "./pages/VerifyEmail";
-import Demographics from "./pages/Demographics";
+// import Demographics from "./pages/Demographics";
 import ForgotPassword from "./pages/ForgotPassword";
 import TeacherDashboard from "./pages/TeacherDahboard";
 import QuizLaunch from "./pages/QuizLaunch";
@@ -38,6 +38,11 @@ import ReminderAgent from "./pages/ReminderAgent";
 import SlideGenerator from "./pages/Slidegenerator";
 import SlideHistory from "./pages/SlideHistory";
 import PdfToSlideGenerator from "./pages/Pdftoslidegenerator";
+import ContactSection from "./sections/contact-section";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+
+
 
 export default function App() {
   return (
@@ -71,8 +76,8 @@ export default function App() {
           <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/Settings" element={<Settings />} />
           <Route path="/NewTeacherAccount" element={<NewTearcherAccount />} />
-          <Route path="/Demographics" element={<Demographics />} />
-          <Route path="/Aboutyou" element={<Aboutyou />} />
+          {/* <Route path="/Demographics" element={<Demographics />} /> */}
+          {/* <Route path="/Aboutyou" element={<Aboutyou />} /> */}
           <Route path="/Teacherlogin" element={<TeacherLogin />} />
           <Route path="/VerifyEmail" element={<VerifyEmail />} />
           <Route path="/ForgotPassword" element={<ForgotPassword />} />
@@ -93,6 +98,9 @@ export default function App() {
          <Route path="/ReminderAgent" element={<ReminderAgent />} />
           <Route path="/SlideHistory" element={<SlideHistory />} />
           <Route path="/Pdftoslidegenerator" element={<PdfToSlideGenerator/>}/>
+          <Route path="/contact-us" element={<ContactSection />} />
+          <Route path="/terms" element={<Terms />} />
+<Route path="/privacy" element={<Privacy />} />
         </Routes>
         {/* <Footer /> */}
       </TeacherAuthProvider>

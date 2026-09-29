@@ -8,17 +8,34 @@ import nodemailer from "nodemailer";
 //                            now, so this has to be an app password
 //                            generated from Google Account > Security >
 //                            App Passwords, which requires 2FA to be on).
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-    },
-});
+// Created on first use (not at import time) so the .env values are already
+// loaded by the time the credentials are read.
+let transporter: nodemailer.Transporter | null = null;
+
+// Also accepts EMAIL_USER / EMAIL_PASS, the names used by the academic email tool.
+const getGmailUser = () => process.env.GMAIL_USER ?? process.env.EMAIL_USER;
+const getGmailPass = () => process.env.GMAIL_APP_PASSWORD ?? process.env.EMAIL_PASS;
+
+const getTransporter = () => {
+    const user = getGmailUser();
+    const pass = getGmailPass();
+    if (!user || !pass) {
+        throw new Error(
+            "Gmail credentials are missing. Set GMAIL_USER and GMAIL_APP_PASSWORD (or EMAIL_USER and EMAIL_PASS) in server/.env and restart the server."
+        );
+    }
+    if (!transporter) {
+        transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user, pass },
+        });
+    }
+    return transporter;
+};
 
 export const sendVerificationEmail = async (to: string, code: string) => {
-    await transporter.sendMail({
-        from: `"Aevion.AI" <${process.env.GMAIL_USER}>`,
+    await getTransporter().sendMail({
+        from: `"Aevion.AI" <${getGmailUser()}>`,
         to,
         subject: "Verify your email",
         text: `Your verification code is ${code}. It expires in 15 minutes.`,
@@ -34,5 +51,21 @@ export const sendVerificationEmail = async (to: string, code: string) => {
                 </p>
             </div>
         `,
+    });
+};
+
+// Sends a Contact Us form submission to your own inbox
+// (or to CONTACT_RECEIVER_EMAIL if you set it in .env).
+export const sendContactEmail = async (
+    name: string,
+    email: string,
+    message: string
+) => {
+    await getTransporter().sendMail({
+        from: `"Aevion.AI Contact Form" <${getGmailUser()}>`,
+        to: process.env.CONTACT_RECEIVER_EMAIL ?? getGmailUser(),
+        replyTo: email, // pressing Reply answers the visitor directly
+        subject: `New contact message from ${name}`,
+        text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
     });
 };

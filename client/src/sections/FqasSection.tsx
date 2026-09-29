@@ -218,17 +218,17 @@ export default function Faqsection() {
                 </div>
 
                 <h3 className="text-2xl md:text-4xl font-urbanist font-extrabold text-white leading-tight">
-                  Still have questions? <br /> Our team can help.
+                  Need a little help? <br /> 
                 </h3>
 
                 <p className="text-white/90 font-medium text-lg">
-                  Can't find what you're looking for? Reach out to our
-                  academic support specialists.
+                  From questions to feedback, our team is here for you. Let us know how we can make your Aevion.AI experience even better.
                 </p>
+                
 
                 <a
                   ref={contactBtnRef}
-                  href="Contact Us"
+                  href="contact-us"
                   className="bg-white text-[#007a8c] hover:bg-cyan-50 font-bold px-10 py-4 rounded-full transition-colors duration-300 shadow-lg text-lg"
                 >
                   Contact Support
