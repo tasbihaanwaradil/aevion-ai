@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useTeacherAuth } from "../context/TeacherAuthContext";
+import { Link, useNavigate } from "react-router-dom";
 
-const TOTAL_STEPS = 3;
+// Step 1: create the account. Step 2: verify the email code (VerifyEmail page).
+const TOTAL_STEPS = 2;
+const CURRENT_STEP = 1;
 
 // Letters and spaces only, 2–50 characters.
 const NAME_REGEX = /^[A-Za-z\s]{2,50}$/;
@@ -12,8 +15,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
 const NewTearcherAccount = () => {
-  const [step] = useState(1);
   const { user } = useAuth();
+  const { teacher, signUp } = useTeacherAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -24,14 +27,16 @@ const NewTearcherAccount = () => {
     password: "",
     confirmPassword: "",
   });
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNext = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -67,31 +72,41 @@ const NewTearcherAccount = () => {
       return;
     }
 
-    // Profile data is carried forward via route state so the final step
-    // (AboutYou) can call signUp with everything collected across all
-    // three steps, instead of creating the account here on step 1.
-    navigate("/Demographics", {
-      state: {
+    if (!agreed) {
+      setError("Please agree to the terms and privacy policy.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await signUp({
         name: fullName,
         email: formData.email,
         password: formData.password,
-      },
-    });
+      });
+
+      // Sign-up doesn't start a session — it emails a verification code —
+      // so go straight to the verification screen with the email.
+      navigate("/VerifyEmail", { state: { email: formData.email } });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong creating your account. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   useEffect(() => {
-    if (user) {
+    if (user || teacher) {
       navigate("/Dashboard");
     }
-  }, [user, navigate]);
+  }, [user, teacher, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#0A1238] px-4 pt-16 pb-12">
-      {/* Logo
-      <Link to="/" className="mb-6">
-        <img src="/assets/logo.svg" alt="logo" className="h-16.5 w-auto" />
-      </Link> */}
-
       {/* Student login note */}
       <p className="text-gray-300 text-sm text-center mb-8">
         Students do not need an account. Join a teacher's room here:{" "}
@@ -106,15 +121,15 @@ const NewTearcherAccount = () => {
       </p>
 
       {/* Step indicator */}
-      <div className="flex items-center justify-center mb-8 w-full max-w-md">
+      <div className="flex items-center justify-center mb-8 w-full max-w-xs">
         {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map(
           (num, idx) => (
             <React.Fragment key={num}>
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${
-                  num === step
+                  num === CURRENT_STEP
                     ? "bg-[#2d5f6e] border-[#2d5f6e] text-white"
-                    : num < step
+                    : num < CURRENT_STEP
                       ? "bg-[#2d5f6e]/20 border-[#2d5f6e] text-[#2d5f6e]"
                       : "bg-transparent border-gray-400 text-gray-400"
                 }`}
@@ -124,7 +139,7 @@ const NewTearcherAccount = () => {
               {idx < TOTAL_STEPS - 1 && (
                 <div
                   className={`flex-1 h-px mx-2 ${
-                    num < step ? "bg-[#2d5f6e]" : "bg-gray-500/40"
+                    num < CURRENT_STEP ? "bg-[#2d5f6e]" : "bg-gray-500/40"
                   }`}
                 />
               )}
@@ -134,14 +149,14 @@ const NewTearcherAccount = () => {
       </div>
 
       <form
-        onSubmit={handleNext}
+        onSubmit={handleSubmit}
         className="w-full max-w-md bg-white rounded-2xl px-10 py-14 shadow-2xl relative z-10"
       >
         <h1 className="text-3xl text-[#2d5f6e] font-bold text-center mb-2">
           Profile
         </h1>
         <p className="text-gray-600 text-sm text-center mb-8">
-          Create your teacher account to get started
+          Create your account to get started
         </p>
 
         {error && (
@@ -227,6 +242,32 @@ const NewTearcherAccount = () => {
           </div>
         </div>
 
+        <label className="flex items-start gap-2 mt-8 text-sm text-gray-600 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#2d5f6e] focus:ring-[#2d5f6e]"
+          />
+          <span>
+            I agree to the{" "}
+            <Link
+              to="/terms"
+              className="text-[#2d5f6e] font-medium hover:underline"
+            >
+              terms
+            </Link>{" "}
+            and{" "}
+            <Link
+              to="/privacy"
+              className="text-[#2d5f6e] font-medium hover:underline"
+            >
+              privacy policy
+            </Link>
+            .
+          </span>
+        </label>
+
         <div className="flex gap-4 mt-10">
           <button
             type="button"
@@ -237,22 +278,12 @@ const NewTearcherAccount = () => {
           </button>
           <button
             type="submit"
-            className="flex-1 h-14 rounded-2xl bg-[#2d5f6e] text-white font-bold hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)]"
+            disabled={submitting}
+            className="flex-1 h-14 rounded-2xl bg-[#2d5f6e] text-white font-bold hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)] disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Next
+            {submitting ? "Creating…" : "Create Account"}
           </button>
         </div>
-
-        {/* Switch
-        <p className="mt-8 text-center text-sm text-gray-500">
-          Already have an account?
-          <Link
-            to="/login"
-            className="ml-1 font-bold text-[#2d5f6e] hover:underline"
-          >
-            Click here
-          </Link>
-        </p> */}
       </form>
     </div>
   );

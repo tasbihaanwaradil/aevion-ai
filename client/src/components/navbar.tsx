@@ -67,50 +67,58 @@ export default function Navbar() {
 
           </div>
 
-          {/* Get Started Button */}
-
-
-
           {/* Mobile */}
-          <button onClick={() => setIsOpen(true)} className="md:hidden text-sky-900">
+          <button onClick={() => setIsOpen(true)} className="md:hidden text-sky-900" aria-label="Open menu">
             <MenuIcon />
           </button>
         </div>
       </nav >
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu — same links as the desktop navbar */}
       <div
         className={`fixed inset-0 z-60 bg-white transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
           }`
         }
       >
         <div className="flex justify-between items-center p-6 border-b">
-          <img src="/assets/logo.svg" className="h-8" />
-          <XIcon onClick={() => setIsOpen(false)} className="cursor-pointer" />
+          <img src="/assets/logo.svg" alt="logo" className="h-8" />
+          <XIcon onClick={() => setIsOpen(false)} className="cursor-pointer" aria-label="Close menu" />
         </div>
 
         <div className="flex flex-col gap-6 p-8">
           <Link to='/' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Home</Link>
+
           {
             isLoggedIn ?
-              <Link to='/LinkedInPostGenerator' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Genearate LinkedIn Post</Link>
+              <Link to='/Dashboard' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Dashboard</Link>
               :
-              <Link to='#' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">About</Link>
+              <Link to='#Features' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Features</Link>
           }
 
           {
             isLoggedIn ?
               <Link to='/my-generation' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">My Generations</Link>
               :
-              <Link to='/contact' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Contact Us</Link>
+              <Link to='/UseCases' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Use Cases</Link>
           }
 
           {
             isLoggedIn ?
-              <button onClick={() => { setIsOpen(false); logout(); }}>Logout</button>
-              : <Link onClick={() => setIsOpen(false)} to='/TeacherLogin' >Login</Link>
+              <button
+                onClick={async () => { setIsOpen(false); await logout(); navigate('/'); }}
+                className="w-fit bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition px-4 py-2 rounded"
+              >
+                Logout
+              </button>
+              :
+              <Link
+                to='/TeacherLogin'
+                onClick={() => setIsOpen(false)}
+                className="w-fit px-6 py-2 rounded-full bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition"
+              >
+                Get Started
+              </Link>
           }
-          <Link to='/TeacherLogin' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Login</Link>
         </div>
       </div >
     </>

@@ -1,117 +1,90 @@
-export const UseCases = [
-  {
-    title: "Professional Branding & Networking",
-    subtitle: "LinkedIn Post Generator",
-    description:
-      "Build your professional presence without spending time writing from scratch.",
-    points: [
-      "Share research publications professionally",
-      "Announce certifications, workshops, and seminars",
-      "Post academic achievements and awards",
-      "Promote university events and conferences",
-      "Maintain consistent LinkedIn activity",
-    ],
-    perfectFor: [
-      "Teachers sharing conference participation",
-      "Researchers posting published papers",
-      "Students highlighting certifications or internships",
-    ],
-    
-  },
+export type UseCaseIcon =
+  | "linkedin"
+  | "email"
+  | "quiz"
+  | "slides"
+  | "pdf"
+  | "reminders";
 
-  {
-    title: "Academic Communication Automation",
-    subtitle: "Academic Email Writer",
-    description:
-      "Reduce repetitive communication tasks with instantly generated academic emails.",
-    points: [
-      "Send assignment deadline reminders",
-      "Create class cancellation announcements",
-      "Write meeting invitations",
-      "Generate student feedback emails",
-      "Draft formal faculty communication",
-    ],
-    perfectFor: [
-      "Daily classroom communication",
-      "Department announcements",
-      "Student follow-ups",
-    ],
-    
-  },
+export type UseCase = {
+  icon: UseCaseIcon;
+  title: string;
+  subtitle: string;
+  description: string;
+  points: string[];
+};
 
+export const UseCases: UseCase[] = [
   {
-    title: "Lesson Preparation & Content Delivery",
-    subtitle: "Auto-Create Google Slides",
+    icon: "linkedin",
+    title: "LinkedIn Post Studio",
+    subtitle: "Turn academic milestones into polished posts",
     description:
-      "Turn ideas into ready-to-present lecture slides in minutes.",
+      "Draft professional LinkedIn posts about your achievements, research, and academic events in minutes.",
     points: [
-      "Create lecture presentations from a topic",
-      "Generate structured lesson slides from outlines",
-      "Prepare revision slides before exams",
-      "Design workshop or seminar presentations",
+      "Achievements, publications, and awards",
+      "Research highlights and conference talks",
+      "Event announcements and recaps",
     ],
-    perfectFor: [
-      "Teachers preparing lectures quickly",
-      "Guest lecturers creating presentations",
-      "Academic workshops",
-    ],
-    
   },
-
   {
-    title: "Assessment & Live Practice",
-    subtitle: "Quiz Generator",
-    description: "Create engaging quizzes instantly from educational materials.",
-    points: [
-      "Generate quizzes from PDFs, slides, or topics",
-      "Adjust difficulty levels",
-      "Conduct live quizzes in class",
-      "Provide instant evaluation and feedback",
-      "Support formative and revision assessments",
-    ],
-    perfectFor: [
-      "Classroom quizzes",
-      "Exam preparation",
-      "Live practice sessions",
-      "Homework assessments",
-    ],
-    
-  },
-
-  {
-    title: "Content Transformation & Summarization",
-    subtitle: "PDF-to-Slide Generator",
+    icon: "email",
+    title: "Academic Email Assistant",
+    subtitle: "Formal emails, drafted for you",
     description:
-      "Convert lengthy academic documents into concise presentations.",
+      "Write clear, formal emails for class announcements, deadlines, feedback, and administrative communication.",
     points: [
-      "Transform lecture notes into slides",
-      "Summarize research papers visually",
-      "Convert study materials into presentation format",
-      "Reduce manual slide creation effort",
+      "Class announcements and deadline notices",
+      "Feedback and follow-ups for students",
+      "Administrative and departmental messages",
     ],
-    perfectFor: [
-      "Teachers converting notes into lectures",
-      "Students summarizing reports",
-      "Research presentations",
-    ],
-    
   },
-
   {
-    title: "Academic Time Management",
-    subtitle: "Reminder",
+    icon: "quiz",
+    title: "Quiz Studio",
+    subtitle: "Quizzes from any lesson material",
     description:
-      "Never miss important academic tasks or deadlines.",
+      "Generate quizzes from lecture slides, PDFs, or a topic, with the difficulty level you choose.",
     points: [
-      "Track class schedules",
-      "Monitor assignment deadlines",
-      "Manage academic events",
-      "Receive timely reminders",
+      "Start from slides, PDFs, or a typed topic",
+      "Adjustable difficulty levels",
+      "Quick checks and practice for your class",
     ],
-    perfectFor: [
-      "Teachers managing multiple courses",
-      "Students organizing semester workload",
+  },
+  {
+    icon: "slides",
+    title: "Lesson Slide Studio",
+    subtitle: "Structured lecture slides, ready to teach",
+    description:
+      "Build a structured slide deck from a topic, a lesson outline, or material you upload.",
+    points: [
+      "Start from a topic or an outline",
+      "Use your own uploaded material",
+      "Clear structure for every lesson",
     ],
-    
+  },
+  {
+    icon: "pdf",
+    title: "PDF Lesson Studio",
+    subtitle: "From dense PDFs to concise slides",
+    description:
+      "Turn lecture notes, research papers, and other PDFs into concise, presentation-ready slides.",
+    points: [
+      "Lecture notes and handouts",
+      "Research papers and articles",
+      "Short slides that keep the key ideas",
+    ],
+  },
+  {
+    icon: "reminders",
+    title: "Smart Teaching Reminders",
+    subtitle: "Deadlines and events, never missed",
+    description:
+      "Keep track of class schedules, assignment deadlines, and academic events with automated reminders.",
+    points: [
+      "Class schedules and assignment deadlines",
+      "Academic events and meetings",
+      "Automatic email reminders as dates approach",
+    ],
   },
 ];

@@ -16,6 +16,11 @@ const CHECKPOINTS: { label: string; msBefore: number }[] = [
 // one reminder never touches another reminder's pending timers.
 const timers = new Map<string, NodeJS.Timeout>();
 
+// How often to re-scan the database so checkpoints that were too far away
+// for a single setTimeout (over ~24.8 days) get scheduled once they are close.
+const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+let refreshStarted = false;
+
 function timerKey(reminderId: string, label: string) {
   return `${reminderId}:${label}`;
 }
@@ -28,6 +33,8 @@ function humanize(label: string): string {
 }
 
 async function fireCheckpoint(reminderId: string, label: string) {
+  console.log(`[ReminderScheduler] Firing ${label} checkpoint for ${reminderId}`);
+
   // Re-fetch — the reminder may have been completed, deleted, or moved
   // since this timer was set.
   const fresh = await Reminder.findById(reminderId);
@@ -47,6 +54,11 @@ async function fireCheckpoint(reminderId: string, label: string) {
       body,
       fromName: "Aevion.AI Reminders",
     });
+    console.log(`[ReminderScheduler] Email sent to ${owner.email} (${label})`);
+  } else {
+    console.warn(
+      `[ReminderScheduler] No email found for user ${fresh.userId}; nothing sent for "${fresh.title}".`
+    );
   }
 
   if (fresh.category === "Meeting") {
@@ -84,6 +96,7 @@ export function scheduleReminder(reminder: IReminder) {
   const now = Date.now();
   const deadlineMs = new Date(reminder.deadline).getTime();
   const MAX_DELAY = 2 ** 31 - 1; // setTimeout's ~24.8-day ceiling
+  const scheduled: string[] = [];
 
   for (const cp of CHECKPOINTS) {
     if (reminder.notifiedCheckpoints.includes(cp.label)) continue;
@@ -91,12 +104,11 @@ export function scheduleReminder(reminder: IReminder) {
     const delay = deadlineMs - cp.msBefore - now;
 
     // Already past this checkpoint (e.g. created close to its deadline,
-    // or right after a restart) — skip it; the immediate creation email
-    // already covers that case.
+    // or right after a restart) — skip it.
     if (delay <= 0) continue;
 
-    // Too far out for a single setTimeout — rehydrateReminderTimers()
-    // picks it up on the next server start as the deadline nears.
+    // Too far out for a single setTimeout — the hourly refresh below
+    // schedules it once the checkpoint is within range.
     if (delay > MAX_DELAY) continue;
 
     const handle = setTimeout(() => {
@@ -106,13 +118,22 @@ export function scheduleReminder(reminder: IReminder) {
     }, delay);
 
     timers.set(timerKey(id, cp.label), handle);
+    scheduled.push(cp.label);
   }
+
+  console.log(
+    `[ReminderScheduler] "${reminder.title}" (${id}): ` +
+      (scheduled.length
+        ? `scheduled ${scheduled.join(", ")}`
+        : "no checkpoints scheduled (all passed, already sent, or too far out)")
+  );
 }
 
 /**
  * Rehydrates all pending timers from the database. Call once on server
  * boot (after the DB connection opens) — in-memory timers don't survive
- * a restart, same as the Academic Email Agent's EmailScheduler.
+ * a restart. It also starts an hourly refresh so far-future reminders
+ * get their timers without needing a restart.
  */
 export async function rehydrateReminderTimers() {
   const pending = await Reminder.find({
@@ -127,4 +148,13 @@ export async function rehydrateReminderTimers() {
   console.log(
     `[ReminderScheduler] Rehydrated timers for ${pending.length} reminder(s).`
   );
+
+  if (!refreshStarted) {
+    refreshStarted = true;
+    setInterval(() => {
+      rehydrateReminderTimers().catch((err) =>
+        console.error("Reminder refresh failed:", err)
+      );
+    }, REFRESH_INTERVAL_MS);
+  }
 }
