@@ -11,38 +11,15 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // At least 8 chars, at least one letter and one number.
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
-const VERIFICATION_CODE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const PASSWORD_RESET_URL = `${FRONTEND_URL}/ResetPassword`;
 
-const generateVerificationCode = () =>
-    Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
-
-// Thin wrapper around the existing sendEmail utility so the two call
-// sites below don't need to repeat the subject/body text.
-const sendVerificationEmail = async (to: string, name: string, code: string) => {
-    await sendEmail({
-        to,
-        subject: 'Verify your email',
-        body: `Hi ${name},
-
-Here's your one time verification code:
-
-${code}
-
-Verification codes expire after 15 minutes.
-If you didn't request this verification code, you can ignore this message.
-
-What's Aevion.AI?
-Aevion.AI helps teachers plan, communicate, and grade faster with a set of AI-powered classroom tools, all in one place.`,
-        fromName: 'Aevion.AI'
-    });
-};
-
 // ======================
 // REGISTER TEACHER
 // ======================
+// No email verification: the account is usable immediately. The
+// frontend logs the teacher in right after this call succeeds.
 export const registerTeacher = async (req: Request, res: Response) => {
     try {
         const { name, email, password } = req.body;
@@ -66,9 +43,6 @@ export const registerTeacher = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Teacher already exists' });
         }
 
-        const verificationCode = generateVerificationCode();
-        const verificationCodeExpires = new Date(Date.now() + VERIFICATION_CODE_TTL_MS);
-
         let newTeacher;
 
         if (password) {
@@ -79,136 +53,22 @@ export const registerTeacher = async (req: Request, res: Response) => {
                 name,
                 email,
                 password: hashedPassword,
-                isEmailVerified: false,
-                verificationCode,
-                verificationCodeExpires
+                isEmailVerified: true
             });
         } else {
             newTeacher = new Teacher({
                 name,
                 email,
-                isEmailVerified: false,
-                verificationCode,
-                verificationCodeExpires
+                isEmailVerified: true
             });
         }
 
         await newTeacher.save();
 
-        try {
-            await sendVerificationEmail(email, name, verificationCode);
-        } catch (mailError) {
-            console.error('Failed to send verification email:', mailError);
-            // The account still gets created — the user can hit
-            // /resend-code to try again rather than losing their signup.
-        }
-
-        // Deliberately NOT starting a session here — the account isn't
-        // usable until the email is verified. The frontend should route
-        // to /VerifyEmail with this email, not /Dashboard.
         return res.json({
-            message: 'Account created. Verification code sent.',
+            message: 'Account created successfully.',
             email: newTeacher.email
         });
-
-    } catch (error: any) {
-        console.log(error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-
-// ======================
-// VERIFY TEACHER EMAIL
-// ======================
-export const verifyTeacherEmail = async (req: Request, res: Response) => {
-    try {
-        const { email, code } = req.body;
-
-        if (!email || !code) {
-            return res.status(400).json({ message: 'Email and code are required.' });
-        }
-
-        const teacher = await Teacher.findOne({ email }).select('+verificationCode +verificationCodeExpires');
-
-        if (!teacher) {
-            return res.status(400).json({ message: 'No account found for that email.' });
-        }
-
-        if (teacher.isEmailVerified) {
-            return res.status(400).json({ message: 'This email is already verified.' });
-        }
-
-        if (
-            !teacher.verificationCode ||
-            !teacher.verificationCodeExpires ||
-            teacher.verificationCodeExpires.getTime() < Date.now()
-        ) {
-            return res.status(400).json({ message: 'That code has expired. Request a new one.' });
-        }
-
-        if (teacher.verificationCode !== code) {
-            return res.status(400).json({ message: 'Incorrect verification code.' });
-        }
-
-        teacher.isEmailVerified = true;
-        teacher.verificationCode = undefined;
-        teacher.verificationCodeExpires = undefined;
-        await teacher.save();
-
-        // Now that the email is confirmed, actually start the session.
-        req.session.regenerate((err) => {
-            if (err) throw err;
-
-            req.session.isLoggedIn = true;
-            req.session.teacherId = teacher._id;
-
-            return res.json({
-                message: 'Email verified successfully',
-                teacher: {
-                    _id: teacher._id,
-                    name: teacher.name,
-                    email: teacher.email
-                }
-            });
-        });
-
-    } catch (error: any) {
-        console.log(error);
-        res.status(500).json({ message: error.message });
-    }
-};
-
-
-// ======================
-// RESEND VERIFICATION CODE
-// ======================
-export const resendVerificationCode = async (req: Request, res: Response) => {
-    try {
-        const { email } = req.body;
-
-        if (!email) {
-            return res.status(400).json({ message: 'Email is required.' });
-        }
-
-        const teacher = await Teacher.findOne({ email });
-
-        if (!teacher) {
-            return res.status(400).json({ message: 'No account found for that email.' });
-        }
-
-        if (teacher.isEmailVerified) {
-            return res.status(400).json({ message: 'This email is already verified.' });
-        }
-
-        const verificationCode = generateVerificationCode();
-        teacher.verificationCode = verificationCode;
-        teacher.verificationCodeExpires = new Date(Date.now() + VERIFICATION_CODE_TTL_MS);
-        await teacher.save();
-
-        await sendVerificationEmail(email, teacher.name, verificationCode);
-
-        return res.json({ message: 'Verification code resent.' });
 
     } catch (error: any) {
         console.log(error);
@@ -356,13 +216,6 @@ export const loginTeacher = async (req: Request, res: Response) => {
         if (!teacher.password) {
             return res.status(400).json({
                 message: 'Please login with Google'
-            });
-        }
-
-        if (!teacher.isEmailVerified) {
-            return res.status(403).json({
-                message: 'Please verify your email before logging in.',
-                email: teacher.email
             });
         }
 

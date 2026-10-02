@@ -3,10 +3,6 @@ import { useAuth } from "../context/AuthContext";
 import { useTeacherAuth } from "../context/TeacherAuthContext";
 import { Link, useNavigate } from "react-router-dom";
 
-// Step 1: create the account. Step 2: verify the email code (VerifyEmail page).
-const TOTAL_STEPS = 2;
-const CURRENT_STEP = 1;
-
 // Letters and spaces only, 2–50 characters.
 const NAME_REGEX = /^[A-Za-z\s]{2,50}$/;
 // Standard, permissive email shape check.
@@ -16,7 +12,7 @@ const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
 const NewTearcherAccount = () => {
   const { user } = useAuth();
-  const { teacher, signUp } = useTeacherAuth();
+  const { teacher, signUp, login } = useTeacherAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -85,9 +81,9 @@ const NewTearcherAccount = () => {
         password: formData.password,
       });
 
-      // Sign-up doesn't start a session — it emails a verification code —
-      // so go straight to the verification screen with the email.
-      navigate("/VerifyEmail", { state: { email: formData.email } });
+      // No email verification — sign the teacher in straight away.
+      // The effect below redirects to /Dashboard once `teacher` is set.
+      await login({ email: formData.email, password: formData.password });
     } catch (err) {
       setError(
         err instanceof Error
@@ -116,37 +112,9 @@ const NewTearcherAccount = () => {
       </p>
 
       {/* Eyebrow */}
-      <p className="text-gray-300 text-xs font-bold tracking-widest uppercase mb-4">
+      <p className="text-gray-300 text-xs font-bold tracking-widest uppercase mb-8">
         New Teacher Account
       </p>
-
-      {/* Step indicator */}
-      <div className="flex items-center justify-center mb-8 w-full max-w-xs">
-        {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map(
-          (num, idx) => (
-            <React.Fragment key={num}>
-              <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${
-                  num === CURRENT_STEP
-                    ? "bg-[#2d5f6e] border-[#2d5f6e] text-white"
-                    : num < CURRENT_STEP
-                      ? "bg-[#2d5f6e]/20 border-[#2d5f6e] text-[#2d5f6e]"
-                      : "bg-transparent border-gray-400 text-gray-400"
-                }`}
-              >
-                {num}
-              </div>
-              {idx < TOTAL_STEPS - 1 && (
-                <div
-                  className={`flex-1 h-px mx-2 ${
-                    num < CURRENT_STEP ? "bg-[#2d5f6e]" : "bg-gray-500/40"
-                  }`}
-                />
-              )}
-            </React.Fragment>
-          ),
-        )}
-      </div>
 
       <form
         onSubmit={handleSubmit}
