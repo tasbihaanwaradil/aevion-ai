@@ -15,7 +15,7 @@ import NotFound from "./pages/NotFound";
 import NewTearcherAccount from "./pages/NewTearcherAccount";
 // import Aboutyou from "./pages/Aboutyou";
 import TeacherLogin from "./pages/Teacherlogin";
-import VerifyEmail from "./pages/VerifyEmail";
+// import VerifyEmail from "./pages/VerifyEmail";
 // import Demographics from "./pages/Demographics";
 import ForgotPassword from "./pages/ForgotPassword";
 import TeacherDashboard from "./pages/TeacherDahboard";
@@ -79,7 +79,7 @@ export default function App() {
           {/* <Route path="/Demographics" element={<Demographics />} /> */}
           {/* <Route path="/Aboutyou" element={<Aboutyou />} /> */}
           <Route path="/Teacherlogin" element={<TeacherLogin />} />
-          <Route path="/VerifyEmail" element={<VerifyEmail />} />
+          {/* <Route path="/VerifyEmail" element={<VerifyEmail />} /> */}
           <Route path="/ForgotPassword" element={<ForgotPassword />} />
           <Route path="/TeacherDashboard" element={<TeacherDashboard />} />
           <Route path="/QuizLaunch" element={<QuizLaunch />} />

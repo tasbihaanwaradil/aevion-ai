@@ -152,12 +152,8 @@ const TeacherLogin = () => {
 
   useEffect(() => {
     const status = searchParams.get("authStatus");
-    const email = searchParams.get("email");
 
-    if (status === "unverified") {
-      toast.error("Please verify your email before signing in.");
-      navigate("/VerifyEmail", { state: { email } });
-    } else if (status === "notfound") {
+    if (status === "notfound") {
       toast.error(
         "No account found for that Google email. Please create one first.",
       );
