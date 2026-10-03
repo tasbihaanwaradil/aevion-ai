@@ -100,22 +100,6 @@ const QuizGenerator: React.FC = () => {
     setError("");
   };
 
-  const resetToBlankForm = () => {
-    setStep("form");
-    setMode("topic");
-    setTopic("");
-    setDocFile(null);
-    setDocFocus("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    setDifficulty("Medium");
-    setQuestionCount(10);
-    setSelectedTypes([]);
-    setGenerateExplanations(true);
-    setError("");
-    setQuestions([]);
-    setAddedIds(new Set());
-  };
-
   const applyDocFile = (file: File | null) => {
     if (!file) return;
     const ext = getExtension(file.name);
@@ -287,31 +271,24 @@ const QuizGenerator: React.FC = () => {
       <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-0 right-0 w-[30rem] h-[26rem] rounded-full bg-teal-400/10 blur-[130px]" />
 
-      <TeacherSideNavbar
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
-        onNewQuiz={resetToBlankForm}
-      />
+      <TeacherSideNavbar isOpen={isOpen} setIsOpen={setIsOpen} />
 
       <div
         className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${isOpen ? "ml-72" : "ml-16"}`}
       >
-        
-<div className="mb-8 max-w-3xl mx-auto text-center">
-  <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5 font-['Sora']">
-    <SparklesIcon
-      className="w-6 h-6 text-teal-300"
-      strokeWidth={1.75}
-    />
-    Quiz Studio
-  </h1>
+        <div className="mb-8 max-w-3xl mx-auto text-center">
+          <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5 font-['Sora']">
+            <SparklesIcon
+              className="w-6 h-6 text-teal-300"
+              strokeWidth={1.75}
+            />
+            Quiz Studio
+          </h1>
 
-  <p className="text-gray-400 text-sm md:text-base">
-    Turn any topic or lesson document into a ready-to-take quiz.
-  </p>
-</div>
-
-
+          <p className="text-gray-400 text-sm md:text-base">
+            Turn any topic or lesson document into a ready-to-take quiz.
+          </p>
+        </div>
 
         <div className="flex flex-col lg:flex-row items-start gap-6">
           <div className="w-full lg:w-[420px] shrink-0 rounded-2xl bg-white shadow-2xl overflow-hidden">

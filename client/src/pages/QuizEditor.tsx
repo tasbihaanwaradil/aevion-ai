@@ -150,7 +150,6 @@ const QuizEditor: React.FC = () => {
       <TeacherSideNavbar
         isOpen={isOpen}
         setIsOpen={setIsOpen}
-        onNewQuiz={() => navigate("/QuizGenerator")}
         activeQuizId={id ?? null}
       />
 
