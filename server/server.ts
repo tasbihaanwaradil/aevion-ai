@@ -20,6 +20,7 @@ import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
 import reminderRoutes from "./routes/Reminderroutes.js";
 import { rehydrateReminderTimers } from "./utils/Reminderscheduler.js";
 import slideRoutes from "./routes/Slideroutes.js";
+   import contactRouter from "./routes/contact.js";
 
 declare module "express-session" {
   interface SessionData {
@@ -87,6 +88,8 @@ app.use("/api/teacher", TeacherRouter);
 app.use("/api/session", sessionRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/slides", slideRoutes);
+   app.use("/api/contact", contactRouter);
+
 
 initSocket(httpServer, sessionMiddleware);
 

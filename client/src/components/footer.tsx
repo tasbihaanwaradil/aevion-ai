@@ -26,9 +26,9 @@ export default function Footer() {
         {/* Left Section */}
         <div className="flex flex-col gap-4 max-w-sm">
           <p className="text-sky-900 text-sm font-medium leading-relaxed">
-            AI agents for smarter academic workflows.
+            AI-powered tools for smarter teaching and learning.
             <br className="hidden md:block" />
-            Automate, create, and share effortlessly.
+            Create, automate, and manage your academic work — all in one place.
           </p>
         </div>
 
@@ -38,7 +38,8 @@ export default function Footer() {
             Connect
           </p>
 
-          <div className="grid grid-cols-2 md:flex md:flex-col gap-x-8 gap-y-3">
+          {/* One link per row on every screen size, so everything lines up */}
+          <div className="flex flex-col gap-3">
             {/* Instagram Link */}
             <a
               href="https://www.instagram.com/aevion_ai/"
@@ -46,25 +47,25 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-sky-900 hover:text-sky-600 transition-all text-sm font-semibold"
             >
-              <InstagramIcon size={18} className="text-sky-600" /> Instagram
+              <InstagramIcon size={18} className="text-sky-600 shrink-0" /> Instagram
             </a>
 
-            {/* LinkedIn Link (Placeholder - add your profile slug when ready) */}
+            {/* LinkedIn Link */}
             <a
               href="https://www.linkedin.com/company/aevion-ai-2026/"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-sky-900 hover:text-sky-600 transition-all text-sm font-semibold"
             >
-              <LinkedinIcon size={18} className="text-sky-600" /> LinkedIn
+              <LinkedinIcon size={18} className="text-sky-600 shrink-0" /> LinkedIn
             </a>
 
             {/* Email Link */}
             <a
-              href="mailto:aevionai0@gmail.com"
+              href="/contact-us"
               className="flex items-center gap-2 text-sky-900 hover:text-sky-600 transition-all text-sm font-semibold"
             >
-              <MailIcon size={18} className="text-sky-600" /> Email
+              <MailIcon size={18} className="text-sky-600 shrink-0" /> Email
             </a>
 
             {/* GitHub Link */}
@@ -74,7 +75,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-sky-900 hover:text-sky-600 transition-all text-sm font-semibold"
             >
-              <GithubIcon size={18} className="text-sky-600" /> GitHub
+              <GithubIcon size={18} className="text-sky-600 shrink-0" /> GitHub
             </a> */}
           </div>
         </div>

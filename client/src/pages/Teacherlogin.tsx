@@ -152,12 +152,8 @@ const TeacherLogin = () => {
 
   useEffect(() => {
     const status = searchParams.get("authStatus");
-    const email = searchParams.get("email");
 
-    if (status === "unverified") {
-      toast.error("Please verify your email before signing in.");
-      navigate("/VerifyEmail", { state: { email } });
-    } else if (status === "notfound") {
+    if (status === "notfound") {
       toast.error(
         "No account found for that Google email. Please create one first.",
       );
@@ -288,16 +284,16 @@ const TeacherLogin = () => {
       </div>
 
       {/* ───────────── RIGHT: sign in form ───────────── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
+      <div className="flex-1 flex items-center justify-center px-2 py-12">
         <div ref={formPanelRef} className="w-full max-w-md">
           <Link to="/" className="inline-block mb-8">
-            <img src="/assets/logo.svg" alt="logo" className="h-12 w-auto" />
+            <img src="/assets/logo.svg" alt="logo" className="h-20 w-auto" />
           </Link>
 
           <h1 className="text-3xl font-semibold text-gray-900">
             Sign in or create an account
           </h1>
-          <p className="mt-2 text-gray-700">Then start creating quizzes!</p>
+          <p className="mt-2 text-gray-700">Then start using</p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div>
@@ -394,7 +390,7 @@ const TeacherLogin = () => {
               >
                 <path d="M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-3.33 0-8 1.67-8 5v1h16v-1c0-3.33-4.67-5-8-5z" />
               </svg>
-              <span>Create a teacher account</span>
+              <span>Create an account</span>
             </button>
           </div>
         </div>

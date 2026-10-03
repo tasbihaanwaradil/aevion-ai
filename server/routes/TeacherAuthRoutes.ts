@@ -5,8 +5,6 @@ import {
     loginTeacher,
     logoutTeacher,
     verifyTeacher,
-    verifyTeacherEmail,
-    resendVerificationCode,
     requestPasswordReset,
     resetPassword
 } from '../controllers/TeacherAuthController.js';
@@ -19,8 +17,6 @@ TeacherAuthRouter.post('/register', registerTeacher);
 TeacherAuthRouter.post('/login', loginTeacher);
 TeacherAuthRouter.post('/logout', logoutTeacher);
 TeacherAuthRouter.get('/verify', verifyTeacher);
-TeacherAuthRouter.post('/verify-email', verifyTeacherEmail);
-TeacherAuthRouter.post('/resend-code', resendVerificationCode);
 TeacherAuthRouter.post('/forgot-password', requestPasswordReset);
 TeacherAuthRouter.post('/reset-password', resetPassword);
 
@@ -43,12 +39,7 @@ TeacherAuthRouter.get('/google/callback', (req, res, next) => {
             }
 
             if (!teacher) {
-                const reason = info?.message; // 'notfound' | 'unverified' | 'no_email'
-                if (reason === 'unverified') {
-                    return res.redirect(
-                        `${FRONTEND_URL}/Teacherlogin?authStatus=unverified&email=${encodeURIComponent(info.email)}`
-                    );
-                }
+                // info?.message is 'notfound' | 'no_email'
                 return res.redirect(`${FRONTEND_URL}/Teacherlogin?authStatus=notfound`);
             }
 
