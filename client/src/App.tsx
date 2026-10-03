@@ -38,6 +38,7 @@ import ReminderAgent from "./pages/ReminderAgent";
 import SlideGenerator from "./pages/Slidegenerator";
 import SlideHistory from "./pages/SlideHistory";
 import PdfToSlideGenerator from "./pages/Pdftoslidegenerator";
+import PublicReport from "./pages/PublicReport";
 
 export default function App() {
   return (
@@ -59,10 +60,7 @@ export default function App() {
             element={<AcademicEmailGenerator />}
           />
           <Route path="/QuizGenerator" element={<QuizGenerator />} />
-          <Route
-            path="/Slidegenerator"
-            element={<SlideGenerator />}
-          />
+          <Route path="/Slidegenerator" element={<SlideGenerator />} />
           <Route
             path="/Pdf-to-SlideConverter"
             element={<PdfToSlidesConverter />}
@@ -87,12 +85,19 @@ export default function App() {
           <Route path="/Quiz/Edit/:id" element={<QuizEditor />} />
           <Route path="/LiveResults/:id" element={<LiveResults />} />
           <Route path="/join" element={<StudentJoin />} />
+          <Route path="/Report/:shareCode" element={<PublicReport />} />
           <Route path="/LinkedInHistory" element={<LinkedInHistory />} />
-          <Route path="/AcademicEmailHistory" element={<AcademicEmailHistory />} />
+          <Route
+            path="/AcademicEmailHistory"
+            element={<AcademicEmailHistory />}
+          />
           <Route path="*" element={<NotFound />} />
-         <Route path="/ReminderAgent" element={<ReminderAgent />} />
+          <Route path="/ReminderAgent" element={<ReminderAgent />} />
           <Route path="/SlideHistory" element={<SlideHistory />} />
-          <Route path="/Pdftoslidegenerator" element={<PdfToSlideGenerator/>}/>
+          <Route
+            path="/Pdftoslidegenerator"
+            element={<PdfToSlideGenerator />}
+          />
         </Routes>
         {/* <Footer /> */}
       </TeacherAuthProvider>
