@@ -32,7 +32,7 @@ const activityTypes = [
   {
     title: "Share Results",
     icon: Share2Icon,
-    route: "/ExitTicket",
+    route: "/Reports",
     border: "border-amber-400",
     text: "text-amber-300",
     glow: "group-hover:shadow-[0_0_35px_-5px_rgba(251,191,36,0.6)]",

@@ -38,11 +38,10 @@ import ReminderAgent from "./pages/ReminderAgent";
 import SlideGenerator from "./pages/Slidegenerator";
 import SlideHistory from "./pages/SlideHistory";
 import PdfToSlideGenerator from "./pages/Pdftoslidegenerator";
+import PublicReport from "./pages/PublicReport";
 import ContactSection from "./sections/contact-section";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
-
-
 
 export default function App() {
   return (
@@ -51,10 +50,12 @@ export default function App() {
         <Toaster />
         <LenisScroll />
         {/* <Navbar /> */}
+
         <Routes>
-          <Route path="/" element={<HomePage />}></Route>
+          <Route path="/" element={<HomePage />} />
           <Route path="/UseCases" element={<UseCases />} />
-          <Route path="/login" element={<Login />}></Route>
+          <Route path="/login" element={<Login />} />
+
           <Route
             path="/LinkedInPostGenerator"
             element={<LinkedInPostGenerator />}
@@ -63,45 +64,60 @@ export default function App() {
             path="/AcademicEmailGenerator"
             element={<AcademicEmailGenerator />}
           />
+
           <Route path="/QuizGenerator" element={<QuizGenerator />} />
-          <Route
-            path="/Slidegenerator"
-            element={<SlideGenerator />}
-          />
+          <Route path="/Slidegenerator" element={<SlideGenerator />} />
           <Route
             path="/Pdf-to-SlideConverter"
             element={<PdfToSlidesConverter />}
           />
+          <Route
+            path="/Pdftoslidegenerator"
+            element={<PdfToSlideGenerator />}
+          />
+
           <Route path="/Reminder" element={<TimetableReminder />} />
           <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/Settings" element={<Settings />} />
           <Route path="/NewTeacherAccount" element={<NewTearcherAccount />} />
+
           {/* <Route path="/Demographics" element={<Demographics />} /> */}
           {/* <Route path="/Aboutyou" element={<Aboutyou />} /> */}
+
           <Route path="/Teacherlogin" element={<TeacherLogin />} />
+
           {/* <Route path="/VerifyEmail" element={<VerifyEmail />} /> */}
+
           <Route path="/ForgotPassword" element={<ForgotPassword />} />
+          <Route path="/ResetPassword" element={<ResetPassword />} />
           <Route path="/TeacherDashboard" element={<TeacherDashboard />} />
+
           <Route path="/QuizLaunch" element={<QuizLaunch />} />
           <Route path="/LaunchSpace" element={<LaunchSpace />} />
           <Route path="/Library" element={<Library />} />
           <Route path="/Rooms" element={<Rooms />} />
           <Route path="/Reports" element={<Reports />} />
           <Route path="/LiveResults" element={<LiveResults />} />
-          <Route path="/ResetPassword" element={<ResetPassword />} />
-          <Route path="/Quiz/Edit/:id" element={<QuizEditor />} />
           <Route path="/LiveResults/:id" element={<LiveResults />} />
+          <Route path="/Quiz/Edit/:id" element={<QuizEditor />} />
           <Route path="/join" element={<StudentJoin />} />
+          <Route path="/Report/:shareCode" element={<PublicReport />} />
+
           <Route path="/LinkedInHistory" element={<LinkedInHistory />} />
-          <Route path="/AcademicEmailHistory" element={<AcademicEmailHistory />} />
-          <Route path="*" element={<NotFound />} />
-         <Route path="/ReminderAgent" element={<ReminderAgent />} />
+          <Route
+            path="/AcademicEmailHistory"
+            element={<AcademicEmailHistory />}
+          />
+          <Route path="/ReminderAgent" element={<ReminderAgent />} />
           <Route path="/SlideHistory" element={<SlideHistory />} />
-          <Route path="/Pdftoslidegenerator" element={<PdfToSlideGenerator/>}/>
+
           <Route path="/contact-us" element={<ContactSection />} />
           <Route path="/terms" element={<Terms />} />
-<Route path="/privacy" element={<Privacy />} />
+          <Route path="/privacy" element={<Privacy />} />
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
+
         {/* <Footer /> */}
       </TeacherAuthProvider>
     </AuthProvider>

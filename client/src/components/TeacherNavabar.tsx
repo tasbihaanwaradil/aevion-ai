@@ -8,7 +8,6 @@ import { useTeacherAuth } from "../context/TeacherAuthContext";
 const navItems = [
   { label: "Launch", route: "/TeacherDashboard" },
   { label: "Library", route: "/Library" },
-  { label: "Discover", route: "/Discover" },
   { label: "Rooms", route: "/Rooms" },
   { label: "Reports", route: "/Reports" },
   { label: "Live Results", route: "/LiveResults" },
@@ -149,9 +148,15 @@ const TeacherNavbar = () => {
               {item.label}
             </button>
           ))}
-          <button onClick={async () => { await logout(); navigate('/'); }} className="bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition px-4 py-2 rounded">
-                    Logout
-                  </button>
+          <button
+            onClick={async () => {
+              await logout();
+              navigate("/");
+            }}
+            className="bg-[#007a8c] text-white font-semibold hover:bg-[#005f6a] transition px-4 py-2 rounded"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </>

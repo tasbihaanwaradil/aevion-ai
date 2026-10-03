@@ -99,6 +99,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       },
     );
 
+    // ----- Student joins a session by room code -----
     socket.on(
       "student:join-session",
       async ({ roomCode, name }: { roomCode: string; name: string }) => {
@@ -109,9 +110,55 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
             });
           }
 
-          const session = await Session.findOne({
+          // Read-only validation first — no mutation here yet.
+          const existing = await Session.findOne({
             roomCode: roomCode.toUpperCase(),
           });
+
+          if (!existing) {
+            return socket.emit("student:join-error", {
+              message: "Room not found.",
+            });
+          }
+          if (existing.status === "finished") {
+            return socket.emit("student:join-error", {
+              message: "This activity has ended.",
+            });
+          }
+          if (existing.status === "paused") {
+            return socket.emit("student:join-error", {
+              message: "This activity is paused.",
+            });
+          }
+          if (existing.settings.requireNames && !name?.trim()) {
+            return socket.emit("student:join-error", {
+              message: "Please enter your name.",
+            });
+          }
+
+          const participantId = crypto.randomUUID();
+          const newParticipant = {
+            participantId,
+            name: name?.trim() || "Anonymous",
+            answers: [],
+            score: 0,
+            currentIndex: 0,
+            completed: false,
+          };
+
+          // Atomic: push this participant onto the array in a single Mongo
+          // operation, so a concurrent join or answer-submit can never
+          // overwrite it via a stale full-document save.
+          const session = await Session.findOneAndUpdate(
+            { _id: existing._id },
+            {
+              $push: { participants: newParticipant },
+              ...(existing.status === "waiting"
+                ? { $set: { status: "active" } }
+                : {}),
+            },
+            { new: true },
+          );
 
           if (!session) {
             return socket.emit("student:join-error", {
@@ -119,51 +166,16 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
             });
           }
 
-          if (session.status === "finished") {
-            return socket.emit("student:join-error", {
-              message: "This activity has ended.",
-            });
-          }
-
-          if (session.status === "paused") {
-            return socket.emit("student:join-error", {
-              message: "This activity is paused.",
-            });
-          }
-
-          if (session.settings.requireNames && !name?.trim()) {
-            return socket.emit("student:join-error", {
-              message: "Please enter your name.",
-            });
-          }
-
-          const participantId = crypto.randomUUID();
-
-          session.participants.push({
-            participantId,
-            name: name?.trim() || "Anonymous",
-            answers: [],
-            score: 0,
-            currentIndex: 0,
-            completed: false,
-          });
-
-          if (session.status === "waiting") {
-            session.status = "active";
-          }
-
-          await session.save();
-
           socket.join(`session:${session._id}`);
           socket.data.participantId = participantId;
           socket.data.sessionId = String(session._id);
 
           const sanitizedQuestions: StudentQuestion[] = session.questions.map(
-            ({ id, type, question, options }: SessionQuestion) => ({
-              id,
-              type,
-              question,
-              options,
+            (q: SessionQuestion) => ({
+              id: q.id,
+              type: q.type,
+              question: q.question,
+              options: q.options,
             }),
           );
 
@@ -177,7 +189,6 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           broadcastParticipants(String(session._id), session);
         } catch (err) {
           console.error(err);
-
           socket.emit("student:join-error", {
             message: "Something went wrong joining the room.",
           });
@@ -185,6 +196,76 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       },
     );
 
+    // ----- Student reconnects after a refresh/disconnect -----
+    socket.on(
+      "student:resume-session",
+      async ({
+        sessionId,
+        participantId,
+      }: {
+        sessionId: string;
+        participantId: string;
+      }) => {
+        try {
+          const session = await Session.findById(sessionId);
+
+          if (!session) {
+            return socket.emit("student:resume-error", {
+              message: "This session no longer exists.",
+            });
+          }
+          if (session.status === "finished") {
+            return socket.emit("student:resume-error", {
+              message: "This activity has ended.",
+            });
+          }
+
+          const participant = session.participants.find(
+            (p: SessionParticipant) => p.participantId === participantId,
+          );
+
+          if (!participant) {
+            return socket.emit("student:resume-error", {
+              message: "Could not find your previous progress.",
+            });
+          }
+
+          socket.join(`session:${session._id}`);
+          socket.data.participantId = participantId;
+          socket.data.sessionId = String(session._id);
+
+          const sanitizedQuestions: StudentQuestion[] = session.questions.map(
+            (q: SessionQuestion) => ({
+              id: q.id,
+              type: q.type,
+              question: q.question,
+              options: q.options,
+            }),
+          );
+
+          socket.emit("student:resumed", {
+            sessionId: session._id,
+            participantId,
+            title: session.title,
+            questions: sanitizedQuestions,
+            currentIndex: participant.currentIndex,
+            completed: participant.completed,
+            score:
+              session.settings.showFinalScore && participant.completed
+                ? participant.score
+                : undefined,
+            total: session.questions.length,
+          });
+        } catch (err) {
+          console.error(err);
+          socket.emit("student:resume-error", {
+            message: "Something went wrong reconnecting.",
+          });
+        }
+      },
+    );
+
+    // ----- Student submits an answer -----
     socket.on(
       "student:submit-answer",
       async ({
@@ -199,10 +280,6 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
         answer: string;
       }) => {
         try {
-          const session = await Session.findById(sessionId);
-
-          if (!session) return;
-
           if (
             socket.data.sessionId &&
             socket.data.sessionId !== String(sessionId)
@@ -212,7 +289,6 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
                 "This socket is already attached to a different session.",
             });
           }
-
           if (
             socket.data.participantId &&
             socket.data.participantId !== participantId
@@ -223,16 +299,21 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
             });
           }
 
-          if (session.status === "paused") {
+          // Read-only lookups to figure out what SHOULD happen — the actual
+          // write below is atomic and re-validates via the query filter, so
+          // even if this read is slightly stale the write can't corrupt data.
+          const snapshot = await Session.findById(sessionId);
+          if (!snapshot) return;
+
+          if (snapshot.status === "paused") {
             return socket.emit("student:answer-error", {
               message: "The activity is paused.",
             });
           }
 
-          const participant = session.participants.find(
+          const participant = snapshot.participants.find(
             (p: SessionParticipant) => p.participantId === participantId,
           );
-
           if (!participant) return;
 
           if (participant.completed) {
@@ -241,14 +322,24 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
             });
           }
 
-          const expectedQuestion = session.questions[participant.currentIndex];
+          const expectedQuestion = snapshot.questions[participant.currentIndex];
 
           if (!expectedQuestion) {
-            participant.completed = true;
-            participant.completedAt = new Date();
-
-            await session.save();
-
+            // Already past the last question — force-complete atomically,
+            // only if not already marked complete, and don't touch answers.
+            await Session.findOneAndUpdate(
+              {
+                _id: sessionId,
+                "participants.participantId": participantId,
+                "participants.completed": false,
+              },
+              {
+                $set: {
+                  "participants.$.completed": true,
+                  "participants.$.completedAt": new Date(),
+                },
+              },
+            );
             return socket.emit("student:answer-error", {
               message: "This activity is already complete.",
             });
@@ -260,68 +351,80 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
             });
           }
 
-          const hasAlreadyAnswered = participant.answers.some(
-            (entry: ParticipantAnswer) => entry.questionId === questionId,
-          );
-
-          if (hasAlreadyAnswered) {
-            return socket.emit("student:answer-error", {
-              message: "You have already answered this question.",
-            });
-          }
-
-          const question = session.questions.find(
+          const question = snapshot.questions.find(
             (q: SessionQuestion) => q.id === questionId,
           );
-
           if (!question) return;
 
           const isCorrect =
             answer.trim().toLowerCase() ===
             question.correctAnswer.trim().toLowerCase();
 
-          participant.answers.push({
-            questionId,
-            answer,
-            isCorrect,
-          });
+          const willComplete =
+            participant.currentIndex + 1 >= snapshot.questions.length;
 
-          if (isCorrect) {
-            participant.score += 1;
+          // Atomic, targeted update: only touches THIS participant's
+          // subdocument, and only applies if their currentIndex still
+          // matches what we expect — guarding against a concurrent
+          // duplicate submission racing in at the same time.
+          const updated = await Session.findOneAndUpdate(
+            {
+              _id: sessionId,
+              "participants.participantId": participantId,
+              "participants.currentIndex": participant.currentIndex,
+            },
+            {
+              $push: {
+                "participants.$.answers": { questionId, answer, isCorrect },
+              },
+              $inc: {
+                "participants.$.score": isCorrect ? 1 : 0,
+                "participants.$.currentIndex": 1,
+              },
+              ...(willComplete
+                ? {
+                    $set: {
+                      "participants.$.completed": true,
+                      "participants.$.completedAt": new Date(),
+                    },
+                  }
+                : {}),
+            },
+            { new: true },
+          );
+
+          if (!updated) {
+            // Someone else's concurrent write already advanced this
+            // participant past the state we expected — treat as a
+            // duplicate submission rather than silently losing data.
+            return socket.emit("student:answer-error", {
+              message: "You have already answered this question.",
+            });
           }
 
-          participant.currentIndex += 1;
-
-          if (participant.currentIndex >= session.questions.length) {
-            participant.completed = true;
-            participant.completedAt = new Date();
-          }
-
-          await session.save();
+          const updatedParticipant = updated.participants.find(
+            (p: SessionParticipant) => p.participantId === participantId,
+          );
 
           socket.emit("student:answer-result", {
             isCorrect,
-            showFeedback: session.settings.showQuestionFeedback,
-
-            correctAnswer: session.settings.showQuestionFeedback
+            showFeedback: updated.settings.showQuestionFeedback,
+            correctAnswer: updated.settings.showQuestionFeedback
               ? question.correctAnswer
               : undefined,
-
-            explanation: session.settings.showQuestionFeedback
+            explanation: updated.settings.showQuestionFeedback
               ? question.explanation
               : undefined,
-
-            completed: participant.completed,
-
+            completed: updatedParticipant?.completed ?? willComplete,
             score:
-              session.settings.showFinalScore && participant.completed
-                ? participant.score
+              updated.settings.showFinalScore &&
+              (updatedParticipant?.completed ?? willComplete)
+                ? updatedParticipant?.score
                 : undefined,
-
-            total: session.questions.length,
+            total: updated.questions.length,
           });
 
-          broadcastParticipants(sessionId, session);
+          broadcastParticipants(sessionId, updated);
         } catch (err) {
           console.error(err);
         }
@@ -332,7 +435,6 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       "teacher:pause-session",
       async ({ sessionId }: { sessionId: string }) => {
         const teacherId = (socket.request as any)?.session?.teacherId;
-
         const session = await Session.findById(sessionId);
 
         if (
@@ -345,10 +447,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           });
         }
 
-        await Session.findByIdAndUpdate(sessionId, {
-          status: "paused",
-        });
-
+        await Session.findByIdAndUpdate(sessionId, { status: "paused" });
         io.to(`session:${sessionId}`).emit("session:status-changed", {
           status: "paused",
         });
@@ -359,7 +458,6 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       "teacher:resume-session",
       async ({ sessionId }: { sessionId: string }) => {
         const teacherId = (socket.request as any)?.session?.teacherId;
-
         const session = await Session.findById(sessionId);
 
         if (
@@ -372,10 +470,7 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           });
         }
 
-        await Session.findByIdAndUpdate(sessionId, {
-          status: "active",
-        });
-
+        await Session.findByIdAndUpdate(sessionId, { status: "active" });
         io.to(`session:${sessionId}`).emit("session:status-changed", {
           status: "active",
         });
@@ -386,7 +481,6 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
       "teacher:finish-session",
       async ({ sessionId }: { sessionId: string }) => {
         const teacherId = (socket.request as any)?.session?.teacherId;
-
         const session = await Session.findById(sessionId);
 
         if (
@@ -399,38 +493,20 @@ export const initSocket = (httpServer: HttpServer, sessionMiddleware?: any) => {
           });
         }
 
-        await Session.findByIdAndUpdate(sessionId, {
-          status: "finished",
-        });
-
+        await Session.findByIdAndUpdate(sessionId, { status: "finished" });
         io.to(`session:${sessionId}`).emit("session:status-changed", {
           status: "finished",
         });
       },
     );
 
-    socket.on("disconnect", async () => {
-      const sessionId = socket.data.sessionId as string | undefined;
-      const participantId = socket.data.participantId as string | undefined;
-
-      if (!sessionId || !participantId) return;
-
-      const session = await Session.findById(sessionId);
-
-      if (!session) return;
-
-      session.participants = session.participants.filter(
-        (participant: SessionParticipant) =>
-          participant.participantId !== participantId,
-      );
-
-      if (session.participants.length === 0 && session.status !== "finished") {
-        session.status = "waiting";
-      }
-
-      await session.save();
-
-      broadcastParticipants(String(sessionId), session);
+    // ----- Disconnect: never delete participant data. -----
+    // A dropped socket (reload, backgrounded tab, brief network loss) does
+    // NOT mean the student is done or should lose their progress. Their
+    // answers and score stay in the session regardless of connection state.
+    socket.on("disconnect", () => {
+      // Intentionally does nothing to session.participants. Socket.io
+      // rooms are cleaned up automatically on disconnect; no DB write needed.
     });
   });
 

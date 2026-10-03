@@ -11,9 +11,44 @@ type Question = {
   options: string[] | null;
 };
 
+const STORAGE_KEY = "aevion_active_quiz_session";
+
+type SavedSession = {
+  roomCode: string;
+  sessionId: string;
+  participantId: string;
+};
+
+const loadSavedSession = (): SavedSession | null => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as SavedSession) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveSession = (data: SavedSession) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    // Storage might be unavailable (private browsing, etc.) — non-fatal.
+  }
+};
+
+const clearSavedSession = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+};
+
 const StudentJoin = () => {
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState<"code" | "name" | "quiz" | "done">("code");
+  const [step, setStep] = useState<
+    "reconnecting" | "code" | "name" | "quiz" | "done"
+  >("reconnecting");
 
   const [roomCode, setRoomCode] = useState(searchParams.get("room") || "");
   const [name, setName] = useState("");
@@ -59,10 +94,56 @@ const StudentJoin = () => {
         setParticipantId(payload.participantId);
         setTitle(payload.title);
         setQuestions(payload.questions);
+        setCurrentIndex(0);
         setJoining(false);
         setStep("quiz");
+
+        saveSession({
+          roomCode: roomCode.trim().toUpperCase(),
+          sessionId: payload.sessionId,
+          participantId: payload.participantId,
+        });
       },
     );
+
+    socket.on(
+      "student:resumed",
+      (payload: {
+        sessionId: string;
+        participantId: string;
+        title: string;
+        questions: Question[];
+        currentIndex: number;
+        completed: boolean;
+        score?: number;
+        total?: number;
+      }) => {
+        setSessionId(payload.sessionId);
+        setParticipantId(payload.participantId);
+        setTitle(payload.title);
+        setQuestions(payload.questions);
+        setCurrentIndex(payload.currentIndex);
+        setAnswer("");
+        setFeedback(null);
+        setError("");
+
+        if (payload.completed) {
+          if (payload.score !== undefined && payload.total !== undefined) {
+            setFinalScore({ score: payload.score, total: payload.total });
+          }
+          setStep("done");
+          clearSavedSession();
+        } else {
+          setStep("quiz");
+        }
+      },
+    );
+
+    socket.on("student:resume-error", ({ message }: { message: string }) => {
+      clearSavedSession();
+      setError(message);
+      setStep("code");
+    });
 
     socket.on(
       "student:answer-result",
@@ -87,6 +168,7 @@ const StudentJoin = () => {
           if (payload.score !== undefined && payload.total !== undefined) {
             setFinalScore({ score: payload.score, total: payload.total });
           }
+          clearSavedSession();
         }
       },
     );
@@ -97,12 +179,36 @@ const StudentJoin = () => {
       setFeedback(null);
     });
 
+    socket.on("session:status-changed", ({ status }: { status: string }) => {
+      if (status === "finished") {
+        clearSavedSession();
+        setStep("done");
+      }
+    });
+
+    // On mount: if there's a saved session, try to resume it before
+    // showing the room-code screen at all.
+    const saved = loadSavedSession();
+    if (saved) {
+      socket.emit("student:resume-session", {
+        sessionId: saved.sessionId,
+        participantId: saved.participantId,
+      });
+      setRoomCode(saved.roomCode);
+    } else {
+      setStep("code");
+    }
+
     return () => {
       socket.off("student:join-error");
       socket.off("student:joined");
+      socket.off("student:resumed");
+      socket.off("student:resume-error");
       socket.off("student:answer-result");
       socket.off("student:answer-error");
+      socket.off("session:status-changed");
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleContinueFromCode = (e: React.FormEvent) => {
@@ -148,6 +254,15 @@ const StudentJoin = () => {
       setCurrentIndex((i) => i + 1);
     }
   };
+
+  if (step === "reconnecting") {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+        <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin mb-4" />
+        <p className="text-gray-600">Reconnecting to your quiz...</p>
+      </div>
+    );
+  }
 
   if (step === "code") {
     return (
@@ -219,6 +334,13 @@ const StudentJoin = () => {
 
   if (step === "quiz") {
     const question = questions[currentIndex];
+    if (!question) {
+      return (
+        <div className="min-h-screen bg-white flex items-center justify-center px-4">
+          <p className="text-gray-500">Loading your question...</p>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-white px-6 py-8">
         <p className="text-sm text-gray-500">Room</p>
