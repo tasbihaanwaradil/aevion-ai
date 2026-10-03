@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   PauseIcon,
@@ -18,9 +18,10 @@ import {
 } from "lucide-react";
 import TeacherNavbar from "../components/TeacherNavabar";
 import { getSocket } from "../lib/socket";
+import { BASE_URL } from "../configs/Config";
 
-const API_BASE = "http://localhost:3000/api";
-const FRONTEND_URL = "http://localhost:5173";
+const API_BASE = `${BASE_URL}/api`;
+const FRONTEND_URL = window.location.origin;
 
 type Answer = { questionId: string; answer: string; isCorrect: boolean };
 type Participant = {

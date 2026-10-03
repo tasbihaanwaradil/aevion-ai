@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { BASE_URL } from "../configs/Config";
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = `${BASE_URL}/api`;
 
 type Answer = { questionId: string; answer: string; isCorrect: boolean };
 type Participant = { name: string; score: number; answers: Answer[] };

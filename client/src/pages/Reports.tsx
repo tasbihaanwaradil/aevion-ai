@@ -5,9 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { SearchIcon, XIcon, CopyIcon, EyeIcon, Share2Icon } from "lucide-react";
 import { useTeacherAuth } from "../context/TeacherAuthContext";
 import TeacherNavbar from "../components/TeacherNavabar";
+import { BASE_URL } from "../configs/Config";
 
-const API_BASE = "http://localhost:3000/api";
-const FRONTEND_URL = "http://localhost:5173";
+const API_BASE = `${BASE_URL}/api`;
+const FRONTEND_URL = window.location.origin;
 
 type Report = {
   id: string;
