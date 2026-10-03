@@ -48,7 +48,7 @@ const quickQuestionTypes = [
     text: "text-yellow-300",
     glow: "group-hover:shadow-[0_0_28px_-6px_rgba(250,204,21,0.6)]",
     fill: "from-yellow-400/20 to-yellow-400/0",
-    route: "/QuickQuestion/MultipleChoice",
+    route: "/TeacherDashboard",
   },
   {
     label: "TF",
@@ -57,7 +57,7 @@ const quickQuestionTypes = [
     text: "text-purple-300",
     glow: "group-hover:shadow-[0_0_28px_-6px_rgba(192,132,252,0.6)]",
     fill: "from-purple-400/20 to-purple-400/0",
-    route: "/QuickQuestion/TrueFalse",
+    route: "/TeacherDashboard",
   },
   {
     label: "SA",
@@ -66,7 +66,7 @@ const quickQuestionTypes = [
     text: "text-orange-300",
     glow: "group-hover:shadow-[0_0_28px_-6px_rgba(251,146,60,0.6)]",
     fill: "from-orange-400/20 to-orange-400/0",
-    route: "/QuickQuestion/ShortAnswer",
+    route: "/TeacherDashboard",
   },
 ];
 

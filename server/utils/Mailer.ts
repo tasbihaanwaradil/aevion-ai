@@ -3,11 +3,8 @@ import nodemailer from "nodemailer";
 // Uses a Gmail account to send mail via SMTP. Requires:
 //   GMAIL_USER            — the sending Gmail address
 //   GMAIL_APP_PASSWORD    — a Google "App Password" for that account
-//                            (not the regular account password — Gmail
-//                            blocks plain SMTP login for most accounts
-//                            now, so this has to be an app password
-//                            generated from Google Account > Security >
-//                            App Passwords, which requires 2FA to be on).
+//                            (Google Account > Security > App Passwords,
+//                            which requires 2FA to be on).
 // Created on first use (not at import time) so the .env values are already
 // loaded by the time the credentials are read.
 let transporter: nodemailer.Transporter | null = null;
@@ -51,21 +48,5 @@ export const sendVerificationEmail = async (to: string, code: string) => {
                 </p>
             </div>
         `,
-    });
-};
-
-// Sends a Contact Us form submission to your own inbox
-// (or to CONTACT_RECEIVER_EMAIL if you set it in .env).
-export const sendContactEmail = async (
-    name: string,
-    email: string,
-    message: string
-) => {
-    await getTransporter().sendMail({
-        from: `"Aevion.AI Contact Form" <${getGmailUser()}>`,
-        to: process.env.CONTACT_RECEIVER_EMAIL ?? getGmailUser(),
-        replyTo: email, // pressing Reply answers the visitor directly
-        subject: `New contact message from ${name}`,
-        text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
     });
 };

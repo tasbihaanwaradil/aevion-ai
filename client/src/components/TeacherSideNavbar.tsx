@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   SearchIcon,
-  PlusIcon,
+  LayoutDashboardIcon,
   FileTextIcon,
   SettingsIcon,
   LogOutIcon,
@@ -21,7 +21,6 @@ type RecentQuiz = { id: string; title: string; updatedAt: string };
 interface TeacherSideNavbarProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  onNewQuiz?: () => void;
   activeQuizId?: string | null;
 }
 
@@ -43,16 +42,18 @@ const formatRelativeTime = (iso: string) => {
 const TeacherSideNavbar: React.FC<TeacherSideNavbarProps> = ({
   isOpen,
   setIsOpen,
-  onNewQuiz,
   activeQuizId,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { teacher, logout } = useTeacherAuth();
 
   const [search, setSearch] = useState("");
   const [quizzes, setQuizzes] = useState<RecentQuiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const onDashboard = location.pathname.toLowerCase() === "/dashboard";
 
   useEffect(() => {
     const fetchQuizzes = async () => {
@@ -120,11 +121,16 @@ const TeacherSideNavbar: React.FC<TeacherSideNavbarProps> = ({
         </button>
         <button
           type="button"
-          onClick={onNewQuiz}
-          className="w-9 h-9 rounded-full bg-[#151d4b]/10 flex items-center justify-center hover:bg-[#151d4b] hover:text-white transition-colors"
-          aria-label="New quiz"
+          onClick={() => navigate("/Dashboard")}
+          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+            onDashboard
+              ? "bg-[#151d4b] text-white"
+              : "bg-[#151d4b]/10 hover:bg-[#151d4b] hover:text-white"
+          }`}
+          aria-label="Dashboard"
+          title="Dashboard"
         >
-          <PlusIcon className="w-4 h-4" />
+          <LayoutDashboardIcon className="w-4 h-4" />
         </button>
       </div>
     );
@@ -134,7 +140,7 @@ const TeacherSideNavbar: React.FC<TeacherSideNavbarProps> = ({
   return (
     <div className="fixed top-0 left-0 h-screen w-72 bg-sky-50 text-sky-900 border-r border-sky-200 flex flex-col z-40">
       <div className="flex items-center justify-between px-4 py-4">
-        <Link to="/Dashboard" onClick={handleLogoClick} className="flex items-center">
+        <Link to="/QuizGenerator" onClick={handleLogoClick} className="flex items-center">
           <img
             src="/assets/logo.svg"
             alt="logo"
@@ -154,11 +160,15 @@ const TeacherSideNavbar: React.FC<TeacherSideNavbarProps> = ({
       <div className="px-3 mb-2">
         <button
           type="button"
-          onClick={onNewQuiz}
-          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-[#151d4b] hover:text-white transition-colors group"
+          onClick={() => navigate("/TeacherDashboard")}
+          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group ${
+            onDashboard
+              ? "bg-[#151d4b] text-white"
+              : "hover:bg-[#151d4b] hover:text-white"
+          }`}
         >
-          <PlusIcon className="w-4 h-4 group-hover:text-white" />
-          New quiz
+          <LayoutDashboardIcon className="w-4 h-4 group-hover:text-white" />
+          Quiz Dashboard
         </button>
       </div>
 
