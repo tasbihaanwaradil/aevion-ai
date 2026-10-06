@@ -132,21 +132,24 @@ const QuizLaunch = () => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-50">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-8 py-5 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-3 sm:p-4 z-50">
+      {/* The card is a flex column capped to the viewport height (dvh, so mobile
+          browser bars are accounted for). Only the list / settings area scrolls;
+          the header and footer stay visible. */}
+      <div className="w-full max-w-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="shrink-0 flex items-center justify-between gap-3 px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-200">
           <div className="flex items-center gap-2 min-w-0">
             {step === "settings" && (
               <button
                 type="button"
                 onClick={() => setStep("select")}
-                className="text-gray-500 hover:text-gray-700 shrink-0"
+                className="text-gray-500 hover:text-gray-700 shrink-0 p-1.5 -ml-1.5"
                 aria-label="Back"
               >
                 <ChevronLeftIcon className="w-5 h-5" />
               </button>
             )}
-            <h1 className="text-lg font-bold text-gray-800 truncate">
+            <h1 className="text-base sm:text-lg font-bold text-gray-800 truncate">
               {step === "select"
                 ? `Launch Quiz in ${roomName}`
                 : selectedQuiz?.name}
@@ -155,33 +158,35 @@ const QuizLaunch = () => {
           <button
             type="button"
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition shrink-0"
+            aria-label="Close"
+            className="text-gray-400 hover:text-gray-600 transition shrink-0 p-2 -mr-2"
           >
             <XIcon className="w-5 h-5" />
           </button>
         </div>
 
         {step === "select" && (
-          <>
-            <div className="px-8 pt-5">
+          <div className="flex flex-col flex-1 min-h-0">
+            <div className="shrink-0 px-4 sm:px-8 pt-4 sm:pt-5">
               <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-xl px-4 h-12">
-                <SearchIcon className="w-4 h-4 text-gray-400" />
+                <SearchIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                {/* text-base on mobile: iOS Safari zooms into fields below 16px */}
                 <input
                   type="text"
                   placeholder="Search Personal"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="flex-1 h-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
+                  className="flex-1 min-w-0 h-full bg-transparent outline-none text-base sm:text-sm text-gray-700 placeholder-gray-400"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-2 px-8 py-4">
+            <div className="shrink-0 flex items-center gap-2 px-4 sm:px-8 py-3 sm:py-4">
               <ChevronLeftIcon className="w-4 h-4 text-[#2d5f6e]" />
               <span className="font-semibold text-gray-700">Personal</span>
             </div>
 
-            <div className="flex items-center justify-between px-8 py-3 border-t border-gray-200 text-xs font-bold tracking-wide text-[#2d5f6e]">
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-8 py-3 border-t border-gray-200 text-xs font-bold tracking-wide text-[#2d5f6e]">
               <span>NAME</span>
               <span className="flex items-center gap-1">
                 MODIFIED
@@ -189,13 +194,13 @@ const QuizLaunch = () => {
               </span>
             </div>
 
-            <div className="border-t border-gray-100 min-h-[220px] max-h-[360px] overflow-y-auto">
+            <div className="border-t border-gray-100 flex-1 min-h-[140px] sm:min-h-[220px] sm:max-h-[360px] overflow-y-auto">
               {loading ? (
-                <div className="min-h-[220px] flex items-center justify-center">
+                <div className="min-h-[140px] sm:min-h-[220px] flex items-center justify-center">
                   <p className="text-gray-500">Loading quizzes...</p>
                 </div>
               ) : error ? (
-                <div className="min-h-[220px] flex items-center justify-center">
+                <div className="min-h-[140px] sm:min-h-[220px] flex items-center justify-center px-4 text-center">
                   <p className="text-red-500">{error}</p>
                 </div>
               ) : visibleQuizzes.length > 0 ? (
@@ -204,7 +209,7 @@ const QuizLaunch = () => {
                     key={quiz.id}
                     type="button"
                     onClick={() => handleSelectQuiz(quiz)}
-                    className="w-full flex items-center justify-between gap-4 px-8 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition text-left"
+                    className="w-full flex items-center justify-between gap-3 sm:gap-4 px-4 sm:px-8 py-3.5 sm:py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 active:bg-gray-50 transition text-left"
                   >
                     <span className="flex items-center gap-2 min-w-0">
                       <FileTextIcon className="w-4 h-4 text-gray-400 shrink-0" />
@@ -212,34 +217,36 @@ const QuizLaunch = () => {
                         {quiz.name}
                       </span>
                     </span>
-                    <span className="text-sm text-gray-500 shrink-0">
+                    <span className="text-xs sm:text-sm text-gray-500 shrink-0">
                       {formatRelativeTime(quiz.updatedAt)}
                     </span>
                   </button>
                 ))
               ) : (
-                <div className="min-h-[220px] flex items-center justify-center">
+                <div className="min-h-[140px] sm:min-h-[220px] flex items-center justify-center">
                   <p className="text-gray-500">This folder is empty</p>
                 </div>
               )}
             </div>
 
-            <div className="px-8 py-5">
+            <div className="shrink-0 px-4 sm:px-8 py-4 sm:py-5">
               <button
                 type="button"
                 onClick={() => navigate("/Library")}
-                className="flex items-center gap-2 text-[#2d5f6e] font-semibold hover:underline"
+                className="flex items-center gap-2 text-[#2d5f6e] font-semibold hover:underline min-h-[40px] sm:min-h-0"
               >
                 <PlusIcon className="w-4 h-4" />
                 Add Quiz
               </button>
             </div>
-          </>
+          </div>
         )}
 
         {step === "settings" && (
-          <>
-            <div className="grid grid-cols-2 gap-6 px-8 py-6 max-h-[420px] overflow-y-auto">
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* One column on phones, two from sm up. Scrolls inside the card
+                when the content is taller than the screen. */}
+            <div className="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 gap-6 px-4 sm:px-8 py-5 sm:py-6 overflow-y-auto sm:max-h-[420px] content-start">
               <div>
                 <p className="text-sm font-bold text-gray-800 mb-3">
                   Delivery Method
@@ -328,13 +335,16 @@ const QuizLaunch = () => {
                   ].map((s) => (
                     <div
                       key={s.label}
-                      className="flex items-center justify-between"
+                      className="flex items-center justify-between gap-3"
                     >
                       <span className="text-sm text-gray-700">{s.label}</span>
                       <button
                         type="button"
+                        role="switch"
+                        aria-checked={s.value}
+                        aria-label={s.label}
                         onClick={() => s.set(!s.value)}
-                        className={`w-11 h-6 rounded-full transition relative ${s.value ? "bg-[#2d5f6e]" : "bg-gray-300"}`}
+                        className={`w-11 h-6 shrink-0 rounded-full transition relative ${s.value ? "bg-[#2d5f6e]" : "bg-gray-300"}`}
                       >
                         <span
                           className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition ${
@@ -348,17 +358,17 @@ const QuizLaunch = () => {
               </div>
             </div>
 
-            <div className="px-8 py-5 border-t border-gray-100 flex justify-end">
+            <div className="shrink-0 px-4 sm:px-8 py-4 sm:py-5 border-t border-gray-100 flex sm:justify-end pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-5">
               <button
                 type="button"
                 disabled={launching}
                 onClick={handleLaunch}
-                className="h-11 px-8 rounded-xl bg-[#2d5f6e] text-white font-bold disabled:opacity-50"
+                className="w-full sm:w-auto h-12 sm:h-11 px-8 rounded-xl bg-[#2d5f6e] text-white font-bold disabled:opacity-50"
               >
                 {launching ? "Launching..." : "Launch"}
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

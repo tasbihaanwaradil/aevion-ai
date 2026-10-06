@@ -253,13 +253,14 @@ const PURPOSE_MAX = 400;
 
 // ─────────────────────────────────────────────────────────────
 // Toast (replaces blocking alert() calls)
+// Mobile: spans the bottom of the screen. sm and up: bottom-right stack.
 // ─────────────────────────────────────────────────────────────
 
 const ToastStack: React.FC<{
   toasts: Toast[];
   onDismiss: (id: number) => void;
 }> = ({ toasts, onDismiss }) => (
-  <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm">
+  <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:bottom-5 sm:right-5 z-[60] flex flex-col gap-2 sm:max-w-sm pb-[env(safe-area-inset-bottom)]">
     {toasts.map((t) => (
       <div
         key={t.id}
@@ -279,7 +280,7 @@ const ToastStack: React.FC<{
         <button
           onClick={() => onDismiss(t.id)}
           aria-label="Dismiss notification"
-          className="text-gray-400 hover:text-gray-600 shrink-0"
+          className="text-gray-400 hover:text-gray-600 shrink-0 p-1 -m-1"
         >
           ✕
         </button>
@@ -293,7 +294,11 @@ const ToastStack: React.FC<{
 // ─────────────────────────────────────────────────────────────
 
 const AcademicEmailGenerator: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  // Open by default on desktop; closed on phones, where the open sidebar
+  // is a full-height drawer that would otherwise cover the page on load.
+  const [isOpen, setIsOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 768,
+  );
   const [activeSection, setActiveSection] = useState("tools");
 
   // Form state
@@ -398,9 +403,11 @@ const AcademicEmailGenerator: React.FC = () => {
   const dismissToast = (id: number) =>
     setToasts((prev) => prev.filter((t) => t.id !== id));
 
-  // ── Autofocus the first field on mount ───────────────────────────────────────
+  // ── Autofocus the first field on mount (desktop only) ────────────────────────
+  // On phones, autofocus pops the keyboard open the moment the page loads and
+  // covers most of the form.
   useEffect(() => {
-    senderNameRef.current?.focus();
+    if (window.innerWidth >= 768) senderNameRef.current?.focus();
   }, []);
 
   // ── Parse recipient list on change ───────────────────────────────────────────
@@ -847,6 +854,9 @@ const AcademicEmailGenerator: React.FC = () => {
     (isBulkMode && bulkMeta != null && committedRecipients.length === 0) ||
     (sendTiming === "schedule" && !scheduledForLocal);
 
+  // Text inputs use text-base on mobile: iOS Safari zooms into fields below 16px.
+  const inputText = "text-base sm:text-sm";
+
   // ─────────────────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────────────────
@@ -867,14 +877,19 @@ const AcademicEmailGenerator: React.FC = () => {
 
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
 
+      {/* Content
+          - Mobile: full width (the sidebar is an overlay drawer there); pt-20
+            leaves room for the floating menu button.
+          - md and up: shift right to clear the sidebar (w-72) or the icon rail (w-16).
+          - min-w-0 stops wide children from stretching the page sideways. */}
       <div
-        className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${
-          isOpen ? "ml-72" : "ml-16"
+        className={`relative z-10 min-w-0 px-4 sm:px-6 md:px-10 pt-20 md:pt-10 pb-12 md:pb-14 transition-[margin] duration-300 ${
+          isOpen ? "md:ml-72" : "md:ml-16"
         }`}
       >
         {/* Header */}
-        <div className="mb-8 max-w-3xl mx-auto text-center flex flex-col items-center gap-3">
-          <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-2 font-['Sora']">
+        <div className="mb-6 md:mb-8 max-w-3xl mx-auto text-center flex flex-col items-center gap-3">
+          <h1 className="flex flex-wrap items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-2 font-['Sora']">
             <MailIcon className="w-6 h-6 text-sky-300" strokeWidth={1.75} />
             Academic Email Assistant
           </h1>
@@ -887,7 +902,7 @@ const AcademicEmailGenerator: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowScheduledPanel((v) => !v)}
-            className="text-xs px-4 py-2 rounded-full bg-white/10 text-gray-200 border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
+            className="text-xs px-4 py-2.5 sm:py-2 rounded-full bg-white/10 text-gray-200 border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
           >
             {showScheduledPanel ? "Hide" : "View"} Scheduled Emails
           </button>
@@ -895,7 +910,7 @@ const AcademicEmailGenerator: React.FC = () => {
 
         {/* ── Scheduled Emails Panel ── */}
         {showScheduledPanel && (
-          <div className="max-w-6xl mx-auto mb-8 bg-white rounded-2xl shadow-2xl p-6">
+          <div className="max-w-6xl mx-auto mb-8 bg-white rounded-2xl shadow-2xl p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">
                 Scheduled Emails
@@ -903,7 +918,7 @@ const AcademicEmailGenerator: React.FC = () => {
               <button
                 type="button"
                 onClick={fetchScheduledList}
-                className="text-xs text-[#2d5f6e] hover:underline font-medium"
+                className="text-xs text-[#2d5f6e] hover:underline font-medium min-h-[36px] sm:min-h-0"
               >
                 {loadingScheduledList ? "Refreshing..." : "↻ Refresh"}
               </button>
@@ -928,12 +943,12 @@ const AcademicEmailGenerator: React.FC = () => {
                 {scheduledList.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-xl border border-gray-200"
+                    className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 p-3 bg-gray-50 rounded-xl border border-gray-200"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span
-                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          className={`shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
                             entry.deliveryMode === "broadcast"
                               ? "bg-blue-100 text-blue-700"
                               : "bg-emerald-100 text-emerald-700"
@@ -947,7 +962,7 @@ const AcademicEmailGenerator: React.FC = () => {
                           {entry.subject}
                         </p>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 break-words">
                         {entry.deliveryMode === "single"
                           ? `To: ${entry.recipientEmail}`
                           : `To: ${entry.bccList?.length ?? 0} recipients (BCC)`}
@@ -962,7 +977,7 @@ const AcademicEmailGenerator: React.FC = () => {
                       type="button"
                       onClick={() => handleCancelScheduled(entry.id)}
                       disabled={cancellingId === entry.id}
-                      className="shrink-0 text-xs font-semibold text-red-500 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all disabled:opacity-50"
+                      className="shrink-0 w-full sm:w-auto text-xs font-semibold text-red-500 border border-red-200 px-3 py-2.5 sm:py-1.5 rounded-lg hover:bg-red-50 transition-all disabled:opacity-50"
                     >
                       {cancellingId === entry.id ? "Cancelling..." : "Cancel"}
                     </button>
@@ -974,13 +989,13 @@ const AcademicEmailGenerator: React.FC = () => {
         )}
 
         {/* Delivery Mode Switcher */}
-        <div className="max-w-6xl mx-auto mb-6 flex justify-center gap-3">
+        <div className="max-w-6xl mx-auto mb-6 flex flex-wrap justify-center gap-2 sm:gap-3">
           {(["single", "broadcast"] as DeliveryMode[]).map((mode) => (
             <button
               key={mode}
               type="button"
               onClick={() => requestModeSwitch(mode)}
-              className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all border ${
+              className={`flex-1 sm:flex-none px-4 sm:px-5 py-3 sm:py-2.5 rounded-xl font-semibold text-sm transition-all border whitespace-nowrap ${
                 deliveryMode === mode
                   ? "bg-[#2d5f6e] text-white border-[#2d5f6e] shadow-lg"
                   : "bg-white/10 text-gray-300 border-white/20 hover:bg-white/20"
@@ -994,31 +1009,35 @@ const AcademicEmailGenerator: React.FC = () => {
 
         {/* Mode-switch confirmation — replaces a jarring window.confirm() */}
         {pendingModeSwitch && (
-          <div className="max-w-6xl mx-auto mb-6 flex items-center justify-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-4 py-3">
+          <div className="max-w-6xl mx-auto mb-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl px-4 py-3 text-center">
             <span>
               Switching modes will discard the drafted email above — it hasn't
               been sent yet.
             </span>
-            <button
-              onClick={() => switchMode(pendingModeSwitch)}
-              className="font-semibold underline shrink-0"
-            >
-              Switch anyway
-            </button>
-            <button
-              onClick={() => setPendingModeSwitch(null)}
-              className="text-amber-600 shrink-0"
-            >
-              Cancel
-            </button>
+            <span className="flex items-center gap-4">
+              <button
+                onClick={() => switchMode(pendingModeSwitch)}
+                className="font-semibold underline shrink-0 min-h-[36px] sm:min-h-0"
+              >
+                Switch anyway
+              </button>
+              <button
+                onClick={() => setPendingModeSwitch(null)}
+                className="text-amber-600 shrink-0 min-h-[36px] sm:min-h-0"
+              >
+                Cancel
+              </button>
+            </span>
           </div>
         )}
 
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-start">
+        {/* Two columns only from xl: with the sidebar open, anything narrower
+            would leave each column too cramped. */}
+        <div className="max-w-6xl mx-auto grid xl:grid-cols-2 gap-6 xl:gap-8 items-start">
           {/* ── LEFT: Input ── */}
           <form
             onSubmit={handleGenerate}
-            className="bg-white rounded-2xl shadow-2xl p-8 flex flex-col gap-5"
+            className="min-w-0 bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 flex flex-col gap-5"
           >
             {/* Sender name */}
             <div>
@@ -1032,7 +1051,7 @@ const AcademicEmailGenerator: React.FC = () => {
                 value={formData.senderName}
                 onChange={handleChange}
                 placeholder="E.g. Dr. Jane Smith"
-                className="w-full h-11 px-4 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] text-sm"
+                className={`w-full h-12 sm:h-11 px-4 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] ${inputText}`}
               />
             </div>
 
@@ -1053,7 +1072,7 @@ const AcademicEmailGenerator: React.FC = () => {
                     : "E.g. Dr. Smith"
                 }
                 required
-                className="w-full h-11 px-4 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] text-sm"
+                className={`w-full h-12 sm:h-11 px-4 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] ${inputText}`}
               />
             </div>
 
@@ -1072,7 +1091,7 @@ const AcademicEmailGenerator: React.FC = () => {
                   onBlur={() => setRecipientEmailTouched(true)}
                   placeholder="E.g. drsmith@university.edu"
                   aria-invalid={recipientEmailInvalid}
-                  className={`w-full h-11 px-4 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 text-sm ${
+                  className={`w-full h-12 sm:h-11 px-4 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 ${inputText} ${
                     recipientEmailInvalid
                       ? "ring-2 ring-red-300 focus:ring-red-400"
                       : "focus:ring-[#2d5f6e]"
@@ -1086,13 +1105,13 @@ const AcademicEmailGenerator: React.FC = () => {
               </div>
             ) : (
               <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <label className="block font-semibold text-gray-800 text-sm">
                     Recipient List
                     <span className="text-red-400 ml-0.5">*</span>
                   </label>
                   {parsedRecipients.length > 0 && (
-                    <span className="text-xs text-emerald-600 font-medium">
+                    <span className="text-xs text-emerald-600 font-medium shrink-0">
                       ✓ {parsedRecipients.length} valid email
                       {parsedRecipients.length !== 1 ? "s" : ""}
                     </span>
@@ -1105,11 +1124,14 @@ const AcademicEmailGenerator: React.FC = () => {
                   onChange={(e) => setRecipientListRaw(e.target.value)}
                   rows={3}
                   placeholder={`One email per line (or comma-separated on one line):\nalice@university.edu\nnimra@gmail.com\ndua@university.edu\n\nOr JSON: ["alice@uni.edu", "bob@uni.edu"]`}
-                  className="w-full min-h-[72px] max-h-[220px] px-4 py-3 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] text-sm font-mono resize-none overflow-y-auto"
+                  className={`w-full min-h-[72px] max-h-[220px] px-4 py-3 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] font-mono resize-none overflow-y-auto ${inputText}`}
                 />
 
                 {parseError && (
-                  <p className="text-red-500 text-xs"> {parseError}</p>
+                  <p className="text-red-500 text-xs break-words">
+                    {" "}
+                    {parseError}
+                  </p>
                 )}
 
                 {parsedRecipients.length > 0 && !parseError && (
@@ -1147,7 +1169,7 @@ const AcademicEmailGenerator: React.FC = () => {
 
             {/* Purpose */}
             <div className="relative">
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between gap-3 mb-1.5">
                 <label className="block font-semibold text-gray-800 text-sm">
                   Email Purpose
                   <span className="text-red-400 ml-0.5">*</span>
@@ -1158,7 +1180,7 @@ const AcademicEmailGenerator: React.FC = () => {
                   )}
                 </label>
                 <span
-                  className={`text-xs ${
+                  className={`shrink-0 text-xs ${
                     formData.purpose.length >= PURPOSE_MAX
                       ? "text-red-400"
                       : "text-gray-300"
@@ -1176,9 +1198,10 @@ const AcademicEmailGenerator: React.FC = () => {
                 required
                 rows={2}
                 placeholder="E.g. Inform students that the AI Quiz is postponed to Monday June 9..."
-                className="w-full min-h-[64px] max-h-[220px] px-4 py-3 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] resize-none text-sm overflow-y-auto"
+                className={`w-full min-h-[64px] max-h-[220px] px-4 py-3 bg-gray-100 rounded-xl text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#2d5f6e] resize-none overflow-y-auto ${inputText}`}
               />
-              <p className="text-[11px] text-gray-300 mt-1">
+              {/* Keyboard shortcut hint: irrelevant on touch screens */}
+              <p className="hidden sm:block text-[11px] text-gray-300 mt-1">
                 Tip: press ⌘/Ctrl + Enter to generate
               </p>
 
@@ -1211,7 +1234,7 @@ const AcademicEmailGenerator: React.FC = () => {
                           key={i}
                           type="button"
                           onClick={() => applySuggestion(s)}
-                          className="text-left text-xs px-3 py-2.5 bg-[#e8f4f7] text-[#2d5f6e] rounded-xl border border-[#2d5f6e]/20 hover:bg-[#2d5f6e] hover:text-white transition-all leading-relaxed"
+                          className="text-left text-xs px-3 py-2.5 bg-[#e8f4f7] text-[#2d5f6e] rounded-xl border border-[#2d5f6e]/20 hover:bg-[#2d5f6e] hover:text-white active:bg-[#2d5f6e] active:text-white transition-all leading-relaxed"
                         >
                           <span className="inline-flex items-start gap-1.5">
                             <span className="mt-0.5 text-[#2d5f6e]/50 font-bold shrink-0">
@@ -1235,7 +1258,7 @@ const AcademicEmailGenerator: React.FC = () => {
                 name="tone"
                 value={formData.tone}
                 onChange={handleChange}
-                className="w-full h-11 px-4 bg-gray-100 rounded-xl text-gray-700 outline-none focus:ring-2 focus:ring-[#2d5f6e] text-sm"
+                className={`w-full h-12 sm:h-11 px-4 bg-gray-100 rounded-xl text-gray-700 outline-none focus:ring-2 focus:ring-[#2d5f6e] ${inputText}`}
               >
                 <option value="Formal">Formal</option>
                 <option value="Respectful">Respectful</option>
@@ -1252,7 +1275,7 @@ const AcademicEmailGenerator: React.FC = () => {
                   recipientListRaw.trim().length > 0 &&
                   !!parseError)
               }
-              className="mt-1 w-full h-13 py-3.5 rounded-2xl bg-[#2d5f6e] text-white font-bold text-base hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)] disabled:opacity-50 flex items-center justify-center gap-2"
+              className="mt-1 w-full h-13 py-3.5 px-4 rounded-2xl bg-[#2d5f6e] text-white font-bold text-base hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.5)] disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loadingGenerate && (
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1266,10 +1289,10 @@ const AcademicEmailGenerator: React.FC = () => {
           </form>
 
           {/* ── RIGHT: Preview ── */}
-          <div className="bg-white rounded-2xl shadow-2xl p-8 flex flex-col">
-            {/* Header row */}
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2.5">
+          <div className="min-w-0 bg-white rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 flex flex-col">
+            {/* Header row: wraps so the Edit/Copy actions drop below the title on phones */}
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-1">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <h2 className="text-xl font-bold text-gray-900">
                   Email Preview
                 </h2>
@@ -1290,7 +1313,7 @@ const AcademicEmailGenerator: React.FC = () => {
                   {hasEdited && !isEditing && (
                     <button
                       onClick={handleResetEdit}
-                      className="text-xs text-gray-400 hover:text-gray-600 underline"
+                      className="text-xs text-gray-400 hover:text-gray-600 underline min-h-[36px] sm:min-h-0"
                     >
                       Reset
                     </button>
@@ -1298,21 +1321,21 @@ const AcademicEmailGenerator: React.FC = () => {
                   {isEditing ? (
                     <button
                       onClick={handleDoneEditing}
-                      className="text-sm font-semibold text-white bg-[#2d5f6e] px-3 py-1.5 rounded-lg hover:bg-[#244d5a] transition-all"
+                      className="text-sm font-semibold text-white bg-[#2d5f6e] px-3 py-2 sm:py-1.5 rounded-lg hover:bg-[#244d5a] transition-all"
                     >
                       Done
                     </button>
                   ) : (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="text-sm font-semibold text-[#2d5f6e] border border-[#2d5f6e] px-3 py-1.5 rounded-lg hover:bg-[#2d5f6e] hover:text-white transition-all"
+                      className="text-sm font-semibold text-[#2d5f6e] border border-[#2d5f6e] px-3 py-2 sm:py-1.5 rounded-lg hover:bg-[#2d5f6e] hover:text-white transition-all"
                     >
                       Edit
                     </button>
                   )}
                   <button
                     onClick={handleCopy}
-                    className="text-sm text-[#2d5f6e] hover:underline font-medium"
+                    className="text-sm text-[#2d5f6e] hover:underline font-medium min-h-[36px] sm:min-h-0 px-1"
                   >
                     {copied ? "✓ Copied!" : "Copy"}
                   </button>
@@ -1356,14 +1379,14 @@ const AcademicEmailGenerator: React.FC = () => {
 
             {/* Email content */}
             <div
-              className={`border-2 border-dashed border-gray-300 rounded-xl p-5 bg-gray-50 overflow-y-auto ${
+              className={`border-2 border-dashed border-gray-300 rounded-xl p-4 sm:p-5 bg-gray-50 overflow-y-auto ${
                 editableEmail && !loadingGenerate
                   ? "max-h-[480px]"
-                  : "min-h-[260px] flex-1"
+                  : "min-h-[200px] sm:min-h-[260px] flex-1"
               }`}
             >
               {loadingGenerate ? (
-                <div className="flex flex-col items-center justify-center h-full gap-3">
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
                   <div className="w-8 h-8 border-3 border-[#2d5f6e] border-t-transparent rounded-full animate-spin" />
                   <p className="text-gray-500 text-sm animate-pulse">
                     Generating email
@@ -1390,10 +1413,10 @@ const AcademicEmailGenerator: React.FC = () => {
                         onChange={(e) =>
                           handleEditChange("subject", e.target.value)
                         }
-                        className="w-full px-3 py-2 bg-white border-2 border-[#2d5f6e] rounded-lg text-gray-900 font-semibold outline-none text-sm"
+                        className={`w-full px-3 py-2 bg-white border-2 border-[#2d5f6e] rounded-lg text-gray-900 font-semibold outline-none ${inputText}`}
                       />
                     ) : (
-                      <p className="text-gray-900 font-semibold text-sm">
+                      <p className="text-gray-900 font-semibold text-sm break-words">
                         {editableEmail.subject}
                       </p>
                     )}
@@ -1410,10 +1433,10 @@ const AcademicEmailGenerator: React.FC = () => {
                         onChange={(e) =>
                           handleEditChange("body", e.target.value)
                         }
-                        className="w-full h-56 px-3 py-3 bg-white border-2 border-[#2d5f6e] rounded-lg text-gray-800 text-sm leading-relaxed outline-none resize-none"
+                        className={`w-full h-56 px-3 py-3 bg-white border-2 border-[#2d5f6e] rounded-lg text-gray-800 leading-relaxed outline-none resize-none ${inputText}`}
                       />
                     ) : (
-                      <p className="text-gray-800 whitespace-pre-line leading-relaxed text-sm">
+                      <p className="text-gray-800 whitespace-pre-line leading-relaxed text-sm break-words">
                         {editableEmail.body}
                       </p>
                     )}
@@ -1472,7 +1495,7 @@ const AcademicEmailGenerator: React.FC = () => {
                   <div>
                     <button
                       onClick={() => setShowBccPreview((v) => !v)}
-                      className="text-xs text-[#2d5f6e] hover:underline font-medium"
+                      className="text-xs text-[#2d5f6e] hover:underline font-medium min-h-[36px] sm:min-h-0"
                     >
                       {showBccPreview ? "▲ Hide" : "▼ Preview"} BCC list (
                       {bulkMeta.broadcastEmail?.bccList.length ??
@@ -1487,7 +1510,7 @@ const AcademicEmailGenerator: React.FC = () => {
                         ).map((email, i) => (
                           <p
                             key={i}
-                            className="text-xs text-gray-500 font-mono"
+                            className="text-xs text-gray-500 font-mono break-all"
                           >
                             {email}
                           </p>
@@ -1511,7 +1534,7 @@ const AcademicEmailGenerator: React.FC = () => {
                         setSendTiming("now");
                         setScheduleStatus("idle");
                       }}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                      className={`flex-1 py-3 sm:py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                         sendTiming === "now"
                           ? "bg-[#2d5f6e] text-white border-[#2d5f6e]"
                           : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
@@ -1525,7 +1548,7 @@ const AcademicEmailGenerator: React.FC = () => {
                         setSendTiming("schedule");
                         setSendStatus("idle");
                       }}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                      className={`flex-1 py-3 sm:py-2.5 rounded-xl text-sm font-semibold border transition-all ${
                         sendTiming === "schedule"
                           ? "bg-[#2d5f6e] text-white border-[#2d5f6e]"
                           : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
@@ -1550,7 +1573,7 @@ const AcademicEmailGenerator: React.FC = () => {
                         setScheduledForLocal(e.target.value);
                         setScheduleStatus("idle");
                       }}
-                      className="w-full h-11 px-4 bg-gray-100 rounded-xl text-gray-700 outline-none focus:ring-2 focus:ring-[#2d5f6e] text-sm"
+                      className={`w-full h-12 sm:h-11 px-4 bg-gray-100 rounded-xl text-gray-700 outline-none focus:ring-2 focus:ring-[#2d5f6e] ${inputText}`}
                     />
                     <p className="text-xs text-gray-400 mt-1">
                       {isBulkMode
@@ -1590,7 +1613,7 @@ const AcademicEmailGenerator: React.FC = () => {
                 {isEditing ? (
                   <button
                     onClick={handleDoneEditing}
-                    className="w-full py-3.5 rounded-2xl bg-[#245463] text-white font-bold text-base hover:bg-[#245463] transition-all"
+                    className="w-full py-3.5 px-4 rounded-2xl bg-[#245463] text-white font-bold text-base hover:bg-[#245463] transition-all"
                   >
                     Done Editing — Ready to Send
                   </button>
@@ -1598,10 +1621,10 @@ const AcademicEmailGenerator: React.FC = () => {
                   <button
                     onClick={handleSend}
                     disabled={sendDisabled}
-                    className="w-full py-3.5 rounded-2xl bg-[#2d5f6e] text-white font-bold text-base hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-3.5 px-4 rounded-2xl bg-[#2d5f6e] text-white font-bold text-sm sm:text-base leading-snug hover:bg-[#244d5a] transition-all shadow-[0_10px_25px_-5px_rgba(45,95,110,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-center"
                   >
                     {(loadingSend || loadingSchedule) && (
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
                     )}
                     {loadingSend || loadingSchedule
                       ? sendTiming === "schedule"

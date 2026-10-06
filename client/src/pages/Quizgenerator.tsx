@@ -67,7 +67,12 @@ const getExtension = (filename: string) => {
 
 const QuizGenerator: React.FC = () => {
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(true);
+
+  // Open by default on desktop; closed on phones, where the open sidebar
+  // is a full-height drawer that would otherwise cover the page on load.
+  const [isOpen, setIsOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 768,
+  );
 
   const [step, setStep] = useState<Step>("form");
   const [mode, setMode] = useState<InputMode>("topic");
@@ -273,11 +278,18 @@ const QuizGenerator: React.FC = () => {
 
       <TeacherSideNavbar isOpen={isOpen} setIsOpen={setIsOpen} />
 
+      {/* Content
+          - Mobile: full width (the sidebar is an overlay drawer there); pt-20
+            leaves room for the floating menu button.
+          - md and up: shift right to clear the sidebar (w-72) or the icon rail (w-16).
+          - min-w-0 stops wide children from stretching the page sideways. */}
       <div
-        className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${isOpen ? "ml-72" : "ml-16"}`}
+        className={`relative z-10 min-w-0 px-4 sm:px-6 md:px-10 pt-20 md:pt-10 pb-12 md:pb-14 transition-[margin] duration-300 ${
+          isOpen ? "md:ml-72" : "md:ml-16"
+        }`}
       >
-        <div className="mb-8 max-w-3xl mx-auto text-center">
-          <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5 font-['Sora']">
+        <div className="mb-6 md:mb-8 max-w-3xl mx-auto text-center">
+          <h1 className="flex flex-wrap items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5 font-['Sora']">
             <SparklesIcon
               className="w-6 h-6 text-teal-300"
               strokeWidth={1.75}
@@ -292,12 +304,12 @@ const QuizGenerator: React.FC = () => {
 
         <div className="flex flex-col lg:flex-row items-start gap-6">
           <div className="w-full lg:w-[420px] shrink-0 rounded-2xl bg-white shadow-2xl overflow-hidden">
-            <form onSubmit={handleGenerate} className="p-5 md:p-6">
+            <form onSubmit={handleGenerate} className="p-4 sm:p-5 md:p-6">
               <div className="grid grid-cols-2 gap-2 mb-5 rounded-xl border border-gray-200 bg-gray-50 p-1">
                 <button
                   type="button"
                   onClick={() => switchMode("topic")}
-                  className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`py-2.5 sm:py-2 rounded-lg text-sm font-medium transition-colors ${
                     mode === "topic"
                       ? "bg-[#0A1238] text-white"
                       : "text-gray-500 hover:text-gray-800"
@@ -308,7 +320,7 @@ const QuizGenerator: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => switchMode("document")}
-                  className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`py-2.5 sm:py-2 rounded-lg text-sm font-medium transition-colors ${
                     mode === "document"
                       ? "bg-[#0A1238] text-white"
                       : "text-gray-500 hover:text-gray-800"
@@ -318,13 +330,14 @@ const QuizGenerator: React.FC = () => {
                 </button>
               </div>
 
+              {/* Inputs use text-base on mobile: iOS Safari zooms into fields below 16px */}
               {mode === "topic" && (
                 <textarea
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="e.g. Cellular respiration, React hooks, WWII causes..."
                   rows={4}
-                  className="w-full resize-none rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder:text-gray-400 p-3.5 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors mb-5"
+                  className="w-full resize-none rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder:text-gray-400 p-3.5 text-base sm:text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors mb-5"
                 />
               )}
 
@@ -339,10 +352,10 @@ const QuizGenerator: React.FC = () => {
                       onDragLeave={() => setIsDragging(false)}
                       onDrop={handleDrop}
                       onClick={() => fileInputRef.current?.click()}
-                      className={`relative rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
+                      className={`relative rounded-xl border-2 border-dashed p-5 sm:p-6 text-center cursor-pointer transition-colors ${
                         isDragging
                           ? "border-blue-400 bg-blue-50"
-                          : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                          : "border-gray-300 bg-gray-50 hover:bg-gray-100 active:bg-gray-100"
                       }`}
                     >
                       <div className="flex flex-col items-center gap-2">
@@ -351,9 +364,14 @@ const QuizGenerator: React.FC = () => {
                           strokeWidth={1.5}
                         />
                         <span className="text-sm text-gray-600">
-                          Drop a PDF, Word, or PowerPoint file, or{" "}
+                          <span className="hidden sm:inline">
+                            Drop a PDF, Word, or PowerPoint file, or{" "}
+                          </span>
                           <span className="text-blue-600 underline">
-                            browse
+                            <span className="sm:hidden">
+                              Tap to choose a file
+                            </span>
+                            <span className="hidden sm:inline">browse</span>
                           </span>
                         </span>
                         <span className="text-xs text-gray-400">
@@ -382,7 +400,7 @@ const QuizGenerator: React.FC = () => {
                       <button
                         type="button"
                         onClick={removeDoc}
-                        className="shrink-0 text-gray-400 hover:text-gray-700"
+                        className="shrink-0 p-2 -m-2 text-gray-400 hover:text-gray-700"
                         aria-label="Remove file"
                       >
                         <XIcon className="w-4 h-4" />
@@ -395,7 +413,7 @@ const QuizGenerator: React.FC = () => {
                     value={docFocus}
                     onChange={(e) => setDocFocus(e.target.value)}
                     placeholder="Focus areas — optional (e.g. only chapters 3-4)"
-                    className="w-full mt-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder:text-gray-400 px-3.5 py-3 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
+                    className="w-full mt-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder:text-gray-400 px-3.5 py-3 text-base sm:text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
                   />
                 </div>
               )}
@@ -403,7 +421,7 @@ const QuizGenerator: React.FC = () => {
               <div className="h-px bg-gray-100 mb-5" />
 
               <div className="space-y-4 mb-5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-sm text-gray-700">Questions</span>
                   <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
                     {[5, 10, 15].map((n) => (
@@ -411,7 +429,7 @@ const QuizGenerator: React.FC = () => {
                         key={n}
                         type="button"
                         onClick={() => setQuestionCount(n as 5 | 10 | 15)}
-                        className={`w-8 h-7 rounded-md text-xs font-semibold transition-colors ${
+                        className={`w-10 sm:w-8 h-8 sm:h-7 rounded-md text-xs font-semibold transition-colors ${
                           questionCount === n
                             ? "bg-[#0A1238] text-white"
                             : "text-gray-500 hover:text-gray-800"
@@ -423,7 +441,7 @@ const QuizGenerator: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-sm text-gray-700">Difficulty</span>
                   <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
                     {(["Easy", "Medium", "Hard"] as Difficulty[]).map(
@@ -432,7 +450,7 @@ const QuizGenerator: React.FC = () => {
                           key={level}
                           type="button"
                           onClick={() => setDifficulty(level)}
-                          className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                          className={`px-3 sm:px-2.5 py-1.5 sm:py-1 rounded-md text-xs font-medium transition-colors ${
                             difficulty === level
                               ? "bg-[#0A1238] text-white"
                               : "text-gray-500 hover:text-gray-800"
@@ -445,7 +463,7 @@ const QuizGenerator: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-sm text-gray-700">Explanations</span>
                   <button
                     type="button"
@@ -480,7 +498,7 @@ const QuizGenerator: React.FC = () => {
                         key={opt.value}
                         type="button"
                         onClick={() => toggleType(opt.value)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        className={`px-3 py-2 sm:py-1.5 rounded-full text-xs font-medium border transition-colors ${
                           active
                             ? "bg-blue-50 text-blue-700 border-blue-200"
                             : "bg-transparent text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700"
@@ -494,7 +512,7 @@ const QuizGenerator: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedTypes([])}
-                      className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
+                      className="px-3 py-2 sm:py-1.5 rounded-full text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       Reset to mixed
                     </button>
@@ -509,16 +527,16 @@ const QuizGenerator: React.FC = () => {
               <button
                 type="submit"
                 disabled={!canGenerate || isLoading}
-                className="w-full h-11 rounded-full bg-[#0A1238] text-white font-semibold text-sm transition-colors hover:bg-[#1a2348] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0A1238]"
+                className="w-full h-12 sm:h-11 rounded-full bg-[#0A1238] text-white font-semibold text-sm transition-colors hover:bg-[#1a2348] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0A1238]"
               >
                 {isLoading ? "Generating..." : "Generate quiz"}
               </button>
             </form>
           </div>
 
-          <div className="w-full flex-1 rounded-2xl bg-white shadow-2xl min-h-[420px] overflow-hidden">
+          <div className="w-full min-w-0 lg:flex-1 rounded-2xl bg-white shadow-2xl min-h-[280px] lg:min-h-[420px] overflow-hidden">
             {step === "form" && (
-              <div className="h-full min-h-[420px] flex flex-col items-center justify-center text-center px-8 py-16">
+              <div className="h-full min-h-[280px] lg:min-h-[420px] flex flex-col items-center justify-center text-center px-6 sm:px-8 py-12 lg:py-16">
                 <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center mb-4">
                   <ListChecksIcon
                     className="w-5 h-5 text-blue-500"
@@ -529,14 +547,17 @@ const QuizGenerator: React.FC = () => {
                   Your questions will show up here
                 </p>
                 <p className="text-gray-400 text-sm max-w-xs">
-                  Set up your quiz on the left, then generate — you'll review
-                  every question before any of them are added.
+                  {/* "above" on stacked (mobile/tablet) layouts, "on the left" side by side */}
+                  Set up your quiz <span className="lg:hidden">above</span>
+                  <span className="hidden lg:inline">on the left</span>, then
+                  generate — you'll review every question before any of them are
+                  added.
                 </p>
               </div>
             )}
 
             {isLoading && (
-              <div className="h-full min-h-[420px] flex flex-col items-center justify-center gap-4">
+              <div className="h-full min-h-[280px] lg:min-h-[420px] flex flex-col items-center justify-center gap-4 px-6 text-center">
                 <div className="relative w-12 h-12">
                   <div className="absolute inset-0 rounded-full border-2 border-gray-200" />
                   <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-500 animate-spin" />
@@ -551,7 +572,7 @@ const QuizGenerator: React.FC = () => {
 
             {step === "results" && (
               <div className="flex flex-col h-full">
-                <div className="px-6 pt-5 pb-3 flex items-start justify-between gap-4 border-b border-gray-100">
+                <div className="px-4 sm:px-6 pt-5 pb-3 flex items-start justify-between gap-4 border-b border-gray-100">
                   <div>
                     <h2 className="text-base font-semibold text-gray-800 font-['Sora']">
                       Review &amp; add questions
@@ -563,20 +584,21 @@ const QuizGenerator: React.FC = () => {
                   <button
                     type="button"
                     onClick={backToForm}
-                    className="shrink-0 text-xs font-medium text-gray-400 hover:text-gray-700 transition-colors"
+                    className="shrink-0 text-xs font-medium text-gray-400 hover:text-gray-700 transition-colors min-h-[36px] sm:min-h-0"
                   >
                     ← Edit setup
                   </button>
                 </div>
 
-                <div className="divide-y divide-gray-100 max-h-[480px] overflow-y-auto">
+                {/* On phones the page itself scrolls; the inner scroll area is desktop-only */}
+                <div className="divide-y divide-gray-100 lg:max-h-[480px] lg:overflow-y-auto">
                   {questions.map((q) => {
                     const isAdded = addedIds.has(q.id);
                     const badge = TYPE_BADGE[q.type];
                     return (
                       <div
                         key={q.id}
-                        className="px-6 py-4 flex items-start justify-between gap-4"
+                        className="px-4 sm:px-6 py-4 flex items-start justify-between gap-3 sm:gap-4"
                       >
                         <div className="min-w-0">
                           <span
@@ -584,7 +606,7 @@ const QuizGenerator: React.FC = () => {
                           >
                             {badge.label}
                           </span>
-                          <p className="text-sm text-gray-800 mt-2">
+                          <p className="text-sm text-gray-800 mt-2 break-words">
                             {q.question}
                           </p>
                         </div>
@@ -592,7 +614,7 @@ const QuizGenerator: React.FC = () => {
                           type="button"
                           disabled={isAdded}
                           onClick={() => addQuestion(q.id)}
-                          className={`shrink-0 h-9 px-4 rounded-full text-sm font-semibold transition flex items-center gap-1.5 ${
+                          className={`shrink-0 h-10 sm:h-9 px-4 rounded-full text-sm font-semibold transition flex items-center gap-1.5 ${
                             isAdded
                               ? "bg-gray-100 text-gray-400 cursor-default"
                               : "bg-[#0A1238] text-white hover:bg-[#1a2348]"
@@ -604,23 +626,23 @@ const QuizGenerator: React.FC = () => {
                       </div>
                     );
                   })}
-                  <p className="px-6 py-3 text-xs text-gray-400">
+                  <p className="px-4 sm:px-6 py-3 text-xs text-gray-400">
                     Generated questions can make mistakes. Consider checking
                     question accuracy.
                   </p>
                 </div>
 
                 {error && (
-                  <p className="px-6 pb-2 text-sm text-red-600 font-medium">
+                  <p className="px-4 sm:px-6 pb-2 text-sm text-red-600 font-medium">
                     {error}
                   </p>
                 )}
 
-                <div className="mt-auto px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+                <div className="mt-auto px-4 sm:px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
                   <button
                     type="button"
                     onClick={addAll}
-                    className="text-sm font-semibold text-blue-600 hover:text-blue-800"
+                    className="text-sm font-semibold text-blue-600 hover:text-blue-800 min-h-[40px] sm:min-h-0"
                   >
                     Add all questions
                   </button>
@@ -628,7 +650,7 @@ const QuizGenerator: React.FC = () => {
                     type="button"
                     disabled={saving || addedCount === 0}
                     onClick={handleDone}
-                    className="h-10 px-6 rounded-full bg-[#0A1238] text-white font-semibold text-sm hover:bg-[#1a2348] disabled:opacity-50"
+                    className="h-11 sm:h-10 px-6 rounded-full bg-[#0A1238] text-white font-semibold text-sm hover:bg-[#1a2348] disabled:opacity-50"
                   >
                     {saving
                       ? "Saving..."
