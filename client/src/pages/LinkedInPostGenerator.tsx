@@ -20,11 +20,7 @@ type PostType =
   | "research_insight"
   | "faculty_development";
 
-type PostTone =
-  | "Reflective"
-  | "Informative"
-  | "Celebratory"
-  | "Inspirational";
+type PostTone = "Reflective" | "Informative" | "Celebratory" | "Inspirational";
 
 type Step = "form" | "review";
 
@@ -99,8 +95,7 @@ function isGibberish(str: string): boolean {
   const bad = words.filter((w) => {
     const hasNoVowel = !/[aeiou]/.test(w) && w.length > 3;
     const isRepeating = /(.)\1{3,}/.test(w);
-    const isKeyboardSmash =
-      /^[qwrtypsdfghjklzxcvbnm]{5,}$/.test(w);
+    const isKeyboardSmash = /^[qwrtypsdfghjklzxcvbnm]{5,}$/.test(w);
 
     return hasNoVowel || isRepeating || isKeyboardSmash;
   });
@@ -109,7 +104,11 @@ function isGibberish(str: string): boolean {
 }
 
 export default function LinkedInPostGenerator() {
-  const [isOpen, setIsOpen] = useState(true);
+  // Open by default on desktop; closed on phones, where the open sidebar
+  // is a full-height drawer that would otherwise cover the page on load.
+  const [isOpen, setIsOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 768,
+  );
   const [activeSection, setActiveSection] = useState("tools");
 
   const [step, setStep] = useState<Step>("form");
@@ -159,17 +158,14 @@ export default function LinkedInPostGenerator() {
     try {
       setLoading(true);
 
-      const res = await fetch(
-        `${BASE_URL}/api/linkedin-posts/generate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(form),
+      const res = await fetch(`${BASE_URL}/api/linkedin-posts/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        credentials: "include",
+        body: JSON.stringify(form),
+      });
 
       const data = await res.json();
 
@@ -182,14 +178,10 @@ export default function LinkedInPostGenerator() {
         setSuccessMsg("");
         setStep("review");
       } else {
-        setError(
-          data.message || "Failed to generate post. Please try again.",
-        );
+        setError(data.message || "Failed to generate post. Please try again.");
       }
     } catch {
-      setError(
-        "Cannot connect to server. Please check your connection.",
-      );
+      setError("Cannot connect to server. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -203,19 +195,16 @@ export default function LinkedInPostGenerator() {
     if (!postId) return;
 
     try {
-      await fetch(
-        `${BASE_URL}/api/linkedin-posts/${postId}/approve`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            content: editablePost,
-          }),
+      await fetch(`${BASE_URL}/api/linkedin-posts/${postId}/approve`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        credentials: "include",
+        body: JSON.stringify({
+          content: editablePost,
+        }),
+      });
 
       setSaved(true);
       setSuccessMsg("Draft saved to your history.");
@@ -259,10 +248,16 @@ export default function LinkedInPostGenerator() {
   // Word Count
   // --------------------------------------------------
 
-  const wordCount = editablePost
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
+  const wordCount = editablePost.trim().split(/\s+/).filter(Boolean).length;
+
+  // Shared by both steps.
+  // - Mobile: full width (the sidebar is an overlay drawer there); pt-20 leaves
+  //   room for the floating menu button.
+  // - md and up: shift right to clear the sidebar (w-72) or the icon rail (w-16).
+  // - min-w-0 stops wide children from stretching the page sideways.
+  const contentClass = `relative z-10 min-w-0 px-4 sm:px-6 md:px-10 pt-20 md:pt-10 pb-12 md:pb-14 transition-[margin] duration-300 ${
+    isOpen ? "md:ml-72" : "md:ml-16"
+  }`;
 
   // --------------------------------------------------
   // STEP 1 — FORM
@@ -271,7 +266,6 @@ export default function LinkedInPostGenerator() {
   if (step === "form") {
     return (
       <div className="min-h-screen bg-[#0A1238] relative overflow-hidden">
-
         {/* Background decoration */}
         <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
 
@@ -287,32 +281,31 @@ export default function LinkedInPostGenerator() {
         />
 
         {/* Main Content */}
-        <div
-          className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${
-            isOpen ? "ml-72" : "ml-16"
-          }`}
-        >
+        <div className={contentClass}>
           {/* Header */}
-          <div className="mb-8 max-w-3xl mx-auto text-center">
-  <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-2 font-['Sora']">
-    <LinkedinIcon className="w-6 h-6 text-sky-300" strokeWidth={1.75} />
-    LinkedIn Post Studio
-  </h1>
+          <div className="mb-6 md:mb-8 max-w-3xl mx-auto text-center">
+            <h1 className="flex flex-wrap items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-2 font-['Sora']">
+              <LinkedinIcon
+                className="w-6 h-6 text-sky-300"
+                strokeWidth={1.75}
+              />
+              LinkedIn Post Studio
+            </h1>
 
-  <p className="text-gray-400 text-sm md:text-base">
-    Create professional LinkedIn posts for academic sessions, achievements,
-    workshops, and research.
-  </p>
-</div>
+            <p className="text-gray-400 text-sm md:text-base">
+              Create professional LinkedIn posts for academic sessions,
+              achievements, workshops, and research.
+            </p>
+          </div>
 
           {/* Step Indicator */}
           <div className="max-w-3xl mx-auto flex items-center gap-2 mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
+              <div className="w-6 h-6 shrink-0 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
                 1
               </div>
 
-              <span className="text-white text-sm font-medium">
+              <span className="text-white text-sm font-medium whitespace-nowrap">
                 Create post
               </span>
             </div>
@@ -320,11 +313,11 @@ export default function LinkedInPostGenerator() {
             <div className="flex-1 h-px bg-gray-600 mx-2" />
 
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full border border-gray-600 flex items-center justify-center text-gray-500 text-xs font-semibold">
+              <div className="w-6 h-6 shrink-0 rounded-full border border-gray-600 flex items-center justify-center text-gray-500 text-xs font-semibold">
                 2
               </div>
 
-              <span className="text-gray-500 text-sm">
+              <span className="text-gray-500 text-sm whitespace-nowrap">
                 Review &amp; publish
               </span>
             </div>
@@ -333,7 +326,7 @@ export default function LinkedInPostGenerator() {
           {/* Form Card */}
           <form
             onSubmit={handleGenerate}
-            className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-5 md:p-6"
+            className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-5 md:p-6"
           >
             {/* Error */}
             {error && (
@@ -349,7 +342,8 @@ export default function LinkedInPostGenerator() {
                 What are you posting about?
               </label>
 
-              <div className="grid grid-cols-2 gap-2">
+              {/* One column on phones so labels and hints have room; two from sm up */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {POST_TYPES.map((pt) => (
                   <button
                     key={pt.value}
@@ -365,14 +359,10 @@ export default function LinkedInPostGenerator() {
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:border-gray-300 bg-white"
                     } ${
-                      pt.value === "faculty_development"
-                        ? "col-span-2"
-                        : ""
+                      pt.value === "faculty_development" ? "sm:col-span-2" : ""
                     }`}
                   >
-                    <span className="text-lg mt-0.5">
-                      {pt.icon}
-                    </span>
+                    <span className="text-lg mt-0.5">{pt.icon}</span>
 
                     <div>
                       <p className="text-sm font-medium text-gray-800">
@@ -394,6 +384,7 @@ export default function LinkedInPostGenerator() {
                 Describe your topic or experience
               </label>
 
+              {/* text-base on mobile: iOS Safari zooms into inputs below 16px */}
               <textarea
                 value={form.topic}
                 onChange={(e) =>
@@ -404,20 +395,18 @@ export default function LinkedInPostGenerator() {
                 }
                 placeholder="e.g. Conducted a session on AI Ethics for faculty under the HEC Mentoring Program — explored academic integrity, bias, and responsible use of generative AI"
                 rows={4}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 outline-none focus:border-blue-400 focus:bg-white resize-none transition-all"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-800 outline-none focus:border-blue-400 focus:bg-white resize-none transition-all"
                 required
               />
 
-              <div className="flex justify-between mt-1">
+              <div className="flex justify-between gap-3 mt-1">
                 <p className="text-xs text-gray-400">
                   The more specific you are, the better the post.
                 </p>
 
                 <p
-                  className={`text-xs ${
-                    form.topic.length < 8
-                      ? "text-gray-400"
-                      : "text-green-500"
+                  className={`text-xs shrink-0 ${
+                    form.topic.length < 8 ? "text-gray-400" : "text-green-500"
                   }`}
                 >
                   {form.topic.length} chars
@@ -442,7 +431,7 @@ export default function LinkedInPostGenerator() {
                         tone,
                       }))
                     }
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                    className={`px-4 py-2 sm:py-1.5 rounded-full text-sm font-medium border transition-all ${
                       form.tone === tone
                         ? "bg-[#0A1238] text-white border-[#0A1238]"
                         : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
@@ -458,7 +447,7 @@ export default function LinkedInPostGenerator() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-full bg-[#0A1238] text-white font-semibold text-sm transition-colors hover:bg-[#1a2348] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full h-12 sm:h-11 rounded-full bg-[#0A1238] text-white font-semibold text-sm transition-colors hover:bg-[#1a2348] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -482,7 +471,6 @@ export default function LinkedInPostGenerator() {
                       d="M4 12a8 8 0 018-8v8z"
                     />
                   </svg>
-
                   Generating post...
                 </>
               ) : (
@@ -504,7 +492,6 @@ export default function LinkedInPostGenerator() {
 
   return (
     <div className="min-h-screen bg-[#0A1238] relative overflow-hidden">
-
       {/* Background decoration */}
       <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
 
@@ -520,23 +507,18 @@ export default function LinkedInPostGenerator() {
       />
 
       {/* Main Content */}
-      <div
-        className={`relative z-10 px-6 md:px-10 pt-10 pb-14 transition-all duration-300 ${
-          isOpen ? "ml-72" : "ml-16"
-        }`}
-      >
-        {/* Header */}
-        <div className="mb-8 max-w-3xl">
-          <h1 className="flex items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5">
+      <div className={contentClass}>
+        {/* Header (mx-auto + text-center so it lines up with the card below) */}
+        <div className="mb-6 md:mb-8 max-w-3xl mx-auto text-center">
+          <h1 className="flex flex-wrap items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5">
             <LinkedinIcon
               className="w-5 h-5 text-blue-300"
               strokeWidth={1.75}
             />
-
             Review your post
           </h1>
 
-          <p className="text-gray-400  text-sm md:text-base">
+          <p className="text-gray-400 text-sm md:text-base">
             Edit the content below, then publish it to LinkedIn.
           </p>
         </div>
@@ -544,11 +526,11 @@ export default function LinkedInPostGenerator() {
         {/* Step Indicator */}
         <div className="max-w-3xl mx-auto flex items-center gap-2 mb-6">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-semibold">
+            <div className="w-6 h-6 shrink-0 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-semibold">
               <CheckIcon className="w-3.5 h-3.5" />
             </div>
 
-            <span className="text-gray-400 text-sm">
+            <span className="text-gray-400 text-sm whitespace-nowrap">
               Create post
             </span>
           </div>
@@ -556,18 +538,18 @@ export default function LinkedInPostGenerator() {
           <div className="flex-1 h-px bg-blue-500 mx-2" />
 
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
+            <div className="w-6 h-6 shrink-0 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
               2
             </div>
 
-            <span className="text-white text-sm font-medium">
+            <span className="text-white text-sm font-medium whitespace-nowrap">
               Review &amp; publish
             </span>
           </div>
         </div>
 
         {/* Review Card */}
-        <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-5 md:p-6">
+        <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-5 md:p-6">
           {/* Errors */}
           {error && (
             <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-4">
@@ -583,9 +565,9 @@ export default function LinkedInPostGenerator() {
             </div>
           )}
 
-          {/* Meta */}
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex gap-2">
+          {/* Meta: wraps on narrow screens so "Edit inputs" drops below the badges */}
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-5">
+            <div className="flex flex-wrap gap-2">
               <span className="text-xs bg-gray-100 border border-gray-200 rounded-full px-3 py-1 text-gray-500">
                 {TYPE_LABELS[form.postType]}
               </span>
@@ -602,7 +584,7 @@ export default function LinkedInPostGenerator() {
                 setError("");
                 setSuccessMsg("");
               }}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1 min-h-[36px] sm:min-h-0"
             >
               <ArrowLeftIcon className="w-3.5 h-3.5" />
               Edit inputs
@@ -615,24 +597,21 @@ export default function LinkedInPostGenerator() {
               Post content
             </label>
 
+            {/* text-base on mobile: iOS Safari zooms into inputs below 16px */}
             <textarea
               value={editablePost}
-              onChange={(e) =>
-                setEditablePost(e.target.value)
-              }
+              onChange={(e) => setEditablePost(e.target.value)}
               rows={14}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 outline-none focus:border-blue-400 focus:bg-white resize-none transition-all leading-relaxed"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-800 outline-none focus:border-blue-400 focus:bg-white resize-none transition-all leading-relaxed"
             />
 
             <div className="flex items-center justify-between mt-1">
-              <p className="text-xs text-gray-400">
-                {wordCount} words
-              </p>
+              <p className="text-xs text-gray-400">{wordCount} words</p>
 
               <button
                 type="button"
                 onClick={() => setEditablePost(generatedPost)}
-                className="text-xs text-blue-500 hover:text-blue-700 transition-colors flex items-center gap-1"
+                className="text-xs text-blue-500 hover:text-blue-700 transition-colors flex items-center gap-1 min-h-[36px] sm:min-h-0"
               >
                 <RotateCcwIcon className="w-3 h-3" />
                 Reset to original
@@ -647,18 +626,19 @@ export default function LinkedInPostGenerator() {
           <button
             type="button"
             onClick={handlePostToLinkedIn}
-            className="w-full h-11 bg-[#0077B5] text-white font-semibold rounded-full hover:bg-[#006097] transition-all text-sm flex items-center justify-center gap-2"
+            className="w-full h-12 sm:h-11 bg-[#0077B5] text-white font-semibold rounded-full hover:bg-[#006097] transition-all text-sm flex items-center justify-center gap-2"
           >
             <LinkedinIcon className="w-4 h-4" />
             Post to LinkedIn
           </button>
 
-          {/* Secondary Actions */}
-          <div className="grid grid-cols-3 gap-3 mt-3">
+          {/* Secondary Actions: Copy + Save side by side, Regenerate full width on
+              phones; all three in a row from sm up */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
             <button
               type="button"
               onClick={handleCopy}
-              className="h-10 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-all text-sm flex items-center justify-center gap-1.5"
+              className="h-11 sm:h-10 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-all text-sm flex items-center justify-center gap-1.5"
             >
               {copied ? (
                 <>
@@ -677,7 +657,7 @@ export default function LinkedInPostGenerator() {
               type="button"
               onClick={handleSaveDraft}
               disabled={saved || !postId}
-              className="h-10 bg-green-50 hover:bg-green-100 text-green-700 font-medium rounded-xl transition-all text-sm border border-green-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
+              className="h-11 sm:h-10 bg-green-50 hover:bg-green-100 text-green-700 font-medium rounded-xl transition-all text-sm border border-green-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
               {saved ? (
                 <>
@@ -703,7 +683,7 @@ export default function LinkedInPostGenerator() {
                 setError("");
                 setSuccessMsg("");
               }}
-              className="h-10 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-all text-sm flex items-center justify-center gap-1.5"
+              className="col-span-2 sm:col-span-1 h-11 sm:h-10 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-all text-sm flex items-center justify-center gap-1.5"
             >
               <RotateCcwIcon className="w-3.5 h-3.5" />
               Regenerate

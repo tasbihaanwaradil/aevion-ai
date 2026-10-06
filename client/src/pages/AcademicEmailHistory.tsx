@@ -83,18 +83,22 @@ export default function AcademicEmailHistory() {
         title="AI Tools"
       />
 
+      {/* Content
+          - Mobile: full width (the sidebar is an overlay drawer there).
+          - md and up: shift right to clear the sidebar (w-72) or the icon rail (w-16).
+          - min-w-0 stops wide children from stretching the page sideways. */}
       <div
-        className={`px-6 pt-28 pb-16 transition-all duration-300 ${
-          isOpen ? "ml-64" : "ml-0"
+        className={`min-w-0 px-4 sm:px-6 pt-20 sm:pt-28 pb-12 sm:pb-16 transition-[margin] duration-300 ${
+          isOpen ? "md:ml-72" : "md:ml-16"
         }`}
       >
         {/* Page header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 sm:mb-10">
           <p className="text-xs font-semibold tracking-widest text-green-400 uppercase mb-3">
             Academic Email Agent
           </p>
-          <h1 className="text-4xl font-bold text-white flex items-center justify-center gap-3">
-            <Mail className="w-8 h-8 text-green-500" />
+          <h1 className="text-2xl sm:text-4xl font-bold text-white flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <Mail className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
             Email History
           </h1>
           <p className="text-gray-400 mt-2 text-sm">
@@ -135,12 +139,16 @@ export default function AcademicEmailHistory() {
               const { date, time } = formatDateTime(email.createdAt);
               const expanded = expandedId === email._id;
               return (
-                <div key={email._id} className="bg-white rounded-2xl shadow-xl p-6">
+                <div
+                  key={email._id}
+                  className="bg-white rounded-2xl shadow-xl p-4 sm:p-6"
+                >
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="text-xs font-semibold bg-green-50 text-green-600 rounded-full px-3 py-1">
                       {email.tone}
                     </span>
-                    <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-3 py-1">
+                    {/* max-w-full + truncate: a long recipient/address can't widen the card */}
+                    <span className="text-xs bg-gray-100 text-gray-500 rounded-full px-3 py-1 max-w-full truncate">
                       To: {email.recipient}
                     </span>
                     <span
@@ -154,16 +162,20 @@ export default function AcademicEmailHistory() {
                     </span>
                   </div>
 
-                  <h3 className="font-semibold text-gray-800 truncate">{email.subject}</h3>
+                  {/* Subject wraps on mobile so it stays readable; truncates on larger screens */}
+                  <h3 className="font-semibold text-gray-800 break-words sm:truncate">
+                    {email.subject}
+                  </h3>
                   <p
-                    className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-wrap"
+                    className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-wrap break-words"
                     style={clampStyle(expanded)}
                   >
                     {email.body}
                   </p>
 
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex items-center gap-4 text-xs text-gray-400">
+                  {/* Footer: stacks on mobile so the date/time and buttons both fit */}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" />
                         {date}
@@ -173,10 +185,10 @@ export default function AcademicEmailHistory() {
                         {time}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between sm:justify-end gap-2">
                       <button
                         onClick={() => toggleExpanded(email._id)}
-                        className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 font-medium"
+                        className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 font-medium min-h-[40px] sm:min-h-0 pr-2"
                       >
                         {expanded ? (
                           <>
@@ -190,7 +202,7 @@ export default function AcademicEmailHistory() {
                       </button>
                       <button
                         onClick={() => handleCopy(email._id, email.body)}
-                        className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg px-3 py-1.5 flex items-center gap-1.5 transition-all"
+                        className="text-xs bg-gray-100 hover:bg-gray-200 active:bg-gray-200 text-gray-700 font-medium rounded-lg px-4 sm:px-3 py-2.5 sm:py-1.5 flex items-center gap-1.5 transition-all"
                       >
                         {copiedId === email._id ? (
                           <>

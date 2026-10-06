@@ -1,72 +1,39 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ChevronDownIcon,
   XIcon,
-  PlusIcon,
   UserIcon,
   SearchIcon,
-  FolderPlusIcon,
-  SparklesIcon,
-  FileTextIcon,
   CopyIcon,
-  FileInputIcon,
-  FilePlusIcon,
   ClipboardListIcon,
   Trash2Icon,
   MoreVerticalIcon,
   Share2Icon,
   DownloadIcon,
+  CheckIcon,
+  LinkIcon,
+  AlertCircleIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
+  Loader2Icon,
 } from "lucide-react";
 import TeacherNavbar from "../components/TeacherNavabar";
 import { BASE_URL } from "../configs/Config";
 
 const API_BASE = `${BASE_URL}/api`;
 
-const addQuizOptions = {
-  ai: [
-    {
-      icon: FileTextIcon,
-      title: "Generate Questions",
-      description: "Create questions using a prompt and/or a file upload.",
-      route: "/Quizgenerator",
-    },
-  ],
-  import: [
-    {
-      icon: CopyIcon,
-      title: "Copy-Paste Questions",
-      description: "Import questions by pasting them from another resource.",
-      route: "/Quiz/CopyPaste",
-    },
-    {
-      icon: FileInputIcon,
-      title: "Extract Questions from Document",
-      description:
-        "Upload a file, and we'll find and extract the questions in it.",
-      pro: true,
-      route: "/Quiz/ExtractFromDocument",
-    },
-  ],
-  scratch: [
-    {
-      icon: FilePlusIcon,
-      title: "Blank Quiz",
-      description: "Jump right in and build something great.",
-      route: "/Quiz/Blank",
-    },
-  ],
-};
-
 type Quiz = {
   id: string;
   name: string;
   modified: string;
+  modifiedRaw: number;
   isShared: boolean;
   shareCode: string | null;
 };
+
+type Toast = { id: number; type: "success" | "error"; message: string };
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, {
@@ -75,23 +42,76 @@ const formatDate = (iso: string) =>
     year: "numeric",
   });
 
+const mapQuiz = (q: any): Quiz => ({
+  id: q._id,
+  name: q.title,
+  modified: formatDate(q.updatedAt),
+  modifiedRaw: new Date(q.updatedAt).getTime(),
+  isShared: Boolean(q.isShared),
+  shareCode: q.shareCode ?? null,
+});
+
+const ROW_GRID = "grid grid-cols-[1fr_auto] md:grid-cols-[1fr_140px_180px]";
+
+const IconButton = ({
+  label,
+  onClick,
+  children,
+  active = false,
+  danger = false,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  active?: boolean;
+  danger?: boolean;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-label={label}
+    title={label}
+    className={`w-9 h-9 rounded-lg flex items-center justify-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#007a8c] ${
+      danger
+        ? "text-gray-400 hover:bg-red-50 hover:text-red-500"
+        : active
+          ? "bg-sky-50 text-[#007a8c]"
+          : "text-gray-400 hover:bg-sky-50 hover:text-[#007a8c]"
+    }`}
+  >
+    {children}
+  </button>
+);
+
 const Library = () => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"quizzes" | "deleted">("quizzes");
-  const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showJoinModal, setShowJoinModal] = useState(false);
-  const [joinCode, setJoinCode] = useState("");
-  const [showAddQuizModal, setShowAddQuizModal] = useState(false);
+  const [sortDesc, setSortDesc] = useState(true);
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
   const [shareModalQuiz, setShareModalQuiz] = useState<Quiz | null>(null);
   const [shareSaving, setShareSaving] = useState(false);
   const [copiedField, setCopiedField] = useState<"link" | "code" | null>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<Quiz | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const notify = (type: Toast["type"], message: string) => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, type, message }]);
+    setTimeout(
+      () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+      3500,
+    );
+  };
 
   const fetchQuizzes = async () => {
     setLoading(true);
@@ -100,15 +120,7 @@ const Library = () => {
       const res = await fetch(`${API_BASE}/quiz`, { credentials: "include" });
       const data = await res.json();
       if (data.success) {
-        setQuizzes(
-          data.quizzes.map((q: any) => ({
-            id: q._id,
-            name: q.title,
-            modified: formatDate(q.updatedAt),
-            isShared: Boolean(q.isShared),
-            shareCode: q.shareCode ?? null,
-          })),
-        );
+        setQuizzes(data.quizzes.map(mapQuiz));
       } else {
         setError(data.message || "Failed to load quizzes.");
       }
@@ -124,26 +136,32 @@ const Library = () => {
     fetchQuizzes();
   }, []);
 
-  const handleDeleteQuiz = async (id: string, name: string) => {
-    if (!window.confirm(`Delete "${name}"? This can't be undone.`)) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      const res = await fetch(`${API_BASE}/quiz/${id}`, {
+      const res = await fetch(`${API_BASE}/quiz/${deleteTarget.id}`, {
         method: "DELETE",
         credentials: "include",
       });
       const data = await res.json();
       if (data.success) {
-        setQuizzes((prev) => prev.filter((q) => q.id !== id));
+        setQuizzes((prev) => prev.filter((q) => q.id !== deleteTarget.id));
+        notify("success", `Deleted "${deleteTarget.name}"`);
+        setDeleteTarget(null);
       } else {
-        alert(data.message || "Failed to delete quiz.");
+        notify("error", data.message || "Failed to delete quiz.");
       }
     } catch (err) {
       console.error(err);
-      alert("Could not reach the server.");
+      notify("error", "Could not reach the server.");
+    } finally {
+      setDeleting(false);
     }
   };
 
   const handleDuplicate = async (id: string) => {
+    setBusyId(id);
     try {
       const res = await fetch(`${API_BASE}/quiz/${id}/duplicate`, {
         method: "POST",
@@ -151,26 +169,21 @@ const Library = () => {
       });
       const data = await res.json();
       if (data.success) {
-        setQuizzes((prev) => [
-          {
-            id: data.quiz._id,
-            name: data.quiz.title,
-            modified: formatDate(data.quiz.updatedAt),
-            isShared: Boolean(data.quiz.isShared),
-            shareCode: data.quiz.shareCode ?? null,
-          },
-          ...prev,
-        ]);
+        setQuizzes((prev) => [mapQuiz(data.quiz), ...prev]);
+        notify("success", "Quiz duplicated");
       } else {
-        alert(data.message || "Failed to duplicate quiz.");
+        notify("error", data.message || "Failed to duplicate quiz.");
       }
     } catch (err) {
       console.error(err);
-      alert("Could not reach the server.");
+      notify("error", "Could not reach the server.");
+    } finally {
+      setBusyId(null);
     }
   };
 
   const handleDownload = async (id: string, name: string) => {
+    setBusyId(id);
     try {
       const res = await fetch(`${API_BASE}/quiz/${id}/export-pdf`, {
         credentials: "include",
@@ -178,7 +191,7 @@ const Library = () => {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        alert(data.message || "Failed to download quiz.");
+        notify("error", data.message || "Failed to download quiz.");
         return;
       }
 
@@ -193,7 +206,9 @@ const Library = () => {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      alert("Could not reach the server.");
+      notify("error", "Could not reach the server.");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -224,11 +239,11 @@ const Library = () => {
           prev.map((q) => (q.id === updated.id ? updated : q)),
         );
       } else {
-        alert(data.message || "Failed to update sharing.");
+        notify("error", data.message || "Failed to update sharing.");
       }
     } catch (err) {
       console.error(err);
-      alert("Could not reach the server.");
+      notify("error", "Could not reach the server.");
     } finally {
       setShareSaving(false);
     }
@@ -240,440 +255,290 @@ const Library = () => {
     setTimeout(() => setCopiedField(null), 1500);
   };
 
-  const handleJoinLibrary = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Joining library with code", joinCode);
-    setShowJoinModal(false);
-    setJoinCode("");
-  };
-
-  const visibleQuizzes = quizzes.filter((quiz) =>
-    quiz.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
-  );
+  const visibleQuizzes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return quizzes
+      .filter((quiz) => quiz.name.toLowerCase().includes(q))
+      .sort((a, b) =>
+        sortDesc
+          ? b.modifiedRaw - a.modifiedRaw
+          : a.modifiedRaw - b.modifiedRaw,
+      );
+  }, [quizzes, searchQuery, sortDesc]);
 
   const shareLink = shareModalQuiz?.shareCode
     ? `${window.location.origin}/Quiz/Import/${shareModalQuiz.shareCode}`
     : "";
 
   return (
-    <div className="h-screen overflow-hidden bg-[#0A1238]">
+    <div className="min-h-screen bg-[#0A1238]">
       <TeacherNavbar />
 
       <div className="pt-20 h-screen">
-        <div className="h-[calc(100vh-5rem)] px-4 md:px-16 lg:px-24 xl:px-32 py-8 flex items-center justify-center">
-          <div className="w-full max-w-7xl h-full min-h-0 bg-white rounded-2xl shadow-2xl overflow-hidden flex">
-            <aside className="w-64 shrink-0 border-r border-gray-200 px-6 py-8 overflow-y-auto min-h-0">
-              <h1 className="text-2xl font-bold text-gray-900 mb-6">Library</h1>
-
-              <button
-                type="button"
-                onClick={() => setShowJoinModal(true)}
-                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition mb-6"
-              >
-                <PlusIcon className="w-4 h-4" />
-                Join or Create Library
-              </button>
-
-              <button
-                type="button"
-                className="w-full flex items-center justify-between gap-2 bg-gray-100 rounded-lg px-3 h-11 text-sm font-medium text-gray-800 hover:bg-gray-200 transition"
-              >
+        <div className="h-[calc(100vh-5rem)] px-3 sm:px-6 md:px-12 lg:px-20 xl:px-28 py-6 flex justify-center">
+          <div className="w-full max-w-7xl h-full min-h-0 bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+            {/* Sidebar */}
+            <aside className="md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-gray-200 bg-gray-50/60 px-5 py-5 md:py-8">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4 md:mb-6">
+                Library
+              </h1>
+              <div className="w-full flex items-center justify-between gap-2 bg-white border border-[#007a8c]/30 ring-1 ring-[#007a8c]/10 rounded-xl px-3 h-11 text-sm font-semibold text-gray-900">
                 <span className="flex items-center gap-2">
-                  <UserIcon className="w-4 h-4 text-gray-500" />
+                  <span className="w-7 h-7 rounded-lg bg-[#007a8c] text-white flex items-center justify-center">
+                    <UserIcon className="w-4 h-4" />
+                  </span>
                   Personal
                 </span>
-                <span className="text-gray-500">{quizzes.length}</span>
-              </button>
+                <span className="text-xs font-semibold text-[#007a8c] bg-sky-50 rounded-full px-2 py-0.5">
+                  {quizzes.length}
+                </span>
+              </div>
             </aside>
 
-            <main className="flex-1 min-h-0 px-8 py-8 overflow-y-auto">
-              <div className="flex items-center justify-between mb-4 gap-4">
-                <div className="flex items-center gap-6 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setTab("quizzes")}
-                    className={`text-sm font-semibold pb-1 border-b-2 transition-colors ${
-                      tab === "quizzes"
-                        ? "text-gray-900 border-[#007a8c]"
-                        : "text-gray-500 border-transparent hover:text-gray-800"
-                    }`}
-                  >
+            {/* Main */}
+            <main className="flex-1 min-h-0 flex flex-col">
+              {/* Toolbar */}
+              <div className="px-5 sm:px-8 pt-6 shrink-0">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-gray-200">
+                  <h2 className="text-sm font-semibold text-gray-900 pb-2.5 -mb-px border-b-2 border-[#007a8c]">
                     Quizzes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTab("deleted")}
-                    className={`text-sm font-semibold pb-1 border-b-2 transition-colors ${
-                      tab === "deleted"
-                        ? "text-gray-900 border-[#007a8c]"
-                        : "text-gray-500 border-transparent hover:text-gray-800"
-                    }`}
-                  >
-                    Deleted
-                  </button>
-                </div>
+                  </h2>
 
-                <div className="flex items-center gap-3 flex-1 justify-end">
-                  {showSearch ? (
-                    <div className="flex items-center gap-2 bg-gray-50 border border-sky-400 rounded-lg h-10 px-3 w-full max-w-xs">
-                      <SearchIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                      <input
-                        autoFocus
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder='Search "Personal"'
-                        className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 min-w-0"
-                      />
+                  <div className="flex items-center gap-2 h-9 w-full sm:w-64 sm:mb-2 px-3 rounded-lg border border-gray-200 bg-gray-50 transition-colors focus-within:bg-white focus-within:border-[#007a8c]">
+                    <SearchIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search quizzes"
+                      aria-label="Search quizzes"
+                      className="flex-1 min-w-0 h-full bg-transparent border-0 p-0 text-sm text-gray-700 placeholder-gray-400 outline-none focus:outline-none focus:ring-0 focus:shadow-none"
+                    />
+                    {searchQuery && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setShowSearch(false);
-                          setSearchQuery("");
-                        }}
+                        onClick={() => setSearchQuery("")}
                         className="text-gray-400 hover:text-gray-600 shrink-0"
-                        aria-label="Close search"
+                        aria-label="Clear search"
                       >
                         <XIcon className="w-4 h-4" />
                       </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowSearch(true)}
-                      className="w-10 h-10 rounded-lg bg-sky-50 text-[#007a8c] flex items-center justify-center hover:bg-sky-100 transition shrink-0"
-                      aria-label="Search"
-                    >
-                      <SearchIcon className="w-4 h-4" />
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 h-10 px-4 rounded-lg bg-sky-50 text-[#007a8c] text-sm font-semibold hover:bg-sky-100 transition shrink-0"
-                  >
-                    <FolderPlusIcon className="w-4 h-4" />
-                    New Folder
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddQuizModal(true)}
-                    className="h-10 px-4 rounded-lg bg-[#007a8c] text-white text-sm font-semibold hover:bg-[#005f6a] transition shrink-0"
-                  >
-                    Add Quiz
-                  </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {tab === "quizzes" ? (
+              {/* List */}
+              <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-8 pb-6">
                 <>
-                  <div className="grid grid-cols-[28px_1fr_120px_140px] items-center gap-4 border-t border-gray-200 py-3 text-xs font-bold tracking-wide text-[#007a8c]">
-                    <span className="w-4 h-4 rounded-full border border-gray-300" />
-                    <span>NAME</span>
-                    <span className="flex items-center gap-1">
-                      MODIFIED
-                      <ChevronDownIcon className="w-3 h-3" />
-                    </span>
-                    <span className="text-right">ACTIONS</span>
+                  <div
+                    className={`${ROW_GRID} items-center gap-4 sticky top-0 bg-white z-10 py-3 text-xs font-semibold text-gray-500 border-b border-gray-100`}
+                  >
+                    <span>Name</span>
+                    <button
+                      type="button"
+                      onClick={() => setSortDesc((s) => !s)}
+                      className="hidden md:flex items-center gap-1 hover:text-[#007a8c] transition text-left"
+                      aria-label="Toggle sort by modified date"
+                    >
+                      Modified
+                      {sortDesc ? (
+                        <ArrowDownIcon className="w-3 h-3" />
+                      ) : (
+                        <ArrowUpIcon className="w-3 h-3" />
+                      )}
+                    </button>
+                    <span className="text-right">Actions</span>
                   </div>
 
                   {loading ? (
-                    <div className="border-t border-gray-100 min-h-[240px] flex items-center justify-center">
-                      <p className="text-gray-500">Loading quizzes...</p>
+                    <div className="space-y-2 pt-3" aria-busy="true">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="h-14 rounded-xl bg-gray-100 animate-pulse"
+                        />
+                      ))}
                     </div>
                   ) : error ? (
-                    <div className="border-t border-gray-100 min-h-[240px] flex items-center justify-center">
-                      <p className="text-red-500">{error}</p>
+                    <div className="min-h-[260px] flex flex-col items-center justify-center text-center gap-3">
+                      <AlertCircleIcon className="w-8 h-8 text-red-400" />
+                      <p className="text-sm text-gray-600">{error}</p>
+                      <button
+                        type="button"
+                        onClick={fetchQuizzes}
+                        className="h-9 px-4 rounded-lg bg-[#007a8c] text-white text-sm font-semibold hover:bg-[#005f6a] transition"
+                      >
+                        Try again
+                      </button>
                     </div>
                   ) : visibleQuizzes.length > 0 ? (
-                    visibleQuizzes.map((quiz) => (
-                      <div
-                        key={quiz.id}
-                        className="grid grid-cols-[28px_1fr_120px_140px] items-center gap-4 border-t border-gray-100 py-3"
-                      >
-                        <span className="w-4 h-4 rounded-full border border-gray-300" />
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/Quiz/Edit/${quiz.id}`)}
-                          className="flex items-center gap-2 min-w-0 text-left"
+                    <ul>
+                      {visibleQuizzes.map((quiz) => (
+                        <li
+                          key={quiz.id}
+                          className={`${ROW_GRID} items-center gap-4 py-3 px-2 -mx-2 rounded-xl border-b border-gray-100 last:border-b-0 hover:bg-sky-50/40 transition-colors`}
                         >
-                          <ClipboardListIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                          <span className="text-sm font-medium text-gray-800 truncate hover:underline">
-                            {quiz.name}
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/Quiz/Edit/${quiz.id}`)}
+                            className="flex items-center gap-3 min-w-0 text-left"
+                          >
+                            <span className="w-9 h-9 rounded-lg bg-sky-50 text-[#007a8c] flex items-center justify-center shrink-0">
+                              <ClipboardListIcon className="w-4 h-4" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-sm font-semibold text-gray-800 truncate hover:underline">
+                                {quiz.name}
+                              </span>
+                              <span className="flex items-center gap-2 text-xs text-gray-500 md:hidden">
+                                {quiz.modified}
+                              </span>
+                            </span>
+                            {quiz.isShared && (
+                              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-green-700 bg-green-50 rounded-full px-2 py-0.5 shrink-0">
+                                <LinkIcon className="w-3 h-3" />
+                                Shared
+                              </span>
+                            )}
+                          </button>
+
+                          <span className="hidden md:block text-sm text-gray-500">
+                            {quiz.modified}
                           </span>
-                        </button>
-                        <span className="text-sm text-gray-500">
-                          {quiz.modified}
-                        </span>
 
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenShare(quiz)}
-                            aria-label={`Share ${quiz.name}`}
-                            className="text-gray-400 hover:text-[#007a8c] transition"
-                          >
-                            <Share2Icon className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDuplicate(quiz.id)}
-                            aria-label={`Duplicate ${quiz.name}`}
-                            className="text-gray-400 hover:text-[#007a8c] transition"
-                          >
-                            <CopyIcon className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDownload(quiz.id, quiz.name)}
-                            aria-label={`Download ${quiz.name}`}
-                            className="text-gray-400 hover:text-[#007a8c] transition"
-                          >
-                            <DownloadIcon className="w-4 h-4" />
-                          </button>
-
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setOpenMenuId(
-                                  openMenuId === quiz.id ? null : quiz.id,
-                                )
-                              }
-                              className={`p-1 rounded transition ${
-                                openMenuId === quiz.id
-                                  ? "bg-sky-50 text-[#007a8c]"
-                                  : "text-gray-400 hover:text-gray-600"
-                              }`}
-                              aria-label={`More options for ${quiz.name}`}
-                            >
-                              <MoreVerticalIcon className="w-4 h-4" />
-                            </button>
-
-                            {openMenuId === quiz.id && (
+                          <div className="flex items-center justify-end gap-0.5">
+                            {busyId === quiz.id ? (
+                              <span className="w-9 h-9 flex items-center justify-center">
+                                <Loader2Icon className="w-4 h-4 text-[#007a8c] animate-spin" />
+                              </span>
+                            ) : (
                               <>
-                                <div
-                                  className="fixed inset-0 z-40"
-                                  onClick={() => setOpenMenuId(null)}
-                                />
-                                <div className="absolute right-0 top-7 z-50 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenMenuId(null);
-                                      handleDeleteQuiz(quiz.id, quiz.name);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 text-left"
-                                  >
-                                    <Trash2Icon className="w-4 h-4" /> Delete
-                                  </button>
-                                </div>
+                                <IconButton
+                                  label={`Share ${quiz.name}`}
+                                  onClick={() => handleOpenShare(quiz)}
+                                  active={quiz.isShared}
+                                >
+                                  <Share2Icon className="w-4 h-4" />
+                                </IconButton>
+                                <IconButton
+                                  label={`Duplicate ${quiz.name}`}
+                                  onClick={() => handleDuplicate(quiz.id)}
+                                >
+                                  <CopyIcon className="w-4 h-4" />
+                                </IconButton>
+                                <IconButton
+                                  label={`Download ${quiz.name}`}
+                                  onClick={() =>
+                                    handleDownload(quiz.id, quiz.name)
+                                  }
+                                >
+                                  <DownloadIcon className="w-4 h-4" />
+                                </IconButton>
                               </>
                             )}
+
+                            <div className="relative">
+                              <IconButton
+                                label={`More options for ${quiz.name}`}
+                                active={openMenuId === quiz.id}
+                                onClick={() =>
+                                  setOpenMenuId(
+                                    openMenuId === quiz.id ? null : quiz.id,
+                                  )
+                                }
+                              >
+                                <MoreVerticalIcon className="w-4 h-4" />
+                              </IconButton>
+
+                              {openMenuId === quiz.id && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => setOpenMenuId(null)}
+                                  />
+                                  <div className="absolute right-0 top-10 z-50 w-40 bg-white border border-gray-200 rounded-xl shadow-lg py-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setOpenMenuId(null);
+                                        setDeleteTarget(quiz);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 text-left"
+                                    >
+                                      <Trash2Icon className="w-4 h-4" />
+                                      Delete
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))
+                        </li>
+                      ))}
+                    </ul>
                   ) : (
-                    <div className="border-t border-gray-100 min-h-[240px] flex items-center justify-center">
-                      <p className="text-gray-500">This folder is empty</p>
+                    <div className="min-h-[260px] flex flex-col items-center justify-center text-center gap-2">
+                      <span className="w-12 h-12 rounded-2xl bg-sky-50 text-[#007a8c] flex items-center justify-center">
+                        <ClipboardListIcon className="w-6 h-6" />
+                      </span>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {searchQuery
+                          ? "No quizzes match your search"
+                          : "No quizzes yet"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {searchQuery
+                          ? "Try a different title."
+                          : "Quizzes you create will appear here."}
+                      </p>
                     </div>
                   )}
                 </>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between border-t border-gray-200 py-3 text-xs font-bold tracking-wide text-[#007a8c]">
-                    <div className="flex items-center gap-3">
-                      <span className="w-4 h-4 rounded-full border border-gray-300" />
-                      <span>NAME</span>
-                    </div>
-                    <span className="flex items-center gap-1">
-                      DELETED
-                      <ChevronDownIcon className="w-3 h-3" />
-                    </span>
-                  </div>
-
-                  <div className="border-t border-gray-100 min-h-[240px] flex items-center justify-center">
-                    <p className="text-gray-500">Nothing in Deleted</p>
-                  </div>
-                </>
-              )}
+              </div>
             </main>
           </div>
         </div>
       </div>
 
-      {/* Join Library modal */}
-      {showJoinModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-[70]">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-5">
-              <h2 className="text-lg font-bold text-gray-800">Join Library</h2>
-              <button
-                type="button"
-                onClick={() => setShowJoinModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition"
-                aria-label="Close"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
+      {/* Delete confirm modal */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 z-[70]"
+          onClick={() => !deleting && setDeleteTarget(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-11 h-11 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4">
+              <Trash2Icon className="w-5 h-5" />
             </div>
-
-            <p className="px-6 py-4 border-t border-gray-100 text-sm text-gray-600">
-              Create, edit, and share quizzes with your peers
+            <h2 className="text-lg font-bold text-gray-900">Delete quiz?</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              "{deleteTarget.name}" will be permanently deleted. This can't be
+              undone.
             </p>
-
-            <form
-              onSubmit={handleJoinLibrary}
-              className="px-6 py-5 border-t border-gray-100 flex items-end gap-3"
-            >
-              <div className="flex-1">
-                <label
-                  htmlFor="joinCode"
-                  className="block text-sm text-gray-600 mb-2"
-                >
-                  Library Join Code
-                </label>
-                <input
-                  id="joinCode"
-                  type="text"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value)}
-                  placeholder="LIB-XXXXXX"
-                  className="w-full h-11 px-3 bg-gray-50 border border-sky-400 rounded-lg outline-none text-sm text-gray-700 placeholder-gray-400 uppercase"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="h-11 px-5 rounded-lg bg-[#007a8c] text-white text-sm font-semibold hover:bg-[#005f6a] transition whitespace-nowrap"
-              >
-                Join Library
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Add Quiz modal */}
-      {showAddQuizModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-[70]">
-          <div className="w-full max-w-lg max-h-[85vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-6 py-5 shrink-0">
-              <h2 className="text-xl font-bold text-gray-800">Add Quiz</h2>
+            <div className="flex justify-end gap-2 mt-6">
               <button
                 type="button"
-                onClick={() => setShowAddQuizModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition"
-                aria-label="Close"
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+                className="h-10 px-4 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition disabled:opacity-50"
               >
-                <XIcon className="w-5 h-5" />
+                Cancel
               </button>
-            </div>
-
-            <div className="flex-1 min-h-0 overflow-y-auto border-t border-gray-100 px-6 py-5 space-y-6">
-              <div>
-                <h3 className="flex items-center gap-1.5 text-sm font-bold text-gray-800 mb-3">
-                  Create with AI
-                  <SparklesIcon className="w-4 h-4 text-[#007a8c]" />
-                </h3>
-                <div className="space-y-3">
-                  {addQuizOptions.ai.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <button
-                        key={option.title}
-                        type="button"
-                        onClick={() => {
-                          setShowAddQuizModal(false);
-                          navigate(option.route);
-                        }}
-                        className="w-full flex items-start gap-3 border border-gray-200 rounded-xl p-4 text-left hover:border-sky-300 hover:bg-sky-50/40 transition"
-                      >
-                        <div className="w-9 h-9 rounded-lg bg-sky-50 text-[#007a8c] flex items-center justify-center shrink-0">
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-[#007a8c]">
-                            {option.title}
-                          </p>
-                          <p className="text-sm text-gray-500 mt-0.5">
-                            {option.description}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-gray-800 mb-3">
-                  Import Questions
-                </h3>
-                <div className="space-y-3">
-                  {addQuizOptions.import.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <button
-                        key={option.title}
-                        type="button"
-                        onClick={() => {
-                          setShowAddQuizModal(false);
-                          navigate(option.route);
-                        }}
-                        className="w-full flex items-start gap-3 border border-gray-200 rounded-xl p-4 text-left hover:border-sky-300 hover:bg-sky-50/40 transition"
-                      >
-                        <div className="w-9 h-9 rounded-lg bg-sky-50 text-[#007a8c] flex items-center justify-center shrink-0">
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-[#007a8c] flex items-center gap-2">
-                            {option.title}
-                          </p>
-                          <p className="text-sm text-gray-500 mt-0.5">
-                            {option.description}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-bold text-gray-800 mb-3">
-                  Start From Scratch
-                </h3>
-                <div className="space-y-3">
-                  {addQuizOptions.scratch.map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <button
-                        key={option.title}
-                        type="button"
-                        onClick={() => {
-                          setShowAddQuizModal(false);
-                          navigate(option.route);
-                        }}
-                        className="w-full flex items-start gap-3 border border-gray-200 rounded-xl p-4 text-left hover:border-sky-300 hover:bg-sky-50/40 transition"
-                      >
-                        <div className="w-9 h-9 rounded-lg bg-sky-50 text-[#007a8c] flex items-center justify-center shrink-0">
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-[#007a8c]">
-                            {option.title}
-                          </p>
-                          <p className="text-sm text-gray-500 mt-0.5">
-                            {option.description}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={confirmDelete}
+                className="h-10 px-4 rounded-lg bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition disabled:opacity-60 flex items-center gap-2"
+              >
+                {deleting && <Loader2Icon className="w-4 h-4 animate-spin" />}
+                Delete quiz
+              </button>
             </div>
           </div>
         </div>
@@ -681,10 +546,23 @@ const Library = () => {
 
       {/* Share Quiz modal */}
       {shareModalQuiz && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-[70]">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-5">
-              <h2 className="text-lg font-bold text-gray-800">Share Quiz</h2>
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 z-[70]"
+          onClick={() => setShareModalQuiz(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between px-6 py-5 gap-4">
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-gray-900">Share quiz</h2>
+                <p className="text-sm text-gray-500 truncate">
+                  {shareModalQuiz.name}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShareModalQuiz(null)}
@@ -698,14 +576,16 @@ const Library = () => {
             <div className="px-6 py-5 border-t border-gray-100 space-y-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-semibold text-gray-800">Enable Sharing</p>
+                  <p className="font-semibold text-gray-800">Enable sharing</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    Allows anyone with the link or code to directly import a
-                    copy of this quiz into their library.
+                    Anyone with the link or code can import a copy of this quiz
+                    into their library.
                   </p>
                 </div>
                 <button
                   type="button"
+                  role="switch"
+                  aria-checked={shareModalQuiz.isShared}
                   disabled={shareSaving}
                   onClick={() => handleToggleSharing(!shareModalQuiz.isShared)}
                   className={`w-11 h-6 rounded-full transition relative shrink-0 disabled:opacity-50 ${
@@ -713,7 +593,7 @@ const Library = () => {
                   }`}
                 >
                   <span
-                    className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition ${
+                    className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
                       shareModalQuiz.isShared ? "left-5" : "left-0.5"
                     }`}
                   />
@@ -722,61 +602,77 @@ const Library = () => {
 
               {shareModalQuiz.isShared && shareModalQuiz.shareCode && (
                 <>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">
-                      Link
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        readOnly
-                        value={shareLink}
-                        className="flex-1 h-11 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(shareLink, "link")}
-                        className="h-11 w-11 shrink-0 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
-                        aria-label="Copy link"
-                      >
-                        <CopyIcon className="w-4 h-4" />
-                      </button>
+                  {(
+                    [
+                      ["link", "Link", shareLink],
+                      ["code", "Code", shareModalQuiz.shareCode],
+                    ] as const
+                  ).map(([field, label, value]) => (
+                    <div key={field}>
+                      <label className="block text-sm text-gray-600 mb-2">
+                        {label}
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          readOnly
+                          value={value}
+                          className={`flex-1 min-w-0 h-11 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none ${
+                            field === "code"
+                              ? "font-semibold tracking-wide"
+                              : ""
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(value, field)}
+                          className={`h-11 px-3 shrink-0 rounded-lg border flex items-center gap-1.5 text-sm font-medium transition ${
+                            copiedField === field
+                              ? "border-green-200 bg-green-50 text-green-700"
+                              : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                          }`}
+                          aria-label={`Copy ${label.toLowerCase()}`}
+                        >
+                          {copiedField === field ? (
+                            <>
+                              <CheckIcon className="w-4 h-4" /> Copied
+                            </>
+                          ) : (
+                            <>
+                              <CopyIcon className="w-4 h-4" /> Copy
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
-                    {copiedField === "link" && (
-                      <p className="text-xs text-green-600 mt-1">Copied!</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">
-                      Code
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        readOnly
-                        value={shareModalQuiz.shareCode}
-                        className="flex-1 h-11 px-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none font-semibold"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copyToClipboard(shareModalQuiz.shareCode!, "code")
-                        }
-                        className="h-11 w-11 shrink-0 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
-                        aria-label="Copy code"
-                      >
-                        <CopyIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                    {copiedField === "code" && (
-                      <p className="text-xs text-green-600 mt-1">Copied!</p>
-                    )}
-                  </div>
+                  ))}
                 </>
               )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Toasts */}
+      <div
+        className="fixed bottom-5 right-5 z-[80] space-y-2"
+        aria-live="polite"
+      >
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-lg text-white ${
+              t.type === "success" ? "bg-gray-900" : "bg-red-600"
+            }`}
+          >
+            {t.type === "success" ? (
+              <CheckIcon className="w-4 h-4 text-green-400" />
+            ) : (
+              <AlertCircleIcon className="w-4 h-4" />
+            )}
+            {t.message}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
