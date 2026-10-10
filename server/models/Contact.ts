@@ -23,14 +23,13 @@ const contactSchema = new Schema(
       minlength: 10,
       maxlength: 5000,
     },
-    // Handy for tracking messages later (e.g. from an admin page).
     status: {
       type: String,
       enum: ["new", "read", "replied"],
       default: "new",
     },
   },
-  { timestamps: true } // adds createdAt / updatedAt
+  { timestamps: true }
 );
 
 const Contact =

@@ -14,13 +14,15 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
 // ======================
 // TEACHER Google strategy
 // ======================
+// Signing in with Google either logs in an existing teacher or creates
+// a brand-new account automatically (no need to visit "Create account").
 passport.use(
   "google-teacher",
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: `${BACKEND_URL}/api/teacher-auth/google/callback`
+      callbackURL: `${BACKEND_URL}/api/teacher-auth/google/callback`,
     },
     async (
       _accessToken,
@@ -29,33 +31,43 @@ passport.use(
       done: VerifyCallback,
     ) => {
       try {
-        const email = profile.emails?.[0]?.value;
+        const email = profile.emails?.[0]?.value?.toLowerCase().trim();
 
         if (!email) {
           return done(null, false, { message: "no_email" });
         }
 
-        // Already linked — signed in with Google before.
+        // Only trust emails that Google itself has verified.
+        const googleVerified = (profile as any)._json?.email_verified;
+        if (googleVerified === false) {
+          return done(null, false, { message: "google_email_unverified" });
+        }
+
+        // 1. Already linked — signed in with Google before.
         let teacher = await Teacher.findOne({ googleId: profile.id });
         if (teacher) {
           return done(null, teacher);
         }
 
-        // Not linked yet — check if an account exists under this email
-        // (e.g. they registered with name/email/password first).
+        // 2. Account exists under this email (e.g. registered with
+        //    email/password first) — link Google to it.
         teacher = await Teacher.findOne({ email });
-
-        if (!teacher) {
-          return done(null, false, { message: "notfound" });
+        if (teacher) {
+          teacher.googleId = profile.id;
+          // Google has verified this email, so it's safe to mark verified.
+          teacher.isEmailVerified = true;
+          await teacher.save();
+          return done(null, teacher);
         }
 
-        if (!teacher.isEmailVerified) {
-          return done(null, false, { message: "unverified", email });
-        }
-
-        // Verified account, first Google sign-in — link it.
-        teacher.googleId = profile.id;
-        await teacher.save();
+        // 3. Brand-new user — create the account straight away.
+        teacher = await Teacher.create({
+          name: (profile.displayName || email.split("@")[0]).trim(),
+          email,
+          googleId: profile.id,
+          isEmailVerified: true,
+          // no password: Google-only account
+        });
 
         return done(null, teacher);
       } catch (error) {

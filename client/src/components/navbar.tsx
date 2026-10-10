@@ -44,6 +44,10 @@ export default function Navbar() {
                 :
                 <Link to='/UseCases' className="hover:text-sky-600">Use Cases</Link>
             }
+            {/* Testimonials — landing-page section, shown to visitors only */}
+            {!isLoggedIn && (
+              <a href="/#testimonials" className="hover:text-sky-600">Testimonials</a>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -101,6 +105,17 @@ export default function Navbar() {
               :
               <Link to='/UseCases' onClick={() => setIsOpen(false)} className="text-lg font-medium text-sky-900 hover:text-sky-600">Use Cases</Link>
           }
+
+          {/* Testimonials — visitors only */}
+          {!isLoggedIn && (
+            <a
+              href="/#testimonials"
+              onClick={() => setIsOpen(false)}
+              className="text-lg font-medium text-sky-900 hover:text-sky-600"
+            >
+              Testimonials
+            </a>
+          )}
 
           {
             isLoggedIn ?
