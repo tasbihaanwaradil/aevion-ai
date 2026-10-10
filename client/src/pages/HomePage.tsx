@@ -1,15 +1,12 @@
-// import FaqSection from "../sections/FqasSection";
 import FaqSection from "../sections/FqasSection";
 import FeaturesSection from "../sections/FeaturesSection";
 import HeroSection from "../sections/HeroSection";
+import TestimonialSection from "../sections/testimonial-section";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 
-
 // import PricingSection from "../sections/pricing-section"
 // import StatsSection from "../sections/stats-section"
-// import TestimonialSection from "../sections/testimonial-section"
-
 
 const HomePage = () => {
     return (
@@ -17,14 +14,13 @@ const HomePage = () => {
             <HeroSection />
             {/* <StatsSection /> */}
             <FeaturesSection />
+            <TestimonialSection />
             <FaqSection />
-            {/* <PricingSection />
-            <TestimonialSection /> */}
-             <Navbar /> 
-             <Footer />
+            {/* <PricingSection /> */}
+            <Navbar />
+            <Footer />
         </>
     )
 }
-
 
 export default HomePage

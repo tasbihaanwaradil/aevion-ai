@@ -4,118 +4,58 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import gsap from "gsap";
 import { BASE_URL } from "../configs/Config";
+import PasswordInput from "../components/PasswordInput";
 
-const Icon = ({ children }: { children: React.ReactNode }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={2}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-5 w-5"
-    aria-hidden="true"
-  >
-    {children}
-  </svg>
-);
-
-const FEATURES = [
+// Short product clips (files live in public/videos/login/).
+// Each clip plays once, then the next one starts automatically.
+const CLIPS = [
   {
-    title: "Quiz Studio",
-    desc: "Turn uploaded documents into quizzes.",
-    tint: "bg-[#7be0c3]/20 text-[#7be0c3]",
-    icon: (
-      <Icon>
-        <path d="M9 11l3 3L22 4" />
-        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-      </Icon>
-    ),
+    id: "quiz-topic",
+    label: "Quiz from a topic",
+    caption: "Describe a topic, get a ready-to-use quiz",
+    src: "/videos/login/quiz-topic.mp4",
+    poster: "/videos/login/quiz-topic.jpg",
   },
   {
-    title: "Live Quiz Room",
-    desc: "Host live quizzes with real-time results.",
-    tint: "bg-[#ff8a7a]/20 text-[#ff8a7a]",
-    icon: (
-      <Icon>
-        <circle cx="12" cy="12" r="2" />
-        <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14" />
-      </Icon>
-    ),
+    id: "quiz-pdf",
+    label: "Quiz from a PDF",
+    caption: "Turn any document into a quiz in seconds",
+    src: "/videos/login/quiz-pdf.mp4",
+    poster: "/videos/login/quiz-pdf.jpg",
   },
   {
-    title: "Student Insights",
-    desc: "Assess and track student performance.",
-    tint: "bg-[#8fb2ff]/20 text-[#8fb2ff]",
-    icon: (
-      <Icon>
-        <path d="M12 20V10" />
-        <path d="M18 20V4" />
-        <path d="M6 20v-4" />
-      </Icon>
-    ),
+    id: "slides",
+    label: "Lesson slides",
+    caption: "Generate a complete slide deck from a single topic",
+    src: "/videos/login/slides.mp4",
+    poster: "/videos/login/slides.jpg",
   },
   {
-    title: "Academic Email Assistant",
-    desc: "Create and schedule academic emails.",
-    tint: "bg-[#ffd166]/20 text-[#ffd166]",
-    icon: (
-      <Icon>
-        <rect x="2" y="4" width="20" height="16" rx="2" />
-        <path d="m22 7-10 5L2 7" />
-      </Icon>
-    ),
+    id: "email",
+    label: "Academic email",
+    caption: "Draft professional emails instantly",
+    src: "/videos/login/email.mp4",
+    poster: "/videos/login/email.jpg",
   },
   {
-    title: "LinkedIn Post Studio",
-    desc: "Craft professional posts tailored to your audience and tone.",
-    tint: "bg-[#c4a8ff]/20 text-[#c4a8ff]",
-    icon: (
-      <Icon>
-        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z" />
-        <rect x="2" y="9" width="4" height="12" />
-        <circle cx="4" cy="4" r="2" />
-      </Icon>
-    ),
+    id: "linkedin",
+    label: "LinkedIn post",
+    caption: "Share your achievements with a polished post",
+    src: "/videos/login/linkedin.mp4",
+    poster: "/videos/login/linkedin.jpg",
   },
   {
-    title: "Smart Teaching Reminders",
-    desc: "Stay on top of teaching tasks and deadlines with timely reminders.",
-    tint: "bg-[#ffb3d9]/20 text-[#ffb3d9]",
-    icon: (
-      <Icon>
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-      </Icon>
-    ),
-  },
-  {
-    title: "Lesson Slide Studio",
-    desc: "Create complete teaching presentations with engaging visuals.",
-    tint: "bg-[#7be0c3]/20 text-[#7be0c3]",
-    icon: (
-      <Icon>
-        <path d="M2 3h20" />
-        <path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3" />
-        <path d="m7 21 5-5 5 5" />
-      </Icon>
-    ),
-  },
-  {
-    title: "PDF Lesson Studio",
-    desc: "Transform PDF documents into engaging teaching slides.",
-    tint: "bg-[#ff8a7a]/20 text-[#ff8a7a]",
-    icon: (
-      <Icon>
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <path d="M14 2v6h6" />
-        <path d="M16 13H8" />
-        <path d="M16 17H8" />
-        <path d="M10 9H8" />
-      </Icon>
-    ),
+    id: "reminders",
+    label: "Reminders",
+    caption: "Stay on top of every deadline",
+    src: "/videos/login/reminders.mp4",
+    poster: "/videos/login/reminders.jpg",
   },
 ];
+
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const TeacherLogin = () => {
   const { teacher, login } = useTeacherAuth();
@@ -132,9 +72,15 @@ const TeacherLogin = () => {
   // session cookie from days ago happened to still be valid on mount".
   const [attemptingLogin, setAttemptingLogin] = useState(false);
 
-  const leftPanelRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLUListElement>(null);
+  // Video showcase state.
+  const [active, setActive] = useState(0);
+  const [reduced] = useState(prefersReducedMotion);
+  const clip = CLIPS[active];
+
+  const rootRef = useRef<HTMLDivElement>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const captionRef = useRef<HTMLParagraphElement>(null);
   const submitBtnRef = useRef<HTMLButtonElement>(null);
   const googleBtnRef = useRef<HTMLButtonElement>(null);
   const createBtnRef = useRef<HTMLButtonElement>(null);
@@ -150,20 +96,20 @@ const TeacherLogin = () => {
     login(formData);
   };
 
+  const nextClip = () => setActive((i) => (i + 1) % CLIPS.length);
+
+  // Google sign-in now creates the account automatically on the backend
+  // for first-time users, so "notfound" is no longer a possible status —
+  // only genuine errors are surfaced here.
   useEffect(() => {
     const status = searchParams.get("authStatus");
 
-    if (status === "notfound") {
-      toast.error(
-        "No account found for that Google email. Please create one first.",
-      );
-      navigate("/Newteacheraccount");
-    } else if (status === "error") {
+    if (status === "error") {
       toast.error(
         "Something went wrong signing in with Google. Please try again.",
       );
     }
-  }, [searchParams, navigate]);
+  }, [searchParams]);
 
   // Redirect only after a login attempt made on THIS page just succeeded —
   // visiting /Teacherlogin directly always shows the form, even if a
@@ -175,9 +121,10 @@ const TeacherLogin = () => {
     }
   }, [teacher, attemptingLogin, navigate]);
 
-  // Entrance animation — the form rises in, then the feature tiles
-  // cascade into place on the left.
+  // Entrance animation — the form rises in, then the left panel cascades.
   useEffect(() => {
+    if (reduced) return;
+
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
@@ -189,18 +136,42 @@ const TeacherLogin = () => {
         );
       }
 
-      if (featuresRef.current) {
-        tl.fromTo(
-          featuresRef.current.children,
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.45, stagger: 0.07 },
-          "-=0.4",
-        );
-      }
-    });
+      tl.fromTo(
+        ".left-item",
+        { opacity: 0, y: 28 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          stagger: 0.12,
+          clearProps: "opacity,transform",
+        },
+        "-=0.4",
+      );
+    }, rootRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [reduced]);
+
+  // When the clip changes: reset progress, animate the caption in,
+  // and warm the browser cache with the next clip.
+  useEffect(() => {
+    if (progressRef.current) progressRef.current.style.width = "0%";
+
+    if (!reduced && captionRef.current) {
+      gsap.fromTo(
+        captionRef.current,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" },
+      );
+    }
+
+    fetch(CLIPS[(active + 1) % CLIPS.length].src).catch(() => {});
+
+    return () => {
+      if (captionRef.current) gsap.killTweensOf(captionRef.current);
+    };
+  }, [active, reduced]);
 
   const handleBtnHover = (
     ref: React.RefObject<HTMLButtonElement | null>,
@@ -215,71 +186,104 @@ const TeacherLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-white">
-      {/* ───────────── LEFT: brand + product preview ───────────── */}
-      <div
-        ref={leftPanelRef}
-        className="hidden lg:flex w-[48%] flex-col justify-center px-10 xl:px-14 py-10 bg-gradient-to-br from-[#0A1238] via-[#2a2f9e] to-[#7b3fe4] relative overflow-hidden"
-      >
-        {/* colour glows + dotted texture */}
-        <div className="absolute -top-32 -left-24 w-[26rem] h-[26rem] rounded-full bg-[#2dd4bf] opacity-25 blur-3xl" />
-        <div className="absolute -bottom-40 -right-20 w-[28rem] h-[28rem] rounded-full bg-[#ff6bb5] opacity-30 blur-3xl" />
-        <div
-          className="absolute inset-0 opacity-[0.12]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, #ffffff 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-          }}
-        />
+    <div ref={rootRef} className="min-h-screen flex bg-white">
+      {/* ───────────── LEFT: product video showcase ───────────── */}
+      <div className="hidden lg:flex w-[48%] flex-col justify-center px-10 xl:px-14 py-10 bg-gradient-to-br from-[#0c4a6e] to-[#0A1238] relative overflow-hidden">
+        {/* soft glows for depth */}
+        <div className="absolute -top-32 -left-24 w-[26rem] h-[26rem] rounded-full bg-[#007a8c] opacity-30 blur-3xl" />
+        <div className="absolute -bottom-40 -right-24 w-[26rem] h-[26rem] rounded-full bg-[#615fff] opacity-20 blur-3xl" />
 
         <div className="relative z-10 w-full max-w-xl mx-auto">
-          {/* wordmark */}
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 border border-white/25 backdrop-blur">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 text-white"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" />
-              </svg>
+          {/* badge */}
+          <div className="left-item inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-white/90 backdrop-blur-sm">
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#7be0c3] opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-[#7be0c3]" />
             </span>
-            <span className="text-xl font-bold text-white tracking-tight">
-              Aevion.AI
-            </span>
+            See it in action
           </div>
 
-          <h2 className="mt-8 text-[2.75rem] xl:text-5xl font-extrabold text-white leading-[1.08] tracking-tight">
-            Teach smarter. Let AI handle the rest.
+          {/* headline */}
+          <h2 className="left-item mt-5 font-urbanist text-[2.5rem] xl:text-5xl font-extrabold text-white leading-[1.08] tracking-tight">
+            Your AI Teaching Assistant,{" "}
+            <span className="bg-gradient-to-r from-[#7be0c3] to-[#8fb2ff] bg-clip-text text-transparent">
+              Always Ready
+            </span>
           </h2>
-          <p className="mt-4 text-base text-indigo-100/85 max-w-md">
-            Specialized AI agents that simplify content creation, quiz
-            generation, and student assessment.
+
+          {/* video window */}
+          <div className="left-item mt-8 overflow-hidden rounded-2xl border border-white/20 bg-[#0A1238] shadow-2xl shadow-black/40">
+            {/* title bar */}
+            <div className="flex items-center gap-3 border-b border-white/10 bg-white/5 px-4 py-2.5">
+              <div className="flex gap-1.5">
+                <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+                <span className="size-2.5 rounded-full bg-[#febc2e]" />
+                <span className="size-2.5 rounded-full bg-[#28c840]" />
+              </div>
+              <span className="truncate text-xs font-medium text-white/70">
+                Aevion.AI — {clip.label}
+              </span>
+            </div>
+
+            {/* video */}
+            <div className="relative aspect-[800/400] w-full bg-[#0A1238]">
+              <video
+                key={clip.id}
+                src={clip.src}
+                poster={clip.poster}
+                muted
+                playsInline
+                autoPlay={!reduced}
+                preload="auto"
+                onTimeUpdate={(e) => {
+                  const v = e.currentTarget;
+                  if (progressRef.current && v.duration) {
+                    progressRef.current.style.width = `${(v.currentTime / v.duration) * 100}%`;
+                  }
+                }}
+                onEnded={reduced ? undefined : nextClip}
+                className="h-full w-full object-contain"
+              />
+
+              {/* progress bar */}
+              {!reduced && (
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-white/10">
+                  <div
+                    ref={progressRef}
+                    className="h-full w-0 bg-gradient-to-r from-[#7be0c3] to-[#8fb2ff]"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* caption */}
+          <p
+            ref={captionRef}
+            className="left-item mt-5 flex min-h-[2rem] items-center gap-2 font-urbanist text-lg xl:text-xl font-semibold text-[#7be0c3]"
+          >
+            <span aria-hidden="true">✦</span>
+            {clip.caption}
           </p>
 
-          {/* feature icon tiles */}
-          <ul ref={featuresRef} className="mt-9 grid grid-cols-2 gap-3">
-            {FEATURES.map((f) => (
-              <li
-                key={f.title}
-                className="rounded-2xl bg-white/10 border border-white/15 p-4 backdrop-blur-sm hover:bg-white/15 transition-colors"
+          {/* clip selector */}
+          <div className="left-item mt-4 flex flex-wrap gap-2">
+            {CLIPS.map((c, i) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setActive(i)}
+                aria-pressed={i === active}
+                className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all duration-300 ${
+                  i === active
+                    ? "border-[#007a8c] bg-[#007a8c] text-white shadow-lg shadow-black/20"
+                    : "border-white/20 bg-white/10 text-white/80 hover:bg-white/20 hover:text-white"
+                }`}
               >
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${f.tint}`}
-                >
-                  {f.icon}
-                </span>
-                <p className="mt-3 text-sm font-semibold text-white">
-                  {f.title}
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-indigo-100/75">
-                  {f.desc}
-                </p>
-              </li>
+                {c.label}
+              </button>
             ))}
-          </ul>
+          </div>
         </div>
       </div>
 
@@ -321,9 +325,8 @@ const TeacherLogin = () => {
               >
                 Password
               </label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}

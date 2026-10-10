@@ -20,7 +20,8 @@ import linkedinPostRoutes from "./routes/linkedInPostRoutes.js";
 import reminderRoutes from "./routes/Reminderroutes.js";
 import { rehydrateReminderTimers } from "./utils/Reminderscheduler.js";
 import slideRoutes from "./routes/Slideroutes.js";
-   import contactRouter from "./routes/contact.js";
+import contactRouter from "./routes/contact.js";
+
 
 declare module "express-session" {
   interface SessionData {

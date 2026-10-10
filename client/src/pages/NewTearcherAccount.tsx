@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTeacherAuth } from "../context/TeacherAuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import PasswordInput from "../components/PasswordInput";
 
 // Letters and spaces only, 2–50 characters.
 const NAME_REGEX = /^[A-Za-z\s]{2,50}$/;
@@ -185,8 +186,7 @@ const NewTearcherAccount = () => {
           </div>
 
           <div className="bg-gray-100 rounded-xl">
-            <input
-              type="password"
+            <PasswordInput
               name="password"
               placeholder="Password"
               value={formData.password}
@@ -198,8 +198,7 @@ const NewTearcherAccount = () => {
           </div>
 
           <div className="bg-gray-100 rounded-xl">
-            <input
-              type="password"
+            <PasswordInput
               name="confirmPassword"
               placeholder="Confirm Password"
               value={formData.confirmPassword}
