@@ -9,73 +9,32 @@ import {
   CopyIcon,
   SaveIcon,
   RotateCcwIcon,
-  ArrowLeftIcon,
   CheckIcon,
+  FileTextIcon,
+  Loader2Icon,
+  ExternalLinkIcon,
+  PencilIcon,
+  EyeIcon,
+  AlertCircleIcon,
 } from "lucide-react";
 
+// ─── Types ──────────────────────────────────────────────
+
 type PostType =
+  | "general"
   | "session_conducted"
   | "student_achievement"
   | "workshop_event"
   | "research_insight"
   | "faculty_development";
 
-type PostTone = "Reflective" | "Informative" | "Celebratory" | "Inspirational";
-
-type Step = "form" | "review";
-
-const POST_TYPES: {
-  value: PostType;
-  label: string;
-  hint: string;
-  icon: string;
-}[] = [
-  {
-    value: "session_conducted",
-    label: "Session conducted",
-    hint: "Workshops, lectures, panel sessions",
-    icon: "🎓",
-  },
-  {
-    value: "student_achievement",
-    label: "Student achievement",
-    hint: "Awards, competitions, showcases",
-    icon: "🏆",
-  },
-  {
-    value: "workshop_event",
-    label: "Workshop / event",
-    hint: "Events you organized or spoke at",
-    icon: "📅",
-  },
-  {
-    value: "research_insight",
-    label: "Research / insight",
-    hint: "Reflections, findings, opinions",
-    icon: "💡",
-  },
-  {
-    value: "faculty_development",
-    label: "Faculty development",
-    hint: "Training programs, mentoring initiatives",
-    icon: "👥",
-  },
-];
-
-const TONES: PostTone[] = [
-  "Reflective",
-  "Informative",
-  "Celebratory",
-  "Inspirational",
-];
-
-const TYPE_LABELS: Record<PostType, string> = {
-  session_conducted: "Session conducted",
-  student_achievement: "Student achievement",
-  workshop_event: "Workshop / event",
-  research_insight: "Research / insight",
-  faculty_development: "Faculty development",
-};
+type PostTone =
+  | "Professional"
+  | "Reflective"
+  | "Informative"
+  | "Celebratory"
+  | "Inspirational"
+  | "Creative";
 
 interface FormState {
   topic: string;
@@ -83,80 +42,111 @@ interface FormState {
   tone: PostTone;
 }
 
-function isGibberish(str: string): boolean {
-  const clean = str.trim().toLowerCase();
-
-  if (clean.length < 8) return true;
-
-  const words = clean.split(/\s+/);
-
-  if (words.length < 2) return true;
-
-  const bad = words.filter((w) => {
-    const hasNoVowel = !/[aeiou]/.test(w) && w.length > 3;
-    const isRepeating = /(.)\1{3,}/.test(w);
-    const isKeyboardSmash = /^[qwrtypsdfghjklzxcvbnm]{5,}$/.test(w);
-
-    return hasNoVowel || isRepeating || isKeyboardSmash;
-  });
-
-  return bad.length > words.length * 0.5;
+interface GenerateResponse {
+  success?: boolean;
+  post?: string;
+  postId?: string;
+  message?: string;
+  error?: string;
 }
 
+const POST_TYPES: {
+  value: PostType;
+  label: string;
+}[] = [
+  { value: "general", label: "General post" },
+  { value: "session_conducted", label: "Session conducted" },
+  { value: "student_achievement", label: "Student achievement" },
+  { value: "workshop_event", label: "Workshop / event" },
+  { value: "research_insight", label: "Research / insight" },
+  { value: "faculty_development", label: "Faculty development" },
+];
+
+const TONES: PostTone[] = [
+  "Professional",
+  "Reflective",
+  "Informative",
+  "Celebratory",
+  "Inspirational",
+  "Creative",
+];
+
+// ─── Component ──────────────────────────────────────────
+
 export default function LinkedInPostGenerator() {
-  // Open by default on desktop; closed on phones, where the open sidebar
-  // is a full-height drawer that would otherwise cover the page on load.
   const [isOpen, setIsOpen] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 768,
   );
-  const [activeSection, setActiveSection] = useState("tools");
 
-  const [step, setStep] = useState<Step>("form");
+  const [activeSection, setActiveSection] = useState("tools");
 
   const [form, setForm] = useState<FormState>({
     topic: "",
-    postType: "session_conducted",
-    tone: "Reflective",
+    postType: "general",
+    tone: "Professional",
   });
 
   const [generatedPost, setGeneratedPost] = useState("");
   const [editablePost, setEditablePost] = useState("");
-
   const [postId, setPostId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const [successMsg, setSuccessMsg] = useState("");
+  const [previewMode, setPreviewMode] = useState<"preview" | "edit">("preview");
 
-  // --------------------------------------------------
-  // Generate Post
-  // --------------------------------------------------
+  const hasPost = Boolean(editablePost.trim());
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const wordCount = editablePost.trim().split(/\s+/).filter(Boolean).length;
+
+  const contentClass = `
+    relative z-10 min-w-0
+    px-4 sm:px-6 md:px-8
+    pt-20 md:pt-9
+    pb-12
+    transition-[margin] duration-300
+    ${isOpen ? "md:ml-72" : "md:ml-16"}
+  `;
+
+  // ─── Generate Post ────────────────────────────────────
+
+  const handleGenerate = async (e?: React.FormEvent) => {
+    e?.preventDefault();
 
     setError("");
+    setSuccessMsg("");
 
-    if (!form.topic.trim() || form.topic.trim().length < 8) {
-      setError(
-        "Enter a meaningful topic — at least 8 characters. E.g. 'AI Ethics session for faculty members'",
-      );
+    const topic = form.topic.trim();
+
+    if (!topic) {
+      setError("Please enter a topic for your post.");
       return;
     }
 
-    if (isGibberish(form.topic)) {
-      setError(
-        "That doesn't look like a valid topic. Try something like: 'AI Ethics workshop for faculty under HEC program'.",
-      );
-      return;
-    }
+    if (loading) return;
 
     try {
       setLoading(true);
+      setSaved(false);
+      setCopied(false);
+      setPostId(null);
+      setGeneratedPost("");
+      setEditablePost("");
+      setPreviewMode("preview");
+
+      // Keep the existing API contract.
+      // General posts omit the academic postType.
+      const payload = {
+        topic,
+        tone: form.tone,
+        ...(form.postType !== "general" ? { postType: form.postType } : {}),
+      };
 
       const res = await fetch(`${BASE_URL}/api/linkedin-posts/generate`, {
         method: "POST",
@@ -164,340 +154,131 @@ export default function LinkedInPostGenerator() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data: GenerateResponse = await res.json();
 
-      if (data.success) {
-        setGeneratedPost(data.post);
-        setEditablePost(data.post);
-        setPostId(data.postId ?? null);
-
-        setSaved(false);
-        setSuccessMsg("");
-        setStep("review");
-      } else {
-        setError(data.message || "Failed to generate post. Please try again.");
+      if (!res.ok || !data.success || !data.post) {
+        throw new Error(
+          data.message || data.error || "Failed to generate the post.",
+        );
       }
-    } catch {
-      setError("Cannot connect to server. Please check your connection.");
+
+      setGeneratedPost(data.post);
+      setEditablePost(data.post);
+      setPostId(data.postId ?? null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to generate the post.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // --------------------------------------------------
-  // Save Draft
-  // --------------------------------------------------
+  // ─── Save Draft ───────────────────────────────────────
 
   const handleSaveDraft = async () => {
-    if (!postId) return;
+    if (!postId || !editablePost.trim() || saving) {
+      return;
+    }
+
+    setError("");
+    setSuccessMsg("");
 
     try {
-      await fetch(`${BASE_URL}/api/linkedin-posts/${postId}/approve`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
+      setSaving(true);
+
+      const res = await fetch(
+        `${BASE_URL}/api/linkedin-posts/${postId}/approve`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            content: editablePost,
+          }),
         },
-        credentials: "include",
-        body: JSON.stringify({
-          content: editablePost,
-        }),
-      });
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to save the draft.");
+      }
 
       setSaved(true);
       setSuccessMsg("Draft saved to your history.");
-
-      setTimeout(() => {
-        setSuccessMsg("");
-      }, 3000);
-    } catch {
-      setError("Failed to save draft.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to save the draft.",
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
-  // --------------------------------------------------
-  // Copy
-  // --------------------------------------------------
+  // ─── Copy Post ────────────────────────────────────────
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(editablePost);
+    if (!editablePost.trim()) return;
 
-    setCopied(true);
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
+    try {
+      await navigator.clipboard.writeText(editablePost);
+      setCopied(true);
+      setSuccessMsg("Post copied to clipboard.");
+    } catch {
+      setError("Unable to copy the post.");
+    }
   };
 
-  // --------------------------------------------------
-  // Post to LinkedIn
-  // --------------------------------------------------
+  // ─── Open LinkedIn ────────────────────────────────────
 
-  const handlePostToLinkedIn = () => {
-    const encoded = encodeURIComponent(editablePost);
+  const handleOpenLinkedIn = async () => {
+    if (!editablePost.trim()) return;
 
+    // Open synchronously to avoid popup blockers.
     window.open(
-      `https://www.linkedin.com/sharing/share-offsite/?text=${encoded}`,
+      "https://www.linkedin.com/feed/",
       "_blank",
+      "noopener,noreferrer",
     );
+
+    try {
+      await navigator.clipboard.writeText(editablePost);
+      setSuccessMsg("Post copied. Paste it into LinkedIn to publish.");
+    } catch {
+      setSuccessMsg("LinkedIn opened. Copy your post to publish it.");
+    }
   };
 
-  // --------------------------------------------------
-  // Word Count
-  // --------------------------------------------------
+  // ─── Reset to Original ────────────────────────────────
 
-  const wordCount = editablePost.trim().split(/\s+/).filter(Boolean).length;
+  const handleReset = () => {
+    setEditablePost(generatedPost);
+    setSaved(false);
+    setError("");
+    setSuccessMsg("");
+  };
 
-  // Shared by both steps.
-  // - Mobile: full width (the sidebar is an overlay drawer there); pt-20 leaves
-  //   room for the floating menu button.
-  // - md and up: shift right to clear the sidebar (w-72) or the icon rail (w-16).
-  // - min-w-0 stops wide children from stretching the page sideways.
-  const contentClass = `relative z-10 min-w-0 px-4 sm:px-6 md:px-10 pt-20 md:pt-10 pb-12 md:pb-14 transition-[margin] duration-300 ${
-    isOpen ? "md:ml-72" : "md:ml-16"
-  }`;
+  // ─── Update Post ──────────────────────────────────────
 
-  // --------------------------------------------------
-  // STEP 1 — FORM
-  // --------------------------------------------------
+  const handlePostChange = (value: string) => {
+    setEditablePost(value);
+    setSaved(false);
+    setSuccessMsg("");
+  };
 
-  if (step === "form") {
-    return (
-      <div className="min-h-screen bg-[#0A1238] relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
-
-        <div className="pointer-events-none absolute bottom-0 right-0 w-[30rem] h-[26rem] rounded-full bg-teal-400/10 blur-[130px]" />
-
-        {/* Sidebar */}
-        <SideNavbar
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-          title="AI Tools"
-        />
-
-        {/* Main Content */}
-        <div className={contentClass}>
-          {/* Header */}
-          <div className="mb-6 md:mb-8 max-w-3xl mx-auto text-center">
-            <h1 className="flex flex-wrap items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-2 font-['Sora']">
-              <LinkedinIcon
-                className="w-6 h-6 text-sky-300"
-                strokeWidth={1.75}
-              />
-              LinkedIn Post Studio
-            </h1>
-
-            <p className="text-gray-400 text-sm md:text-base">
-              Create professional LinkedIn posts for academic sessions,
-              achievements, workshops, and research.
-            </p>
-          </div>
-
-          {/* Step Indicator */}
-          <div className="max-w-3xl mx-auto flex items-center gap-2 mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 shrink-0 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
-                1
-              </div>
-
-              <span className="text-white text-sm font-medium whitespace-nowrap">
-                Create post
-              </span>
-            </div>
-
-            <div className="flex-1 h-px bg-gray-600 mx-2" />
-
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 shrink-0 rounded-full border border-gray-600 flex items-center justify-center text-gray-500 text-xs font-semibold">
-                2
-              </div>
-
-              <span className="text-gray-500 text-sm whitespace-nowrap">
-                Review &amp; publish
-              </span>
-            </div>
-          </div>
-
-          {/* Form Card */}
-          <form
-            onSubmit={handleGenerate}
-            className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-5 md:p-6"
-          >
-            {/* Error */}
-            {error && (
-              <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-5">
-                <span className="mt-0.5">⚠️</span>
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* Post Type */}
-            <div className="mb-5">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                What are you posting about?
-              </label>
-
-              {/* One column on phones so labels and hints have room; two from sm up */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {POST_TYPES.map((pt) => (
-                  <button
-                    key={pt.value}
-                    type="button"
-                    onClick={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        postType: pt.value,
-                      }))
-                    }
-                    className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${
-                      form.postType === pt.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300 bg-white"
-                    } ${
-                      pt.value === "faculty_development" ? "sm:col-span-2" : ""
-                    }`}
-                  >
-                    <span className="text-lg mt-0.5">{pt.icon}</span>
-
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">
-                        {pt.label}
-                      </p>
-
-                      <p className="text-xs text-gray-400 mt-0.5 leading-snug">
-                        {pt.hint}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Topic */}
-            <div className="mb-5">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Describe your topic or experience
-              </label>
-
-              {/* text-base on mobile: iOS Safari zooms into inputs below 16px */}
-              <textarea
-                value={form.topic}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    topic: e.target.value,
-                  }))
-                }
-                placeholder="e.g. Conducted a session on AI Ethics for faculty under the HEC Mentoring Program — explored academic integrity, bias, and responsible use of generative AI"
-                rows={4}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-800 outline-none focus:border-blue-400 focus:bg-white resize-none transition-all"
-                required
-              />
-
-              <div className="flex justify-between gap-3 mt-1">
-                <p className="text-xs text-gray-400">
-                  The more specific you are, the better the post.
-                </p>
-
-                <p
-                  className={`text-xs shrink-0 ${
-                    form.topic.length < 8 ? "text-gray-400" : "text-green-500"
-                  }`}
-                >
-                  {form.topic.length} chars
-                </p>
-              </div>
-            </div>
-
-            {/* Tone */}
-            <div className="mb-5">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Tone
-              </label>
-
-              <div className="flex flex-wrap gap-2">
-                {TONES.map((tone) => (
-                  <button
-                    key={tone}
-                    type="button"
-                    onClick={() =>
-                      setForm((prev) => ({
-                        ...prev,
-                        tone,
-                      }))
-                    }
-                    className={`px-4 py-2 sm:py-1.5 rounded-full text-sm font-medium border transition-all ${
-                      form.tone === tone
-                        ? "bg-[#0A1238] text-white border-[#0A1238]"
-                        : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
-                    }`}
-                  >
-                    {tone}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-12 sm:h-11 rounded-full bg-[#0A1238] text-white font-semibold text-sm transition-colors hover:bg-[#1a2348] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <svg
-                    className="animate-spin h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v8z"
-                    />
-                  </svg>
-                  Generating post...
-                </>
-              ) : (
-                <>
-                  <SparklesIcon className="w-4 h-4" />
-                  Generate post
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  // --------------------------------------------------
-  // STEP 2 — REVIEW
-  // --------------------------------------------------
+  // ─── UI ───────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#0A1238] relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="pointer-events-none absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
+    <div className="relative min-h-screen overflow-hidden bg-[#0A1238]">
+      {/* Background decorations */}
+      <div className="pointer-events-none absolute -left-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-sky-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-teal-400/10 blur-[130px]" />
 
-      <div className="pointer-events-none absolute bottom-0 right-0 w-[30rem] h-[26rem] rounded-full bg-teal-400/10 blur-[130px]" />
-
-      {/* Sidebar */}
+      {/* Existing sidebar */}
       <SideNavbar
         isOpen={isOpen}
         setIsOpen={setIsOpen}
@@ -506,191 +287,405 @@ export default function LinkedInPostGenerator() {
         title="AI Tools"
       />
 
-      {/* Main Content */}
-      <div className={contentClass}>
-        {/* Header (mx-auto + text-center so it lines up with the card below) */}
-        <div className="mb-6 md:mb-8 max-w-3xl mx-auto text-center">
-          <h1 className="flex flex-wrap items-center justify-center gap-2 text-2xl md:text-3xl font-semibold text-white mb-1.5">
-            <LinkedinIcon
-              className="w-5 h-5 text-blue-300"
-              strokeWidth={1.75}
-            />
-            Review your post
-          </h1>
+      <main className={contentClass}>
+        <div className="mx-auto max-w-7xl">
+          {/* Header */}
+          <header className="mb-8 text-center">
+            <h1 className="flex items-center justify-center gap-2 font-['Sora'] text-2xl font-semibold text-white md:text-3xl">
+              <SparklesIcon className="h-6 w-6 text-teal-300" />
+              LinkedIn Post Studio
+            </h1>
 
-          <p className="text-gray-400 text-sm md:text-base">
-            Edit the content below, then publish it to LinkedIn.
-          </p>
-        </div>
+            <p className="mt-2 text-sm text-slate-400 md:text-base">
+              Turn any topic or idea into a professional, ready-to-share
+              LinkedIn post.
+            </p>
+          </header>
 
-        {/* Step Indicator */}
-        <div className="max-w-3xl mx-auto flex items-center gap-2 mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 shrink-0 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-semibold">
-              <CheckIcon className="w-3.5 h-3.5" />
-            </div>
-
-            <span className="text-gray-400 text-sm whitespace-nowrap">
-              Create post
-            </span>
-          </div>
-
-          <div className="flex-1 h-px bg-blue-500 mx-2" />
-
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 shrink-0 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
-              2
-            </div>
-
-            <span className="text-white text-sm font-medium whitespace-nowrap">
-              Review &amp; publish
-            </span>
-          </div>
-        </div>
-
-        {/* Review Card */}
-        <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-5 md:p-6">
-          {/* Errors */}
+          {/* Error / success */}
           {error && (
-            <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-4">
-              <span className="mt-0.5">⚠️</span>
+            <div
+              role="alert"
+              className="mb-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Success */}
           {successMsg && (
-            <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 text-sm font-medium mb-4">
-              ✓ {successMsg}
+            <div
+              role="status"
+              className="mb-5 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+            >
+              <CheckIcon className="h-4 w-4 shrink-0" />
+              <span>{successMsg}</span>
             </div>
           )}
 
-          {/* Meta: wraps on narrow screens so "Edit inputs" drops below the badges */}
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-5">
-            <div className="flex flex-wrap gap-2">
-              <span className="text-xs bg-gray-100 border border-gray-200 rounded-full px-3 py-1 text-gray-500">
-                {TYPE_LABELS[form.postType]}
-              </span>
-
-              <span className="text-xs bg-gray-100 border border-gray-200 rounded-full px-3 py-1 text-gray-500">
-                {form.tone}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setStep("form");
-                setError("");
-                setSuccessMsg("");
-              }}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1 min-h-[36px] sm:min-h-0"
+          {/* Two-panel layout */}
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
+            {/* LEFT: Configuration */}
+            <form
+              onSubmit={handleGenerate}
+              className="rounded-2xl bg-white p-5 shadow-xl sm:p-6"
             >
-              <ArrowLeftIcon className="w-3.5 h-3.5" />
-              Edit inputs
-            </button>
-          </div>
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-[#0A1238]">
+                    Create your post
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Customize your topic and writing style.
+                  </p>
+                </div>
 
-          {/* Editable Post */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Post content
-            </label>
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+                  AI powered
+                </span>
+              </div>
 
-            {/* text-base on mobile: iOS Safari zooms into inputs below 16px */}
-            <textarea
-              value={editablePost}
-              onChange={(e) => setEditablePost(e.target.value)}
-              rows={14}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-800 outline-none focus:border-blue-400 focus:bg-white resize-none transition-all leading-relaxed"
-            />
+              {/* Topic */}
+              <div className="mb-5">
+                <label
+                  htmlFor="linkedin-topic"
+                  className="mb-2 block text-sm font-medium text-[#0A1238]"
+                >
+                  What would you like to post about?
+                </label>
 
-            <div className="flex items-center justify-between mt-1">
-              <p className="text-xs text-gray-400">{wordCount} words</p>
+                <textarea
+                  id="linkedin-topic"
+                  value={form.topic}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      topic: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. React.js, my first internship, AI in healthcare, leadership..."
+                  rows={5}
+                  required
+                  className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base leading-relaxed text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-400 focus:bg-white sm:text-sm"
+                />
 
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="text-xs text-slate-400">
+                    Add details for a more personalized post.
+                  </p>
+                  <span className="shrink-0 text-xs text-slate-400">
+                    {form.topic.length} chars
+                  </span>
+                </div>
+              </div>
+
+              <div className="my-5 h-px bg-slate-100" />
+
+              {/* Post Type */}
+              <div className="mb-5">
+                <label
+                  htmlFor="linkedin-post-type"
+                  className="mb-2 block text-sm font-medium text-[#0A1238]"
+                >
+                  Post type
+                </label>
+
+                <select
+                  id="linkedin-post-type"
+                  value={form.postType}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      postType: e.target.value as PostType,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
+                >
+                  {POST_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+
+                <p className="mt-2 text-xs text-slate-400">
+                  Choose General post for any topic.
+                </p>
+              </div>
+
+              {/* Tone */}
+              <div className="mb-6">
+                <label className="mb-3 block text-sm font-medium text-[#0A1238]">
+                  Writing tone
+                </label>
+
+                <div className="flex flex-wrap gap-2">
+                  {TONES.map((tone) => {
+                    const selected = form.tone === tone;
+
+                    return (
+                      <button
+                        key={tone}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            tone,
+                          }))
+                        }
+                        className={`rounded-full border px-3.5 py-2 text-xs font-medium transition-colors ${
+                          selected
+                            ? "border-[#0A1238] bg-[#0A1238] text-white"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+                        }`}
+                      >
+                        {tone}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Generate */}
               <button
-                type="button"
-                onClick={() => setEditablePost(generatedPost)}
-                className="text-xs text-blue-500 hover:text-blue-700 transition-colors flex items-center gap-1 min-h-[36px] sm:min-h-0"
+                type="submit"
+                disabled={loading}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0A1238] text-sm font-semibold text-white transition-colors hover:bg-[#172650] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <RotateCcwIcon className="w-3 h-3" />
-                Reset to original
+                {loading ? (
+                  <>
+                    <Loader2Icon className="h-4 w-4 animate-spin" />
+                    Generating post...
+                  </>
+                ) : (
+                  <>
+                    <SparklesIcon className="h-4 w-4" />
+                    {hasPost ? "Regenerate post" : "Generate post"}
+                  </>
+                )}
               </button>
-            </div>
-          </div>
 
-          {/* Divider */}
-          <div className="h-px bg-gray-100 my-5" />
+              <p className="mt-3 text-center text-xs text-slate-400">
+                Review your post before publishing.
+              </p>
+            </form>
 
-          {/* LinkedIn Button */}
-          <button
-            type="button"
-            onClick={handlePostToLinkedIn}
-            className="w-full h-12 sm:h-11 bg-[#0077B5] text-white font-semibold rounded-full hover:bg-[#006097] transition-all text-sm flex items-center justify-center gap-2"
-          >
-            <LinkedinIcon className="w-4 h-4" />
-            Post to LinkedIn
-          </button>
-
-          {/* Secondary Actions: Copy + Save side by side, Regenerate full width on
-              phones; all three in a row from sm up */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="h-11 sm:h-10 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-all text-sm flex items-center justify-center gap-1.5"
+            {/* RIGHT: Preview */}
+            <section
+              aria-label="LinkedIn post preview"
+              className="flex min-h-[500px] min-w-0 flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
             >
-              {copied ? (
-                <>
-                  <CheckIcon className="w-3.5 h-3.5" />
-                  Copied
-                </>
+              {/* Preview header */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50">
+                    <LinkedinIcon className="h-5 w-5 text-[#0077B5]" />
+                  </div>
+
+                  <div>
+                    <h2 className="text-sm font-semibold text-[#0A1238]">
+                      Post preview
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      {hasPost
+                        ? `${wordCount} words`
+                        : "Your generated content"}
+                    </p>
+                  </div>
+                </div>
+
+                {hasPost && (
+                  <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode("preview")}
+                      className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium ${
+                        previewMode === "preview"
+                          ? "bg-[#0A1238] text-white"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      <EyeIcon className="h-3.5 w-3.5" />
+                      Preview
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode("edit")}
+                      className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium ${
+                        previewMode === "edit"
+                          ? "bg-[#0A1238] text-white"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      <PencilIcon className="h-3.5 w-3.5" />
+                      Edit
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Loading */}
+              {loading ? (
+                <div
+                  role="status"
+                  className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center"
+                >
+                  <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
+                    <Loader2Icon className="h-7 w-7 animate-spin text-blue-500" />
+                  </div>
+
+                  <h3 className="text-base font-semibold text-[#0A1238]">
+                    Creating your LinkedIn post
+                  </h3>
+
+                  <p className="mt-2 max-w-xs text-sm leading-relaxed text-slate-400">
+                    Our AI is preparing content based on your topic and selected
+                    tone.
+                  </p>
+                </div>
+              ) : !hasPost ? (
+                /* Empty state */
+                <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-blue-100 bg-blue-50">
+                    <FileTextIcon className="h-6 w-6 text-blue-500" />
+                  </div>
+
+                  <h3 className="text-sm font-semibold text-[#0A1238]">
+                    Your LinkedIn post will appear here
+                  </h3>
+
+                  <p className="mt-2 max-w-xs text-sm leading-relaxed text-slate-400">
+                    Enter a topic and choose your writing style on the left,
+                    then generate your post.
+                  </p>
+                </div>
               ) : (
                 <>
-                  <CopyIcon className="w-3.5 h-3.5" />
-                  Copy
+                  {/* Preview body */}
+                  <div className="min-w-0 flex-1 px-5 py-5 sm:px-6">
+                    {previewMode === "preview" ? (
+                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A1238]">
+                            <LinkedinIcon className="h-5 w-5 text-white" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-800">
+                              LinkedIn post preview
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              Preview only · Not published
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="max-h-[500px] overflow-y-auto px-4 py-5">
+                          <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-700">
+                            {editablePost}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label
+                          htmlFor="linkedin-edit-post"
+                          className="mb-2 block text-sm font-medium text-slate-700"
+                        >
+                          Edit your post
+                        </label>
+
+                        <textarea
+                          id="linkedin-edit-post"
+                          value={editablePost}
+                          onChange={(e) => handlePostChange(e.target.value)}
+                          rows={16}
+                          className="min-h-[340px] w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base leading-relaxed text-slate-700 outline-none focus:border-blue-400 sm:text-sm"
+                        />
+
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <span className="text-xs text-slate-400">
+                            {wordCount} words
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={handleReset}
+                            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800"
+                          >
+                            <RotateCcwIcon className="h-3.5 w-3.5" />
+                            Reset to original
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action footer */}
+                  <div className="border-t border-slate-100 px-5 py-4 sm:px-6">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      <button
+                        type="button"
+                        onClick={handleCopy}
+                        className="flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                      >
+                        {copied ? (
+                          <CheckIcon className="h-4 w-4" />
+                        ) : (
+                          <CopyIcon className="h-4 w-4" />
+                        )}
+                        {copied ? "Copied" : "Copy"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleSaveDraft}
+                        disabled={!postId || saved || saving}
+                        className="flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {saving ? (
+                          <Loader2Icon className="h-4 w-4 animate-spin" />
+                        ) : saved ? (
+                          <CheckIcon className="h-4 w-4" />
+                        ) : (
+                          <SaveIcon className="h-4 w-4" />
+                        )}
+                        {saving ? "Saving" : saved ? "Saved" : "Save draft"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        disabled={editablePost === generatedPost}
+                        className="col-span-2 flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-1"
+                      >
+                        <RotateCcwIcon className="h-4 w-4" />
+                        Reset
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleOpenLinkedIn}
+                      className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0077B5] text-sm font-semibold text-white transition-colors hover:bg-[#00669b]"
+                    >
+                      <LinkedinIcon className="h-4 w-4" />
+                      Open LinkedIn
+                      <ExternalLinkIcon className="h-3.5 w-3.5" />
+                    </button>
+
+                    <p className="mt-2 text-center text-xs text-slate-400">
+                      Copy your post and paste it into LinkedIn to publish.
+                    </p>
+                  </div>
                 </>
               )}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              disabled={saved || !postId}
-              className="h-11 sm:h-10 bg-green-50 hover:bg-green-100 text-green-700 font-medium rounded-xl transition-all text-sm border border-green-200 disabled:opacity-50 flex items-center justify-center gap-1.5"
-            >
-              {saved ? (
-                <>
-                  <CheckIcon className="w-3.5 h-3.5" />
-                  Saved
-                </>
-              ) : (
-                <>
-                  <SaveIcon className="w-3.5 h-3.5" />
-                  Save draft
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setStep("form");
-                setGeneratedPost("");
-                setEditablePost("");
-                setPostId(null);
-                setSaved(false);
-                setError("");
-                setSuccessMsg("");
-              }}
-              className="col-span-2 sm:col-span-1 h-11 sm:h-10 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-all text-sm flex items-center justify-center gap-1.5"
-            >
-              <RotateCcwIcon className="w-3.5 h-3.5" />
-              Regenerate
-            </button>
+            </section>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
