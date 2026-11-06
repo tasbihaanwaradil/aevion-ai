@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  XIcon,
+  LightbulbIcon,
+  PartyPopperIcon,
+} from "lucide-react";
 import { getSocket } from "../lib/socket";
 
 type Question = {
@@ -43,6 +50,71 @@ const clearSavedSession = () => {
     // ignore
   }
 };
+
+/* ---------- Shared UI pieces ---------- */
+
+const ACCENT = "#2d5f6e";
+
+const Shell = ({
+  children,
+  center = false,
+}: {
+  children: React.ReactNode;
+  center?: boolean;
+}) => (
+  <div className="min-h-screen bg-slate-50 flex flex-col">
+    <header className="px-6 py-4 flex items-center">
+      <Link to="/">
+        <img src="/assets/logo.svg" alt="Aevion.AI" className="h-12 w-auto" />
+      </Link>
+    </header>
+    <main
+      className={`flex-1 flex flex-col items-center px-4 pb-12 ${
+        center ? "justify-center -mt-12" : "pt-4"
+      }`}
+    >
+      {children}
+    </main>
+  </div>
+);
+
+const Card = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div
+    className={`w-full bg-white rounded-2xl border border-slate-200 shadow-sm ${className}`}
+  >
+    {children}
+  </div>
+);
+
+const RoomPill = ({ code }: { code: string }) => (
+  <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 bg-white border border-slate-200 rounded-full px-3 py-1">
+    Room
+    <span className="font-mono font-semibold text-slate-800">
+      {code.toUpperCase()}
+    </span>
+  </span>
+);
+
+const PrimaryButton = ({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button
+    {...props}
+    className="w-full h-12 rounded-xl bg-slate-900 text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-[0.99] transition disabled:opacity-40 disabled:hover:bg-slate-900 disabled:cursor-not-allowed"
+  >
+    {children}
+  </button>
+);
+
+const inputClass =
+  "w-full h-12 px-4 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#2d5f6e] focus:ring-4 focus:ring-[#2d5f6e]/10 transition";
 
 const StudentJoin = () => {
   const [searchParams] = useSearchParams();
@@ -255,220 +327,352 @@ const StudentJoin = () => {
     }
   };
 
+  /* ---------- Reconnecting ---------- */
   if (step === "reconnecting") {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
-        <div className="w-8 h-8 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin mb-4" />
-        <p className="text-gray-600">Reconnecting to your quiz...</p>
-      </div>
+      <Shell center>
+        <div
+          className="w-9 h-9 rounded-full border-[3px] border-slate-200 animate-spin mb-4"
+          style={{ borderTopColor: ACCENT }}
+        />
+        <p className="text-sm text-slate-500">Reconnecting to your quiz…</p>
+      </Shell>
     );
   }
 
+  /* ---------- Room code ---------- */
   if (step === "code") {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
-        <h1 className="text-3xl font-bold text-gray-800 mb-1">Aevion.AI</h1>
-        <p className="text-xl font-semibold text-gray-800 mb-1">
-          Join an activity
-        </p>
-        <p className="text-gray-500 mb-6">
-          Enter your room name to join an activity
-        </p>
-        <form onSubmit={handleContinueFromCode} className="w-full max-w-sm">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Room name
-          </label>
-          <input
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value)}
-            placeholder="E.G. SCIENCE101"
-            className="w-full h-12 px-4 border border-gray-300 rounded-lg outline-none mb-4 uppercase text-gray-900 placeholder:text-gray-500 bg-white"
-          />
-          {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
-          <button
-            type="submit"
-            className="w-full h-12 rounded-lg bg-gray-900 text-white font-bold"
-          >
-            Join
-          </button>
-        </form>
-      </div>
+      <Shell center>
+        <Card className="max-w-md p-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">
+            Join an activity
+          </h1>
+          <p className="text-sm text-slate-500 mb-6">
+            Enter the room name your teacher shared with you.
+          </p>
+          <form onSubmit={handleContinueFromCode}>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Room name
+            </label>
+            <input
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value)}
+              placeholder="e.g. SCIENCE101"
+              autoFocus
+              className={`${inputClass} uppercase font-mono tracking-wider mb-4`}
+            />
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">
+                {error}
+              </p>
+            )}
+            <PrimaryButton type="submit">Join</PrimaryButton>
+          </form>
+        </Card>
+      </Shell>
     );
   }
 
+  /* ---------- Name ---------- */
   if (step === "name") {
     return (
-      <div className="min-h-screen bg-white px-6 py-8">
-        <p className="text-sm text-gray-500">Room</p>
-        <p className="text-xl font-bold text-gray-900 mb-8">
-          {roomCode.toUpperCase()}
-        </p>
-        <form onSubmit={handleJoin} className="max-w-md">
-          <h2 className="text-lg font-bold text-gray-800 mb-2">
+      <Shell center>
+        <div className="mb-4">
+          <RoomPill code={roomCode} />
+        </div>
+        <Card className="max-w-md p-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-1">
             What's your name?
           </h2>
-          <p className="text-gray-500 text-sm mb-4">
+          <p className="text-sm text-slate-500 mb-6">
             Your teacher sees this name on their results.
           </p>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Enter your name
-          </label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Last, First"
-            className="w-full h-12 px-4 border border-gray-300 rounded-lg outline-none mb-4 text-gray-900 placeholder:text-gray-500 bg-white"
-          />
-          {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+          <form onSubmit={handleJoin}>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Your name
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Last, First"
+              autoFocus
+              className={`${inputClass} mb-4`}
+            />
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">
+                {error}
+              </p>
+            )}
+            <PrimaryButton type="submit" disabled={joining || !name.trim()}>
+              {joining ? "Joining…" : "Continue"}
+            </PrimaryButton>
+          </form>
           <button
-            type="submit"
-            disabled={joining}
-            className="w-full h-12 rounded-lg bg-gray-900 text-white font-bold disabled:opacity-50"
+            type="button"
+            onClick={() => {
+              setError("");
+              setStep("code");
+            }}
+            className="w-full mt-3 text-sm text-slate-400 hover:text-slate-600 transition"
           >
-            {joining ? "Joining..." : "Continue"}
+            Change room
           </button>
-        </form>
-      </div>
+        </Card>
+      </Shell>
     );
   }
 
+  /* ---------- Quiz ---------- */
   if (step === "quiz") {
     const question = questions[currentIndex];
     if (!question) {
       return (
-        <div className="min-h-screen bg-white flex items-center justify-center px-4">
-          <p className="text-gray-500">Loading your question...</p>
-        </div>
+        <Shell center>
+          <p className="text-sm text-slate-500">Loading your question…</p>
+        </Shell>
       );
     }
+
+    const typeLabel =
+      question.type === "MCQ"
+        ? "Multiple choice"
+        : question.type === "TrueFalse"
+          ? "True or false"
+          : "Short answer";
+
+    const progressPct = (currentIndex / questions.length) * 100;
+    const isLast = currentIndex + 1 >= questions.length;
+
     return (
-      <div className="min-h-screen bg-white px-6 py-8">
-        <p className="text-sm text-gray-500">Room</p>
-        <p className="text-xl font-bold text-gray-900 mb-8">
-          {roomCode.toUpperCase()}
-        </p>
+      <Shell>
+        <div className="w-full max-w-2xl">
+          {/* Progress */}
+          <div className="flex items-center justify-between mb-2">
+            <RoomPill code={roomCode} />
+            <span className="text-xs font-medium text-slate-500 tabular-nums">
+              {currentIndex + 1} / {questions.length}
+            </span>
+          </div>
+          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden mb-5">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${progressPct + 100 / questions.length}%`,
+                backgroundColor: ACCENT,
+              }}
+            />
+          </div>
 
-        <div className="max-w-2xl">
-          <p className="text-sm text-gray-500 mb-1">
-            Question {currentIndex + 1} of {questions.length} ·{" "}
-            {question.type === "MCQ"
-              ? "Multiple Choice"
-              : question.type === "TrueFalse"
-                ? "True / False"
-                : "Short Answer"}
-          </p>
-          <h2 className="text-lg font-semibold text-gray-800 mb-6">
-            {question.question}
-          </h2>
+          <Card className="p-6 sm:p-8">
+            <span className="inline-block text-xs font-medium text-slate-500 bg-slate-100 rounded-full px-2.5 py-1 mb-4">
+              {typeLabel}
+            </span>
+            <h2 className="text-xl font-semibold text-slate-900 leading-snug mb-6">
+              {question.question}
+            </h2>
 
-          {!feedback && (
-            <>
-              {question.type === "MCQ" && question.options && (
-                <div className="space-y-3">
-                  {question.options.map((opt, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setAnswer(opt)}
-                      className={`w-full flex items-center gap-3 px-5 py-4 rounded-xl border-2 text-left transition text-gray-900 ${
-                        answer === opt
-                          ? "border-[#2d5f6e] bg-sky-50"
-                          : "border-gray-200"
-                      }`}
-                    >
-                      <span className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-xs font-bold">
-                        {String.fromCharCode(65 + i)}
+            {!feedback && (
+              <>
+                {question.type === "MCQ" && question.options && (
+                  <div className="space-y-2.5">
+                    {question.options.map((opt, i) => {
+                      const selected = answer === opt;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setAnswer(opt)}
+                          className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl border-2 text-left transition ${
+                            selected
+                              ? "border-[#2d5f6e] bg-[#2d5f6e]/5"
+                              : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          <span
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 transition ${
+                              selected
+                                ? "bg-[#2d5f6e] text-white"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {String.fromCharCode(65 + i)}
+                          </span>
+                          <span className="text-slate-800 font-medium">
+                            {opt}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {question.type === "TrueFalse" && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {["True", "False"].map((opt) => {
+                      const selected = answer === opt;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setAnswer(opt)}
+                          className={`h-16 rounded-xl border-2 font-semibold transition ${
+                            selected
+                              ? "border-[#2d5f6e] bg-[#2d5f6e] text-white"
+                              : "border-slate-200 text-slate-800 hover:border-slate-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {question.type === "ShortAnswer" && (
+                  <textarea
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder="Type your answer…"
+                    className="w-full h-32 p-4 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none resize-none focus:border-[#2d5f6e] focus:ring-4 focus:ring-[#2d5f6e]/10 transition"
+                  />
+                )}
+
+                {error && (
+                  <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mt-4">
+                    {error}
+                  </p>
+                )}
+
+                <div className="mt-6">
+                  <PrimaryButton
+                    type="button"
+                    onClick={handleSubmitAnswer}
+                    disabled={!answer.trim() || submitting}
+                  >
+                    {submitting ? "Submitting…" : "Submit answer"}
+                  </PrimaryButton>
+                </div>
+              </>
+            )}
+
+            {feedback && (
+              <div>
+                <div
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3.5 mb-4 ${
+                    feedback.isCorrect
+                      ? "bg-[#c8e9d1] text-[#2d5a3d]"
+                      : "bg-[#f6b3b3] text-[#7a2b2b]"
+                  }`}
+                >
+                  <span
+                    className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                      feedback.isCorrect ? "bg-[#2d5a3d]" : "bg-[#7a2b2b]"
+                    } text-white`}
+                  >
+                    {feedback.isCorrect ? (
+                      <CheckIcon className="w-4 h-4" />
+                    ) : (
+                      <XIcon className="w-4 h-4" />
+                    )}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-semibold leading-tight">
+                      {feedback.isCorrect ? "Correct" : "Not quite"}
+                    </p>
+                    <p className="text-xs opacity-80 truncate">
+                      Your answer: {answer}
+                    </p>
+                  </div>
+                </div>
+
+                {feedback.showFeedback &&
+                  !feedback.isCorrect &&
+                  feedback.correctAnswer && (
+                    <p className="text-sm text-slate-600 mb-3">
+                      Correct answer:{" "}
+                      <span className="font-semibold text-slate-900">
+                        {feedback.correctAnswer}
                       </span>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              )}
+                    </p>
+                  )}
 
-              {question.type === "TrueFalse" && (
-                <div className="flex gap-4">
-                  {["True", "False"].map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setAnswer(opt)}
-                      className={`flex-1 h-14 rounded-xl border-2 font-semibold transition text-gray-900 ${
-                        answer === opt
-                          ? "border-[#2d5f6e] bg-sky-50"
-                          : "border-gray-200"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              )}
+                {feedback.showFeedback && feedback.explanation && (
+                  <div className="flex gap-3 bg-slate-50 rounded-xl px-4 py-3.5 mb-6">
+                    <LightbulbIcon className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      {feedback.explanation}
+                    </p>
+                  </div>
+                )}
 
-              {question.type === "ShortAnswer" && (
-                <textarea
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Type your answer..."
-                  className="w-full h-32 p-4 border border-gray-300 rounded-xl outline-none text-gray-900 placeholder:text-gray-500 bg-white"
-                />
-              )}
-
-              <button
-                type="button"
-                onClick={handleSubmitAnswer}
-                disabled={!answer.trim() || submitting}
-                className="w-full h-12 mt-6 rounded-xl bg-gray-900 text-white font-bold disabled:opacity-50"
-              >
-                {submitting ? "Submitting..." : "Submit Answer"}
-              </button>
-            </>
-          )}
-
-          {feedback && (
-            <div>
-              <div
-                className={`rounded-xl px-4 py-3 mb-3 font-semibold ${
-                  feedback.isCorrect
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {feedback.isCorrect ? "Correct" : "Not quite"}
+                <PrimaryButton type="button" onClick={handleNext}>
+                  {isLast ? "Finish" : "Next question"}
+                  <ArrowRightIcon className="w-4 h-4" />
+                </PrimaryButton>
               </div>
-              {feedback.showFeedback && feedback.explanation && (
-                <p className="text-sm text-gray-600 mb-6">
-                  {feedback.explanation}
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={handleNext}
-                className="w-full h-12 rounded-xl bg-gray-900 text-white font-bold"
-              >
-                {currentIndex + 1 >= questions.length
-                  ? "Finish"
-                  : "Next Question"}
-              </button>
-            </div>
-          )}
+            )}
+          </Card>
         </div>
-      </div>
+      </Shell>
     );
   }
 
+  /* ---------- Done ---------- */
+  const pct =
+    finalScore && finalScore.total > 0
+      ? Math.round((finalScore.score / finalScore.total) * 100)
+      : null;
+  const RADIUS = 52;
+  const CIRC = 2 * Math.PI * RADIUS;
+
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 text-center">
-      <h2 className="text-2xl font-bold text-gray-800 mb-2">
-        You're all done!
-      </h2>
-      {finalScore && (
-        <p className="text-gray-600">
-          You scored {finalScore.score} / {finalScore.total}
+    <Shell center>
+      <Card className="max-w-md p-8 text-center">
+        {pct !== null ? (
+          <div className="relative w-36 h-36 mx-auto mb-6">
+            <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+              <circle
+                cx="60"
+                cy="60"
+                r={RADIUS}
+                fill="none"
+                stroke="#e2e8f0"
+                strokeWidth="10"
+              />
+              <circle
+                cx="60"
+                cy="60"
+                r={RADIUS}
+                fill="none"
+                stroke={ACCENT}
+                strokeWidth="10"
+                strokeLinecap="round"
+                strokeDasharray={CIRC}
+                strokeDashoffset={CIRC - (pct / 100) * CIRC}
+                style={{ transition: "stroke-dashoffset 0.8s ease" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-3xl font-bold text-slate-900 tabular-nums">
+                {finalScore!.score}/{finalScore!.total}
+              </span>
+              <span className="text-xs text-slate-400">{pct}%</span>
+            </div>
+          </div>
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6">
+            <PartyPopperIcon className="w-7 h-7" />
+          </div>
+        )}
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">
+          You're all done!
+        </h2>
+        <p className="text-sm text-slate-500">
+          Your teacher can see your results.
         </p>
-      )}
-      <p className="text-gray-500 mt-2">Your teacher can see your results.</p>
-    </div>
+      </Card>
+    </Shell>
   );
 };
-
 export default StudentJoin;
