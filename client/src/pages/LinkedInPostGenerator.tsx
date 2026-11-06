@@ -690,6 +690,7 @@ export default function LinkedInPostGenerator() {
             </button>
           </div>
         </div>
+        
       </div>
     </div>
   );

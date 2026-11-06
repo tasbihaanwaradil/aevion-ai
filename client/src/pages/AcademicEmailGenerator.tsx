@@ -1659,6 +1659,11 @@ const AcademicEmailGenerator: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* AI disclaimer */}
+        <p className="max-w-6xl mx-auto mt-6 text-center text-xs text-gray-400">
+          Aevion.AI can make mistakes. Please review emails before sending.
+        </p>
       </div>
     </div>
   );

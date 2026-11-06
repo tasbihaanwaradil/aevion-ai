@@ -1,12 +1,7 @@
 "use client";
 
 import { useNavigate } from "react-router-dom";
-import {
-  ClipboardListIcon,
-  RocketIcon,
-  Share2Icon,
-  SparklesIcon,
-} from "lucide-react";
+import { ClipboardListIcon, RocketIcon, Share2Icon } from "lucide-react";
 import { useTeacherAuth } from "../context/TeacherAuthContext";
 import TeacherNavbar from "../components/TeacherNavabar";
 
@@ -21,7 +16,7 @@ const activityTypes = [
     fill: "from-sky-400/20 to-sky-400/0",
   },
   {
-    title: "Lauch Pad",
+    title: "Launch Pad",
     icon: RocketIcon,
     route: "/LaunchSpace",
     border: "border-violet-400",
@@ -40,33 +35,32 @@ const activityTypes = [
   },
 ];
 
-const quickQuestionTypes = [
+// Display-only: these show the question types the app supports.
+// They are intentionally not clickable.
+const questionTypes = [
   {
     label: "MC",
     title: "Multiple Choice",
-    border: "border-yellow-400",
+    border: "border-yellow-400/70",
     text: "text-yellow-300",
-    glow: "group-hover:shadow-[0_0_28px_-6px_rgba(250,204,21,0.6)]",
-    fill: "from-yellow-400/20 to-yellow-400/0",
-    route: "/TeacherDashboard",
+    glow: "shadow-[0_0_28px_-10px_rgba(250,204,21,0.55)]",
+    fill: "from-yellow-400/15 to-yellow-400/0",
   },
   {
     label: "TF",
     title: "True / False",
-    border: "border-purple-400",
+    border: "border-purple-400/70",
     text: "text-purple-300",
-    glow: "group-hover:shadow-[0_0_28px_-6px_rgba(192,132,252,0.6)]",
-    fill: "from-purple-400/20 to-purple-400/0",
-    route: "/TeacherDashboard",
+    glow: "shadow-[0_0_28px_-10px_rgba(192,132,252,0.55)]",
+    fill: "from-purple-400/15 to-purple-400/0",
   },
   {
     label: "SA",
     title: "Short Answer",
-    border: "border-orange-400",
+    border: "border-orange-400/70",
     text: "text-orange-300",
-    glow: "group-hover:shadow-[0_0_28px_-6px_rgba(251,146,60,0.6)]",
-    fill: "from-orange-400/20 to-orange-400/0",
-    route: "/TeacherDashboard",
+    glow: "shadow-[0_0_28px_-10px_rgba(251,146,60,0.55)]",
+    fill: "from-orange-400/15 to-orange-400/0",
   },
 ];
 
@@ -88,10 +82,6 @@ const TeacherDashboard = () => {
           <div className="w-full max-w-3xl">
             {/* Welcome heading */}
             <div className="text-center mb-12">
-              <p className="flex items-center justify-center gap-2 text-xs font-bold tracking-[0.2em] text-sky-300 uppercase mb-3">
-                <SparklesIcon className="w-4 h-4" />
-                Ready when you arezz
-              </p>
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
                 Welcome back, {teacher?.name || "Teacher"}!
               </h1>
@@ -100,7 +90,7 @@ const TeacherDashboard = () => {
               </p>
             </div>
 
-            {/* Activity types */}
+            {/* Activity types (clickable) */}
             <div className="grid grid-cols-3 gap-6 md:gap-10 justify-items-center">
               {activityTypes.map((activity) => {
                 const Icon = activity.icon;
@@ -132,29 +122,27 @@ const TeacherDashboard = () => {
             <div className="flex items-center gap-4 my-12">
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-500/50 to-gray-500/50" />
               <span className="text-xs font-bold tracking-[0.2em] text-gray-300 uppercase">
-                Quick Question
+                Question Types
               </span>
               <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gray-500/50 to-gray-500/50" />
             </div>
 
-            {/* Quick question types */}
+            {/* Question types (display only, not clickable) */}
             <div className="grid grid-cols-3 gap-6 md:gap-10 justify-items-center">
-              {quickQuestionTypes.map((question) => (
-                <button
+              {questionTypes.map((question) => (
+                <div
                   key={question.label}
-                  type="button"
-                  onClick={() => navigate(question.route)}
-                  className="flex flex-col items-center gap-3 group"
+                  className="flex flex-col items-center gap-3 cursor-default select-none"
                 >
                   <div
-                    className={`w-20 h-20 md:w-24 md:h-24 rounded-full border-2 ${question.border} ${question.text} bg-gradient-to-br ${question.fill} flex items-center justify-center text-lg font-bold transition-all duration-300 ${question.glow} group-hover:scale-110 group-hover:-translate-y-1`}
+                    className={`w-20 h-20 md:w-24 md:h-24 rounded-full border-2 ${question.border} ${question.text} bg-gradient-to-br ${question.fill} flex items-center justify-center text-lg font-bold ${question.glow}`}
                   >
                     {question.label}
                   </div>
-                  <span className="text-sm font-semibold text-gray-100 group-hover:text-white text-center transition-colors">
+                  <span className="text-sm font-semibold text-gray-300 text-center">
                     {question.title}
                   </span>
-                </button>
+                </div>
               ))}
             </div>
           </div>

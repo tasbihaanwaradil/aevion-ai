@@ -8,6 +8,7 @@ import {
   CheckSquareIcon,
   UsersIcon,
   XIcon,
+  CheckIcon,
   CheckCircle2Icon,
   ArrowUpIcon,
   ArrowDownIcon,
@@ -47,6 +48,14 @@ const RANK_STYLES = [
   { bg: "bg-slate-200", text: "text-slate-600", ring: "ring-slate-300" },
   { bg: "bg-orange-100", text: "text-orange-700", ring: "ring-orange-200" },
 ];
+
+/* Cell colour tokens (match the reference grid) */
+const CELL_BASE =
+  "h-11 px-4 rounded-lg text-sm whitespace-nowrap align-middle";
+const CELL_EMPTY = "bg-[#f6f7f9]";
+const CELL_CORRECT = "bg-[#c8e9d1] text-[#2d5a3d]";
+const CELL_WRONG = "bg-[#f6b3b3] text-[#7a2b2b]";
+const CELL_TOTAL = "bg-[#dde4eb] text-slate-600";
 
 const LiveResults = () => {
   const { id } = useParams<{ id: string }>();
@@ -145,7 +154,7 @@ const LiveResults = () => {
       .filter((a): a is Answer => Boolean(a));
     if (relevant.length === 0) return null;
     const correct = relevant.filter((a) => a.isCorrect).length;
-    return Math.round((correct / relevant.length) * 100);
+    return Math.round((correct / participants.length) * 100);
   };
 
   const attemptedCount = participants.length;
@@ -154,6 +163,7 @@ const LiveResults = () => {
     if (participants.length === 0) return null;
     const total = participants.reduce((sum, p) => sum + scorePercent(p), 0);
     return Math.round(total / participants.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [participants, questions.length]);
 
   const completedCount = useMemo(
@@ -172,6 +182,7 @@ const LiveResults = () => {
       }
     }
     return worstPct <= 50 ? worstId : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions, participants]);
 
   const topPerformers = useMemo(() => {
@@ -225,6 +236,15 @@ const LiveResults = () => {
 
   const inviteLink = `${FRONTEND_URL}/join?room=${roomCode}`;
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(inviteLink)}`;
+
+  const SortArrow = ({ k }: { k: SortKey }) =>
+    sortKey === k ? (
+      sortDir === "asc" ? (
+        <ArrowUpIcon className="w-3 h-3" />
+      ) : (
+        <ArrowDownIcon className="w-3 h-3" />
+      )
+    ) : null;
 
   if (loading) {
     return (
@@ -355,8 +375,8 @@ const LiveResults = () => {
             {/* ---------- Top performers ---------- */}
             {topPerformers.length > 0 && (
               <div className="bg-white rounded-xl border border-slate-200 px-5 py-4 mb-6">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
-                  Top Performers
+                <p className="text-xs font-semibold text-slate-500 mb-3">
+                  Top performers
                 </p>
                 <div className="flex flex-wrap gap-2.5">
                   {topPerformers.map((p, i) => {
@@ -413,8 +433,8 @@ const LiveResults = () => {
           ))}
         </div>
 
-        {/* ---------- Results table ---------- */}
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        {/* ---------- Results grid ---------- */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
           {participants.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
@@ -440,100 +460,86 @@ const LiveResults = () => {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse text-sm">
+            <div className="overflow-x-auto p-3">
+              <table className="w-full border-separate border-spacing-1 text-sm">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th
-                      onClick={() => toggleSort("name")}
-                      className="text-left text-xs font-semibold text-slate-500 py-3 pl-5 pr-4 cursor-pointer select-none sticky left-0 bg-slate-50 whitespace-nowrap"
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        NAME
-                        {sortKey === "name" &&
-                          (sortDir === "asc" ? (
-                            <ArrowUpIcon className="w-3 h-3" />
-                          ) : (
-                            <ArrowDownIcon className="w-3 h-3" />
-                          ))}
-                      </span>
+                  <tr>
+                    {/* Name + score sort controls */}
+                    <th className="sticky left-0 z-10 bg-white min-w-[230px] p-0 font-normal">
+                      <div className="flex items-center justify-between px-4 h-8 text-xs font-medium text-slate-400">
+                        <button
+                          type="button"
+                          onClick={() => toggleSort("name")}
+                          className="inline-flex items-center gap-1 hover:text-slate-600 transition"
+                        >
+                          Name
+                          <SortArrow k="name" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleSort("score")}
+                          className="inline-flex items-center gap-1 hover:text-slate-600 transition"
+                        >
+                          Score
+                          <SortArrow k="score" />
+                        </button>
+                      </div>
                     </th>
-                    <th className="text-left text-xs font-semibold text-slate-500 py-3 pr-4 whitespace-nowrap">
-                      PROGRESS
-                    </th>
-                    <th
-                      onClick={() => toggleSort("score")}
-                      className="text-left text-xs font-semibold text-slate-500 py-3 pr-4 cursor-pointer select-none whitespace-nowrap"
-                    >
-                      <span className="inline-flex items-center gap-1">
-                        SCORE
-                        {sortKey === "score" &&
-                          (sortDir === "asc" ? (
-                            <ArrowUpIcon className="w-3 h-3" />
-                          ) : (
-                            <ArrowDownIcon className="w-3 h-3" />
-                          ))}
-                      </span>
-                    </th>
-                    {questions.map((q, i) => (
-                      <th
-                        key={q.id}
-                        className={`text-xs font-semibold py-3 px-3 min-w-[100px] whitespace-nowrap ${
-                          q.id === hardestQuestionId
-                            ? "text-orange-600"
-                            : "text-slate-500"
-                        }`}
-                      >
-                        <span className="inline-flex items-center gap-1">
-                          {q.id === hardestQuestionId && (
-                            <AlertTriangleIcon className="w-3 h-3" />
-                          )}
-                          Q{i + 1}
-                        </span>
-                      </th>
-                    ))}
+                    {questions.map((q, i) => {
+                      const isHardest = q.id === hardestQuestionId;
+                      return (
+                        <th
+                          key={q.id}
+                          className="min-w-[110px] p-0 font-normal"
+                        >
+                          <div
+                            className={`flex items-center justify-center gap-1 h-8 text-xs font-medium ${
+                              isHardest ? "text-orange-600" : "text-slate-400"
+                            }`}
+                          >
+                            {isHardest && (
+                              <AlertTriangleIcon className="w-3 h-3" />
+                            )}
+                            Q{i + 1}
+                          </div>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
+
                 <tbody>
                   {sortedParticipants.map((p, rowIdx) => (
-                    <tr
-                      key={p.participantId}
-                      className={`border-b border-slate-100 last:border-b-0 ${
-                        rowIdx % 2 === 1 ? "bg-slate-50/50" : "bg-white"
-                      }`}
-                    >
-                      <td className="py-3 pl-5 pr-4 sticky left-0 bg-inherit">
-                        <span className="inline-flex items-center gap-1.5 font-medium text-slate-800 whitespace-nowrap">
-                          {p.completed && (
-                            <CheckCircle2Icon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          )}
-                          {showNames ? p.name : "Student"}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-2 min-w-[100px]">
-                          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${
-                                p.completed ? "bg-emerald-400" : "bg-sky-400"
-                              }`}
-                              style={{
-                                width: `${
-                                  questions.length > 0
-                                    ? (p.currentIndex / questions.length) * 100
-                                    : 0
-                                }%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-xs text-slate-400 shrink-0 tabular-nums">
-                            {p.currentIndex}/{questions.length}
+                    <tr key={p.participantId}>
+                      {/* Name cell */}
+                      <td
+                        className={`${CELL_BASE} sticky left-0 z-10 ${
+                          rowIdx % 2 === 0 ? "bg-[#f4f5f8]" : "bg-[#f8f9fb]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                              status === "finished" && !p.completed
+                                ? "bg-slate-300"
+                                : "bg-[#4caf5d]"
+                            }`}
+                            title={
+                              p.completed
+                                ? "Completed"
+                                : `${p.currentIndex}/${questions.length} answered`
+                            }
+                          />
+                          <span className="flex-1 font-medium text-slate-700 truncate max-w-[180px]">
+                            {showNames ? p.name : "Student"}
+                          </span>
+                          <span className="text-slate-500 tabular-nums">
+                            {scorePercent(p)}%
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 pr-4 text-slate-600 font-medium tabular-nums">
-                        {scorePercent(p)}%
-                      </td>
+
+                      {/* Answer pills */}
                       {questions.map((q) => {
                         const ans = p.answers.find(
                           (a) => a.questionId === q.id,
@@ -542,42 +548,52 @@ const LiveResults = () => {
                           return (
                             <td
                               key={q.id}
-                              className="py-3 px-3 text-center text-slate-300"
-                            >
-                              —
-                            </td>
+                              className={`${CELL_BASE} ${CELL_EMPTY}`}
+                            />
                           );
                         return (
                           <td
                             key={q.id}
-                            className={`py-3 px-3 text-center font-medium ${
-                              ans.isCorrect
-                                ? "text-emerald-700"
-                                : "text-orange-600"
+                            className={`${CELL_BASE} ${
+                              ans.isCorrect ? CELL_CORRECT : CELL_WRONG
                             }`}
                           >
-                            {showResponses
-                              ? ans.answer
-                              : ans.isCorrect
-                                ? "✓"
-                                : "✗"}
+                            <div className="flex items-center justify-center gap-1.5">
+                              {ans.isCorrect ? (
+                                <CheckIcon className="w-3.5 h-3.5 shrink-0" />
+                              ) : (
+                                <XIcon className="w-3.5 h-3.5 shrink-0" />
+                              )}
+                              {showResponses && (
+                                <span className="truncate max-w-[200px]">
+                                  {ans.answer}
+                                </span>
+                              )}
+                            </div>
                           </td>
                         );
                       })}
                     </tr>
                   ))}
-                  <tr className="border-t border-slate-200 bg-slate-50 font-semibold">
-                    <td className="py-3 pl-5 pr-4 text-slate-700 sticky left-0 bg-slate-50 whitespace-nowrap">
-                      {participants.length} students
+
+                  {/* Class total row */}
+                  <tr>
+                    <td
+                      className={`${CELL_BASE} ${CELL_TOTAL} sticky left-0 z-10 font-semibold`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="tabular-nums">
+                          {participants.length}
+                        </span>
+                        <span>Class Total</span>
+                      </div>
                     </td>
-                    <td className="py-3 pr-4" />
-                    <td className="py-3 pr-4" />
                     {questions.map((q) => {
                       const pct = classTotalForQuestion(q.id);
                       return (
                         <td
                           key={q.id}
-                          className="py-3 px-3 text-center text-slate-500"
+                          className={`${CELL_BASE} ${CELL_TOTAL} text-center font-medium tabular-nums`}
                         >
                           {showResults && pct !== null ? `${pct}%` : "—"}
                         </td>
