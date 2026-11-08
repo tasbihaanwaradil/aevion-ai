@@ -1,54 +1,70 @@
-import { BotIcon, WorkflowIcon, PlugIcon, ShieldCheckIcon, BarChartIcon, CpuIcon } from "lucide-react";
+import {
+  LinkedinIcon,
+  MailIcon,
+  FileQuestionIcon,
+  PresentationIcon,
+  FileTextIcon,
+  CalendarClockIcon,
+  // LayersIcon,
+} from "lucide-react";
+
 import type { IFeature } from "../../types";
 
-export const features: IFeature[] = [
-    {
-        title: "AI Agent Builder",
-        description:
-            "Design intelligent agents with modular logic, memory and tools - no complex setup required.",
-        icon: BotIcon,
-        cardBg: "bg-orange-100",
-        iconBg: "bg-orange-500"
-    },
-    {
-        title: "Workflow Orchestration",
-        description:
-            "Chain actions, triggers and decisions to automate multi-step workflows reliably.",
-        icon: WorkflowIcon,
-        cardBg: "bg-green-100",
-        iconBg: "bg-green-500"
-    },
-    {
-        title: "Plug & Play Integrations",
-        description:
-            "Connect APIs, databases and third-party tools seamlessly with built-in connectors.",
-        icon: PlugIcon,
-        cardBg: "bg-indigo-100",
-        iconBg: "bg-indigo-500"
-    },
-    {
-        title: "Production-Ready Security",
-        description:
-            "Built-in safeguards, rate limits and isolation to run agents safely at scale and protect your data.",
-        icon: ShieldCheckIcon,
-
-        cardBg: "bg-pink-100",
-        iconBg: "bg-pink-500"
-    },
-    {
-        title: "Real-Time Monitoring",
-        description:
-            "Track executions, logs and performance metrics in real time and get insights into your agent's behavior.",
-        icon: BarChartIcon,
-        cardBg: "bg-lime-100",
-        iconBg: "bg-lime-500"
-    },
-    {
-        title: "Scalable Infrastructure",
-        description:
-            "Run agents efficiently across workloads with automatic scaling and optimization.",
-        icon: CpuIcon,
-        cardBg: "bg-gray-50",
-        iconBg: "bg-orange-500",
-    },
-]
+export const Features: IFeature[] = [
+  {
+    title: "LinkedIn Post Studio",
+    description:
+      "Generates professional LinkedIn posts for teachers related to achievements, research, or academic events.",
+    icon: LinkedinIcon,
+    cardBg: "bg-orange-100",
+    iconBg: "bg-orange-500",
+  },
+  {
+    title: "Academic Email Assistant",
+    description:
+      "Drafts formal emails for class announcements, deadlines, feedback, and administrative communication.",
+    icon: MailIcon,
+    cardBg: "bg-green-100",
+    iconBg: "bg-green-500",
+  },
+  {
+    title: "Quiz Studio ",
+    description:
+      "Automatically creates quizzes from lecture slides, PDFs, or topic inputs with adjustable difficulty levels.",
+    icon: FileQuestionIcon,
+    cardBg: "bg-indigo-100",
+    iconBg: "bg-indigo-500",
+  },
+  {
+    title: "Lesson Slide Studio",
+    description:
+      "Generates structured lecture slides from a topic, lesson outline, or uploaded material.",
+    icon: PresentationIcon,
+    cardBg: "bg-pink-100",
+    iconBg: "bg-pink-500",
+  },
+  {
+    title: "PDF Lession Studio",
+    description:
+      "Converts PDFs (lecture notes, research papers, etc.) into concise, presentation-ready slides.",
+    icon: FileTextIcon,
+    cardBg: "bg-lime-100",
+    iconBg: "bg-lime-500",
+  },
+  {
+    title: "Smart Teaching Reminders ",
+    description:
+      "Tracks class schedules, assignment deadlines, and academic events with automated reminders.",
+    icon: CalendarClockIcon,
+    cardBg: "bg-gray-100",
+    iconBg: "bg-orange-500",
+  },
+  // {
+  //   title: "Merge & Summarize Multiple Slides",
+  //   description:
+  //     "Combines multiple lecture slide decks into one structured slide deck and summarizes key points.",
+  //   icon: LayersIcon,
+  //   cardBg: "bg-purple-100",
+  //   iconBg: "bg-purple-500",
+  // },
+];

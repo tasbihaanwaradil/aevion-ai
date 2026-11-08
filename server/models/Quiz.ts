@@ -1,0 +1,51 @@
+
+
+import mongoose, { Document, Schema } from "mongoose";
+
+export interface IQuizQuestion {
+  id: string;
+  type: "MCQ" | "TrueFalse" | "ShortAnswer";
+  question: string;
+  options: string[] | null;
+  correctAnswer: string;
+  explanation: string;
+}
+
+export interface IQuiz extends Document {
+  teacherId: mongoose.Types.ObjectId;
+  title: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  questions: IQuizQuestion[];
+  isShared: boolean;
+  shareCode: string | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const QuizQuestionSchema = new Schema<IQuizQuestion>(
+  {
+    id: { type: String, required: true },
+    type: { type: String, enum: ["MCQ", "TrueFalse", "ShortAnswer"], required: true },
+    question: { type: String, required: true },
+    options: { type: [String], default: null },
+    correctAnswer: { type: String, required: true },
+    explanation: { type: String, required: true },
+  },
+  { _id: false }
+);
+
+const QuizSchema = new Schema<IQuiz>(
+  {
+    teacherId: { type: Schema.Types.ObjectId, ref: "Teacher", required: true },
+    title: { type: String, required: true },
+    difficulty: { type: String, enum: ["Easy", "Medium", "Hard"], required: true },
+    questions: { type: [QuizQuestionSchema], required: true },
+    isShared: { type: Boolean, default: false },
+    shareCode: { type: String, default: null },
+  },
+  { timestamps: true }
+);
+
+const Quiz = mongoose.models.Quiz || mongoose.model<IQuiz>("Quiz", QuizSchema);
+
+export default Quiz;
