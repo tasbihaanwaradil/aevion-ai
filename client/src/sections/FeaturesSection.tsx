@@ -5,80 +5,84 @@ import { ArrowUpRightIcon, SparkleIcon } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Features } from "../data/features";
+import { getFeatureVideos } from "../data/featureVideos";
 import AnimatedContent from "../components/animated-content";
 import SectionTitle from "../components/section-title";
+import FeatureVideo from "../components/feature-video";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function FeaturesSection() {
-  const cardsWrapRef = useRef<HTMLDivElement>(null);
+  const rowsRef = useRef<HTMLDivElement>(null);
   const ctaBoxRef = useRef<HTMLDivElement>(null);
   const exploreLinkRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Stagger each feature card in as it scrolls into view
-      if (cardsWrapRef.current) {
-        const cards = cardsWrapRef.current.querySelectorAll(".feature-card");
+      // Each feature row: text and video slide in from opposite sides
+      if (rowsRef.current) {
+        const rows = rowsRef.current.querySelectorAll<HTMLElement>(".feature-row");
 
-        gsap.fromTo(
-          cards,
-          { opacity: 0, y: 44, scale: 0.96 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.6,
-            ease: "power3.out",
-            stagger: 0.12,
+        rows.forEach((row, i) => {
+          const text = row.querySelector(".feature-text");
+          const media = row.querySelector(".feature-media");
+          const icon = row.querySelector(".feature-icon");
+          const fromLeft = i % 2 === 0;
+
+          const tl = gsap.timeline({
             scrollTrigger: {
-              trigger: cardsWrapRef.current,
+              trigger: row,
               start: "top 80%",
               once: true,
             },
+          });
+
+          tl.fromTo(
+            row,
+            { opacity: 0, y: 40 },
+            { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }
+          );
+
+          if (text) {
+            tl.fromTo(
+              text,
+              { opacity: 0, x: fromLeft ? -40 : 40 },
+              { opacity: 1, x: 0, duration: 0.6, ease: "power3.out" },
+              "<0.1"
+            );
           }
-        );
 
-        cards.forEach((card) => {
-          const icon = card.querySelector(".feature-icon");
+          if (media) {
+            tl.fromTo(
+              media,
+              { opacity: 0, x: fromLeft ? 40 : -40, scale: 0.97 },
+              { opacity: 1, x: 0, scale: 1, duration: 0.7, ease: "power3.out" },
+              "<0.1"
+            );
+          }
 
-          card.addEventListener("mouseenter", () => {
-            gsap.to(card, {
-              y: -6,
-              boxShadow: "0 18px 32px -10px rgba(0,0,0,0.18)",
-              duration: 0.3,
-              ease: "power2.out",
-            });
-            if (icon) {
+          if (icon) {
+            row.addEventListener("mouseenter", () => {
               gsap.to(icon, {
                 scale: 1.15,
                 rotate: 6,
                 duration: 0.3,
                 ease: "power2.out",
               });
-            }
-          });
-
-          card.addEventListener("mouseleave", () => {
-            gsap.to(card, {
-              y: 0,
-              boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
-              duration: 0.3,
-              ease: "power2.out",
             });
-            if (icon) {
+            row.addEventListener("mouseleave", () => {
               gsap.to(icon, {
                 scale: 1,
                 rotate: 0,
                 duration: 0.3,
                 ease: "power2.out",
               });
-            }
-          });
+            });
+          }
         });
       }
 
-      // Left CTA box entrance emphasis + hover on the "Explore use cases" link
+      // Bottom CTA banner entrance
       if (ctaBoxRef.current) {
         gsap.fromTo(
           ctaBoxRef.current,
@@ -90,7 +94,7 @@ export default function FeaturesSection() {
             ease: "power3.out",
             scrollTrigger: {
               trigger: ctaBoxRef.current,
-              start: "top 85%",
+              start: "top 90%",
               once: true,
             },
           }
@@ -101,12 +105,7 @@ export default function FeaturesSection() {
         const arrow = exploreLinkRef.current.querySelector("svg");
         exploreLinkRef.current.addEventListener("mouseenter", () => {
           if (arrow) {
-            gsap.to(arrow, {
-              x: 3,
-              y: -3,
-              duration: 0.25,
-              ease: "power2.out",
-            });
+            gsap.to(arrow, { x: 3, y: -3, duration: 0.25, ease: "power2.out" });
           }
         });
         exploreLinkRef.current.addEventListener("mouseleave", () => {
@@ -122,69 +121,94 @@ export default function FeaturesSection() {
 
   return (
     <section id="Features" className="px-4 md:px-16 lg:px-24 xl:px-32">
-      <div className="grid grid-cols-1 md:grid-cols-2 max-w-7xl mx-auto">
-        {/* Left Panel */}
-        <div>
-          <div className="p-4 pt-16 md:p-16 flex flex-col items-start md:sticky md:top-26">
-            <SectionTitle
-              dir="left"
-              icon={SparkleIcon}
-              title="Core features"
-              subtitle="Everything you need to build, deploy, and scale Aevion.AI agents—designed for speed, reliability, and real-world academic use."
-            />
-
-            <AnimatedContent
-              distance={12}
-              delay={0}
-              className="p-8 bg-[#007a8c] w-full rounded-2xl mt-12 shadow-xl shadow-cyan-950/20 border border-white/10"
-            >
-              <div ref={ctaBoxRef}>
-                <p className="text-lg text-white font-medium leading-relaxed">
-                  Trusted by educators, institutions, and academic teams
-                  building intelligent teaching and learning solutions with AI
-                  agents.
-                </p>
-
-                <a
-                  ref={exploreLinkRef}
-                  href="/UseCases"
-                  className="bg-white text-[#007a8c] hover:bg-cyan-50 px-6 py-2.5 rounded-full mt-8 flex items-center gap-2 transition-colors duration-300 font-bold w-max shadow-sm"
-                >
-                  Explore use cases
-                  <ArrowUpRightIcon size={20} />
-                </a>
-              </div>
-            </AnimatedContent>
-          </div>
+      <div className="max-w-7xl mx-auto">
+        {/* Heading (centered) */}
+        <div className="pt-16 pb-10 md:pb-14 flex flex-col items-center text-center [&_*]:mx-auto">
+          <SectionTitle
+            dir="center"
+            icon={SparkleIcon}
+            title="Core features"
+            subtitle="Everything you need to build, deploy, and scale Aevion.AI agents—designed for speed, reliability, and real-world academic use."
+          />
         </div>
 
-        {/* Right Features Cards */}
-        <div className="p-4 pt-16 md:p-16">
-          <AnimatedContent distance={10} delay={0}>
-            <div ref={cardsWrapRef} className="space-y-6">
-              {Features.map((feature, index) => (
+        {/* Feature rows: text + large video, alternating sides */}
+        <AnimatedContent distance={10} delay={0}>
+          <div ref={rowsRef} className="space-y-8 md:space-y-12">
+            {Features.map((feature, index) => {
+              const clips = getFeatureVideos(feature.title);
+              const hasVideo = clips.length > 0;
+              const reversed = index % 2 === 1;
+
+              return (
                 <div
                   key={index}
-                  className={`feature-card ${feature.cardBg} flex flex-col items-start p-6 rounded-xl w-full md:sticky md:top-26 shadow-sm will-change-transform`}
+                  className={`feature-row ${feature.cardBg} rounded-2xl p-6 md:p-10 shadow-sm grid grid-cols-1 gap-8 lg:gap-14 items-center ${
+                    hasVideo ? "md:grid-cols-2" : ""
+                  }`}
                 >
+                  {/* Text */}
                   <div
-                    className={`feature-icon ${feature.iconBg} p-2 text-white rounded-md inline-flex items-center justify-center`}
+                    className={`feature-text flex flex-col items-start ${
+                      hasVideo && reversed ? "md:order-2" : ""
+                    }`}
                   >
-                    <feature.icon size={20} />
+                    <div
+                      className={`feature-icon ${feature.iconBg} p-2.5 text-white rounded-lg inline-flex items-center justify-center`}
+                    >
+                      <feature.icon size={22} />
+                    </div>
+
+                    <h3 className="text-xl md:text-2xl font-bold text-zinc-900 mt-5">
+                      {feature.title}
+                    </h3>
+
+                    <p className="text-sm md:text-base text-zinc-700 mt-3 leading-relaxed">
+                      {feature.description}
+                    </p>
                   </div>
 
-                  <p className="text-lg font-bold text-zinc-900 mt-4">
-                    {feature.title}
-                  </p>
-
-                  <p className="text-sm text-zinc-700 mt-2 leading-relaxed">
-                    {feature.description}
-                  </p>
+                  {/* Video */}
+                  {hasVideo && (
+                    <div
+                      className={`feature-media w-full ${
+                        reversed ? "md:order-1" : ""
+                      }`}
+                    >
+                      <FeatureVideo clips={clips} />
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </AnimatedContent>
-        </div>
+              );
+            })}
+          </div>
+        </AnimatedContent>
+
+        {/* CTA banner */}
+        <AnimatedContent
+          distance={12}
+          delay={0}
+          className="mt-12 md:mt-16 mb-16 p-8 md:p-12 bg-[#007a8c] w-full rounded-2xl shadow-xl shadow-cyan-950/20 border border-white/10"
+        >
+          <div
+            ref={ctaBoxRef}
+            className="flex flex-col md:flex-row md:items-center md:justify-between gap-6"
+          >
+            <p className="text-lg md:text-xl text-white font-medium leading-relaxed max-w-2xl">
+              Trusted by educators, institutions, and academic teams building
+              intelligent teaching and learning solutions with AI agents.
+            </p>
+
+            <a
+              ref={exploreLinkRef}
+              href="/UseCases"
+              className="bg-white text-[#007a8c] hover:bg-cyan-50 px-6 py-2.5 rounded-full flex items-center gap-2 transition-colors duration-300 font-bold w-max shrink-0 shadow-sm"
+            >
+              Explore use cases
+              <ArrowUpRightIcon size={20} />
+            </a>
+          </div>
+        </AnimatedContent>
       </div>
     </section>
   );
